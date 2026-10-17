@@ -1,0 +1,39 @@
+services:
+  finance-hub:
+    image: mybadreligon/finance-hub:0.1.0
+    container_name: finance-hub
+    restart: unless-stopped
+    user: "1000:100"
+    environment:
+      - TZ=America/Toronto
+      - APP_SECRET_KEY=${APP_SECRET_KEY:?set APP_SECRET_KEY (openssl rand -hex 32)}
+      - APP_URL=${APP_URL:-}
+      - COOKIE_SECURE=${COOKIE_SECURE:-true}
+      - CF_ACCESS_TEAM_DOMAIN=${CF_ACCESS_TEAM_DOMAIN:-}
+      - CF_ACCESS_AUD=${CF_ACCESS_AUD:-}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-}
+      - ADMIN_PASSWORD_HASH=${ADMIN_PASSWORD_HASH:-}
+      - SESSION_IDLE_MINUTES=${SESSION_IDLE_MINUTES:-30}
+      - MAX_UPLOAD_MB=${MAX_UPLOAD_MB:-50}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    ports:
+      - "${PORT_HOST:?assign from port register}:8080"
+    volumes:
+      - ${FAST_STORAGE:-/srv/dev-disk-by-uuid-758425e9-f9ca-4fbc-ad81-eaea80fdfb73/appdata-ssd}/finance-hub:/data
+      - type: bind
+        source: ${SLOW_STORAGE:-/srv/mergerfs/StoragePool/docker}/finance-hub
+        target: /files
+        bind:
+          create_host_path: false      # pool paths must exist; fail loudly if the pool is not mounted
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/healthz >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    stop_grace_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
