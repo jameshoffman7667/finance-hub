@@ -1,11 +1,13 @@
 {
   "name": "finance-hub",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Personal finance manager for the home server",
   "private": true,
   "type": "module",
   "main": "src/server.js",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node src/server.js",
     "test": "node --test test/*.test.js"

@@ -9,10 +9,10 @@ Current release: see `CHANGELOG.md`. What the app does today: `docs/functional-s
 ```
 npm ci
 export APP_SECRET_KEY=$(openssl rand -hex 32)
-DATA_DIR=./data COOKIE_SECURE=false PORT=8080 npm start
+DATA_DIR=./data COOKIE_SECURE=false PORT=8070 npm start
 ```
 
-Open http://localhost:8080 (installing as an app needs https). The first visit asks you to create a login and set up an authenticator app.
+Open http://localhost:8070 (installing as an app needs https). The first visit asks you to create a login and set up an authenticator app.
 
 ```
 npm test

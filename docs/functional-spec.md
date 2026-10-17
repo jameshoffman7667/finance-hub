@@ -1,4 +1,4 @@
-# Finance Hub: functional specification (current state, v0.1.0)
+# Finance Hub: functional specification (current state, v0.1.1)
 
 Personal finance manager for one household on James's home server. This file describes what the app does now; later features (bonuses, investments, forecast, tax) are listed under Not yet built. The full product plan lives in the Project "Financial Management".
 
@@ -79,7 +79,7 @@ Light and dark follow the device setting (`prefers-color-scheme`) with matching 
 
 ## Environment variables
 
-See `deploy/.env.example`. Required: `APP_SECRET_KEY` (32+ characters; the app refuses to start without it). Others: `APP_URL`, `COOKIE_SECURE`, `CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD`, `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, `SESSION_IDLE_MINUTES`, `MAX_UPLOAD_MB`, `TRUST_PROXY`, `LOG_LEVEL`, `TZ`.
+See `deploy/.env.example`. Required: `APP_SECRET_KEY` (32+ characters; the app refuses to start without it). `PORT` (listening port; default 8070, set by compose from `PORT_HOST`). Others: `APP_URL`, `COOKIE_SECURE`, `CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD`, `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, `SESSION_IDLE_MINUTES`, `MAX_UPLOAD_MB`, `TRUST_PROXY`, `LOG_LEVEL`, `TZ`.
 
 ## Data and storage
 

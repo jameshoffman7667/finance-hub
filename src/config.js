@@ -14,7 +14,7 @@ export function loadConfig(env = process.env) {
   return {
     version: VERSION,
     root,
-    port: Number(env.PORT || 8080),
+    port: Number(env.PORT || 8070),
     dataDir: env.DATA_DIR || '/data',
     filesDir: env.FILES_DIR || '/files',
     secret,

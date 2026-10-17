@@ -1,11 +1,12 @@
 services:
   finance-hub:
-    image: mybadreligon/finance-hub:0.1.0
+    image: mybadreligon/finance-hub:0.1.1
     container_name: finance-hub
     restart: unless-stopped
     user: "1000:100"
     environment:
       - TZ=America/Toronto
+      - PORT=${PORT_HOST:?assign from port register}
       - APP_SECRET_KEY=${APP_SECRET_KEY:?set APP_SECRET_KEY (openssl rand -hex 32)}
       - APP_URL=${APP_URL:-}
       - COOKIE_SECURE=${COOKIE_SECURE:-true}
@@ -17,7 +18,7 @@ services:
       - MAX_UPLOAD_MB=${MAX_UPLOAD_MB:-50}
       - LOG_LEVEL=${LOG_LEVEL:-info}
     ports:
-      - "${PORT_HOST:?assign from port register}:8080"
+      - "${PORT_HOST}:${PORT_HOST}"
     volumes:
       - ${FAST_STORAGE:-/srv/dev-disk-by-uuid-758425e9-f9ca-4fbc-ad81-eaea80fdfb73/appdata-ssd}/finance-hub:/data
       - type: bind
@@ -26,7 +27,7 @@ services:
         bind:
           create_host_path: false      # pool paths must exist; fail loudly if the pool is not mounted
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/healthz >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:$${PORT}/healthz >/dev/null || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3
