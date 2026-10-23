@@ -1,5 +1,5 @@
 // Finance Hub service worker. Caches the app shell only; never API responses or signed-in pages.
-const VERSION = '0.1.1';
+const VERSION = '0.1.2';
 const CACHE = `finance-hub-v${VERSION}`;
 const SHELL = ['/', '/offline.html', '/app.css', '/app.js', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/apple-touch-icon.png'];
 

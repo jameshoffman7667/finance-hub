@@ -14,10 +14,13 @@ test('default port is 8070 and PORT overrides it', () => {
 test('image and compose health checks follow PORT', () => {
   const d = read('Dockerfile');
   assert.match(d, /EXPOSE 8070/);
-  assert.match(d, /HEALTHCHECK[\s\S]*127\.0\.0\.1:\$\{PORT\}\/healthz/);
+  assert.match(d, /HEALTHCHECK[^\n]*--start-period=30s[\s\S]*127\.0\.0\.1:\$\{PORT\}\/healthz \| grep -q/);
+  assert.match(d, /"status":"ok"/);
   const c = read('deploy/compose.yaml');
   assert.match(c, /PORT=\$\{PORT_HOST:\?/);
   assert.match(c, /"\$\{PORT_HOST\}:\$\{PORT_HOST\}"/);
   assert.match(c, /127\.0\.0\.1:\$\$\{PORT\}\/healthz/);
+  assert.match(c, /start_period: 30s/);
+  assert.match(c, /status.*ok/);
   assert.doesNotMatch(c, /8080/);
 });

@@ -1,4 +1,4 @@
-# Finance Hub: functional specification (current state, v0.1.1)
+# Finance Hub: functional specification (current state, v0.1.2)
 
 Personal finance manager for one household on James's home server. This file describes what the app does now; later features (bonuses, investments, forecast, tax) are listed under Not yet built. The full product plan lives in the Project "Financial Management".
 
@@ -89,7 +89,7 @@ See `deploy/.env.example`. Required: `APP_SECRET_KEY` (32+ characters; the app r
 
 ## API (JSON, all under /api, signed-in unless noted)
 
-`GET /healthz` (no auth, `{status, version}`); `GET /api/state`; `POST /api/setup`, `/api/login`, `/api/totp/enable`, `/api/logout`, `/api/stepup`, `/api/password`; accounts (`GET/POST /api/accounts`, `PATCH /api/accounts/:id`, valuations); categories and rules; `POST /api/imports/preview`, `POST /api/imports`, `GET /api/imports`, `DELETE /api/imports/:id`; `GET /api/transactions`, `PATCH /api/transactions/:id`; `GET /api/reports/spending`, `/api/reports/networth`, `/api/overview`; `GET /api/export.json`, `/api/export/transactions.csv` (step-up); `GET /api/audit`.
+`GET /healthz` (no auth, no private data, no outside services; exactly `{"status":"ok","version":"<image tag>"}`, 503 `status:"error"` if the local database cannot be read); `GET /api/state`; `POST /api/setup`, `/api/login`, `/api/totp/enable`, `/api/logout`, `/api/stepup`, `/api/password`; accounts (`GET/POST /api/accounts`, `PATCH /api/accounts/:id`, valuations); categories and rules; `POST /api/imports/preview`, `POST /api/imports`, `GET /api/imports`, `DELETE /api/imports/:id`; `GET /api/transactions`, `PATCH /api/transactions/:id`; `GET /api/reports/spending`, `/api/reports/networth`, `/api/overview`; `GET /api/export.json`, `/api/export/transactions.csv` (step-up); `GET /api/audit`.
 
 ## Operations
 

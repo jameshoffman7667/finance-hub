@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { startApp, client, signUp, totpAt } from './helpers.js';
 
 const csv = 'Date,Description,Amount\n2026-10-01,LOBLAWS #123,-85.20\n2026-10-02,SHELL GAS,-40.00\n2026-10-03,PAYROLL ACME,2500.00\n2026-10-03,MYSTERY SHOP,-12.00\n';
@@ -10,6 +11,18 @@ test('health endpoint reports version without auth', async () => {
   assert.equal(r.status, 200);
   assert.equal(r.json.status, 'ok');
   assert.match(r.json.version, /^\d+\.\d+\.\d+$/);
+  await a.close();
+});
+
+test('healthz is exactly {status, version}, equals the image tag, needs no login and leaks nothing', async () => {
+  const a = await startApp();
+  const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+  const res = await fetch(a.base + '/healthz');
+  const body = await res.text();
+  assert.equal(res.status, 200);
+  assert.equal(body, JSON.stringify({ status: 'ok', version: pkg.version }));
+  assert.equal(res.headers.get('set-cookie'), null);
+  assert.match(res.headers.get('content-type'), /application\/json/);
   await a.close();
 });
 

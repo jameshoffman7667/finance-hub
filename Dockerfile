@@ -18,7 +18,7 @@ COPY public ./public
 RUN mkdir -p /data /files && chown 1000:100 /data /files
 USER 1000:100
 EXPOSE 8070
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-  CMD wget -qO- http://127.0.0.1:${PORT}/healthz >/dev/null || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+  CMD wget -qO- http://127.0.0.1:${PORT}/healthz | grep -q '"status":"ok"' || exit 1
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "src/server.js"]
