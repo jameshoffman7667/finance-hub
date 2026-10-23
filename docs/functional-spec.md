@@ -1,4 +1,4 @@
-# Finance Hub: functional specification (current state, v0.1.2)
+# Finance Hub: functional specification (current state, v0.1.3)
 
 Personal finance manager for one household on James's home server. This file describes what the app does now; later features (bonuses, investments, forecast, tax) are listed under Not yet built. The full product plan lives in the Project "Financial Management".
 
@@ -106,3 +106,6 @@ Logs go to stdout, one line per event. SIGTERM stops accepting requests, closes 
 ## Not yet built (planned)
 
 Bonus tracker and reminders with Google Calendar, AI plan builder, Questrade import and ACB tracking, further institutions, forecast and wealth projection, tax tools, weekly offer research, live data connections.
+
+## Releases
+A release is a push to `main` that changes the version in `package.json` (CHANGELOG entry required: Short up to 50 characters, Long up to 250). The `release` GitHub Actions workflow reads the version X.Y.Z, stops if the tag vX.Y.Z or a GitHub release for it already exists or the CHANGELOG entry is missing or invalid, builds and pushes the image tags X.Y.Z, X.Y and latest, then runs `gh release create vX.Y.Z --target $GITHUB_SHA`, which also creates the tag. A push to `main` that does not change the version does nothing. A manually pushed `vX.Y.Z` tag runs the same workflow as a fallback; both triggers share a concurrency group per version, so only one of them can release a version.

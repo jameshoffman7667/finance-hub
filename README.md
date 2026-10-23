@@ -20,6 +20,6 @@ npm test
 
 ## Docker
 
-Release images are built by the `release` workflow when a `vX.Y.Z` tag is pushed and published as `mybadreligon/finance-hub`. Server deployment files are in `deploy/` (`compose.yaml`, `.env.example`, `RELEASE.md`).
+A release is a commit pushed to `main` that changes `version` in `package.json` (with a matching `CHANGELOG.md` entry). The `release` workflow then builds and pushes `mybadreligon/finance-hub:X.Y.Z`, `:X.Y` and `:latest`, and creates the GitHub release and the `vX.Y.Z` tag itself, so nobody pushes a tag. Pushing a `vX.Y.Z` tag by hand still works as a manual fallback; the workflow refuses to release a version twice. Server deployment files are in `deploy/` (`compose.yaml`, `.env.example`, `RELEASE.md`).
 
 Data lives under `/data` (SQLite and backups) and `/files` (statements). The container runs as uid 1000, gid 100.

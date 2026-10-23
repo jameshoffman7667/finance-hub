@@ -1,6 +1,6 @@
 services:
   finance-hub:
-    image: mybadreligon/finance-hub:0.1.2
+    image: mybadreligon/finance-hub:0.1.3
     container_name: finance-hub
     restart: unless-stopped
     user: "1000:100"

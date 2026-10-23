@@ -24,3 +24,17 @@ test('image and compose health checks follow PORT', () => {
   assert.match(c, /status.*ok/);
   assert.doesNotMatch(c, /8080/);
 });
+
+test('release workflow releases from a push to main that changes the version, tag trigger is only a fallback', () => {
+  const w = read('.github/workflows/release.yml');
+  assert.match(w, /branches: \[main\]/);
+  assert.match(w, /paths: \[package\.json, VERSION\]/);
+  assert.match(w, /tags: \["v\*\.\*\.\*"\]/);
+  assert.match(w, /permissions:\s+contents: write/);
+  assert.match(w, /gh release create "v\$VERSION" --target "\$GITHUB_SHA"/);
+  assert.match(w, /concurrency:\s+group: release-\$\{\{ needs\.prepare\.outputs\.version \}\}/);
+  assert.match(w, /already exists: bump the version/);
+  assert.match(w, /CHANGELOG\.md has no entry/);
+  assert.match(w, /type=raw,value=latest/);
+  assert.match(w, /value=v\$\{\{ env\.VERSION \}\}/);
+});
