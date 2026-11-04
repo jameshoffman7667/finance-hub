@@ -66,5 +66,33 @@ Type: minor (new feature, outside data)        Status: Pending
 Plan: a watchlist of cards you hold or want, with offer value, rebate, expiry, source link and date seen. Pages are fetched only on request or on a slow schedule, cached, and only facts are stored with a link back. Compare against the issuer's own terms and your eligibility from P-3. RedFlagDeals: use whatever feed or email alert the forum offers and filter by card names.
 Notes / questions: the pages read so far have no structured data or API (offer text is prose), so extraction needs review before saving. Terms of use of each site and robots rules must be checked before any scheduled fetch. Rebate-site cashback is separate from the issuer bonus and usually has its own conditions (new cardholder, income, credit score).
 
+### P-10 - Offer planner: link offer terms, evaluate the best strategy, build a plan with reminders
+Requested: 2026-11-04 (James: "link current and potential offer terms, evaluate the optimal strategy and make a plan and associated calendar reminders", after a worked comparison of the Scotia iTRADE WIN27 transfer offer against the TD Spring 2026 and Questrade 2%/4% offers)
+Type: minor (new feature, new data model)        Status: Pending
+Plan (first version):
+- Offer record, for offers you hold and ones you are considering: issuer, product, offer window, source link, saved terms text and date seen, plus structured terms: what qualifies (transfer-in, deposit, spend), rate by account type (registered / non-registered), cap, minimum, enrol-by and fund-by dates, hold-from and hold-until dates, measuring dates, payout schedule (lump sum or installments), and what a withdrawal or transfer-out does (reduces the qualifying amount, forfeits everything remaining, or is allowed up to a percentage), whether the effect is pooled across accounts or per account, offers that cannot be combined, fee reimbursements, tax note. Status: Potential / Enrolled / Earning / Paid / Forfeited. Reapplication limits come from P-3 and P-4.
+- Holdings: accounts with institution, type, current value and the offer each one is earning under, so in-flight bonuses at risk are known.
+- Evaluator (fixed rules in code, not AI): for each option on a set of holdings it reports total cash, when the cash arrives, how long the capital is locked, the equivalent annual return (bonus divided by years locked, and an IRR using the payout dates), bonuses forfeited by leaving, and the net of moving versus staying. It also reports the break-even: the annual return the freed capital would have to earn elsewhere for staying to win. Results are ranked by annual return, with total cash shown but not used to rank.
+- Terms that are unclear (pooled versus per account, whether a transfer-out counts as a withdrawal) are shown as assumptions to confirm, never silently chosen.
+- Plan: the chosen strategy saved as ordered dated steps (enrol, open account, start transfer, fund-by, do-not-withdraw-before, payout dates), each step creating reminders through P-7 and showing on the P-8 calendar. Until those exist, steps are listed with dates only.
+- Terms entry: paste text or a URL, the app proposes the structured fields, and you review before saving. Pages are fetched only on request and facts are stored with a link back (same rules as P-9).
+Notes / questions:
+- First test case to build against: Scotia iTRADE WIN27 (3% registered / 1% non-registered, hold Nov 3 2026 to Feb 28 2029, enrol by Apr 1 2027, fund by May 31 2027) versus TD Spring 2026 (hold to Jul 31 2027) and Questrade 2%/4% (24 payments, 5% withdrawal limit).
+- Rate for freed capital: a default benchmark in settings (editable), or a per-plan value?
+- Should the evaluator also cover credit-card and bank-account offers (minimum spend, fee, clawback period), or investment offers only at first?
+
+### P-11 - Bonus earnings ledger and effort / return report
+Requested: 2026-11-04 (James: "track the bonuses earned from this and other offers (credit cards and bank accounts) to understand total gains and if the effort is worthwhile")
+Type: minor (new feature)        Status: Pending
+Plan (first version):
+- Every bonus gets expected and received amounts with dates and a status (Pending / Partly paid / Paid / Clawed back / Forfeited). Installment offers record each payment as it arrives. Fed automatically from P-2, P-4 and P-6 where an award is detected, manual otherwise. Card points are valued at a cents-per-point setting.
+- Costs against each bonus: annual fees, interest paid, transfer fees net of reimbursement, foreign exchange, and the return given up on locked capital (a benchmark rate setting, applied to the capital and the days it was locked).
+- Effort: optional hours per offer, with a default estimate per offer type, so a dollars-per-hour figure can be shown.
+- Reports: gross and net gains by year, by type (card, bank, investment transfer) and by issuer; annualized return on locked capital for investment offers; dollars per hour; a "worth it" flag against a minimum dollars-per-hour you set; a tile on the dashboard. Totals are labelled as estimates when any part is estimated.
+- Taxes are a flag only (a reminder that cash bonuses may be taxable and some issuers send no slip), not a calculation.
+Notes / questions:
+- What minimum dollars per hour counts as worth it, what cents per point should be used, and what benchmark rate (for example a high-interest savings rate) for the cost of locked capital?
+- Import the history already in the workbook (P-2) as past bonuses, including ones now closed or clawed back?
+
 ## Done
 (none yet)
