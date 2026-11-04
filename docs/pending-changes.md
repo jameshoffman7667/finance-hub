@@ -102,30 +102,30 @@ Notes / questions:
 - Best-use or conservative cash-out point values as the default?
 - Import the history already in the workbook (P-2) as past bonuses, including ones now closed or clawed back?
 
-### P-10 - Smith Manoeuvre tracker
+### P-12 - Smith Manoeuvre tracker
 Requested: 2026-11-04 (James: "track my smith maneuver progress - the outstanding debt, the investment value, total interest for tax purposes, etc. I can mark the loan and investment accounts associated with the smith maneuver manually")
 Type: minor (new feature, new account tags)        Status: Pending
 Plan: tag loan accounts (mortgage and HELOC segments) and non-registered investment accounts as "Smith Manoeuvre" by hand. Track: mortgage balance and principal repaid, HELOC balance split into investment-loan, capitalized interest and anything else, borrowing room, investment value and ACB, income received (dividends, interest, return of capital), interest paid per year (deductible carrying charge, claimed on line 22100), cumulative interest, estimated tax refund at a marginal rate you enter, and net position (investments minus debt). Warnings: HELOC withdrawals that do not match an investment purchase (tracing gap, personal use of the investment loan), registered accounts tagged by mistake (RRSP, TFSA, FHSA, RESP interest is not deductible), return of capital kept instead of reinvested, rate-rise stress test. Yearly export: interest by loan with borrowed amounts and dates, for your tax software and accountant.
 Notes / questions: lender and product? Is interest paid from cash or capitalized? Do you re-advance monthly? Are the loan accounts on a statement the app can read?
 
-### P-11 - Tax support center (information only)
+### P-13 - Tax support center (information only)
 Requested: 2026-11-04 (James: "Add a tax support center if not already included ... investment carrying costs, medical costs, capital gains and losses with ACB, tracking, expected T5 values for interest and dividends, etc. Benchmark other tax software for suggestions")
 Type: minor (new feature area; the ACB part was already on the roadmap)        Status: Pending
 Plan: one place per tax year, clearly labelled information only (you still calculate and file in accredited software). Sections:
-- Investment carrying charges: interest on investment loans (from P-10), investment counsel / safekeeping fees on non-registered accounts, with receipts linked from paperless-ngx (P-1).
+- Investment carrying charges: interest on investment loans (from P-12), investment counsel / safekeeping fees on non-registered accounts, with receipts linked from paperless-ngx (P-1).
 - Medical expenses: receipts by person, any 12-month period ending in the tax year (finds the best window), family pooling, insurance reimbursements subtracted, running total against the claim threshold.
 - Capital gains and losses with ACB: pooled across brokers per taxpayer, reinvested distributions, return of capital, foreign currency at Bank of Canada rates, stock splits, superficial-loss warnings (30 days either side, including purchases in spouse or registered accounts), transfers between institutions keeping the ACB, net capital loss carry-forwards, a Schedule 3 style summary.
 - Expected slips: expected T5 (interest, dividends), T3, T5008 and T4 amounts per institution from statements; upload the real slips when they arrive and the app shows the differences.
 - Bonus register: bank, brokerage, referral and credit card bonuses with a taxable / not taxable / unsure flag and the amount, so nothing is forgotten.
 - Registered accounts: RRSP, TFSA, FHSA and RESP (CESG) contributions and room, entered from your CRA My Account figures.
 - Document checklist, carry-forwards (losses, donations, unused credits), and CSV / PDF export for tax software.
-Notes / questions: single taxpayer or James and Vanessa separately? Do you want the tax year to follow the calendar year only? Which accredited software do you use?
+Notes / questions: overlaps P-11 only on bonus income (P-11 flags tax, P-13 keeps the register of amounts and taxable status); keep one source of bonus amounts. Single taxpayer or James and Vanessa separately? Do you want the tax year to follow the calendar year only? Which accredited software do you use?
 
-### P-12 - Tax opportunity review
+### P-14 - Tax opportunity review
 Requested: 2026-11-04 (James: "Evaluate my total financial picture for tax opportunities")
-Type: minor (new feature, depends on P-2, P-10, P-11)        Status: Pending
+Type: minor (new feature, depends on P-2, P-12, P-13)        Status: Pending
 Plan: a list of informational checks run over your data, each with the numbers behind it and a "talk to your accountant" note: unused registered room, RESP grant room, loss harvesting candidates in non-registered accounts (and superficial-loss traps), investment interest not yet claimed, unclaimed medical or fee receipts, bonus income not yet recorded, foreign property reporting thresholds, income splitting opportunities. No advice to buy or sell; findings only.
-Notes / questions: needs enough data first (P-2 import, P-10, P-11). Until then the review is limited to what you tell me.
+Notes / questions: needs enough data first (P-2 import, P-12, P-13). Until then the review is limited to what you tell me.
 
 ## Done
 (none yet)
