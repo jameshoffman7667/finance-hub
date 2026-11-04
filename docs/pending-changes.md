@@ -83,6 +83,11 @@ Decisions (James, 2026-11-04):
 Notes / questions:
 - First test case to build against: Scotia iTRADE WIN27 (3% registered / 1% non-registered, hold Nov 3 2026 to Feb 28 2029, enrol by Apr 1 2027, fund by May 31 2027) versus TD Spring 2026 (hold to Jul 31 2027) and Questrade 2%/4% (24 payments from Sept 2026, 5% withdrawal limit). Full detail and expected figures are in the handoff document for P-10 / P-11.
 - Should invested capital also be checked against debt rates, or only cash-like capital?
+Decisions (James, 2026-11-04, second round):
+- Points valuation default is cash value, with the best-use value shown beside it (seed best-use values in the handoff). The workbook now has a best-use column.
+- Debt check: skip holdings tagged Smith Manoeuvre (P-12), because investing borrowed money is the strategy. Debts and loans share one table with P-12 so the HELOC rate feeds both.
+- If an option needs a sale in a non-registered account, warn about the taxable gain and the superficial-loss rule (P-13); for a Smith Manoeuvre account also warn that moving the money could break the interest tracing.
+- Total return rule (James, 2026-11-04): wherever a total or annual return is shown (P-10 evaluator, P-11 report, P-12 net position, P-15 projection) it includes the estimated tax value of deductible carrying costs. The estimate uses interest paid from the statements and your income (P-13) at the marginal rate for the tax year, labelled as an estimate and informational only.
 
 ### P-11 - Bonus earnings ledger and effort / return report
 Requested: 2026-11-04 (James: "track the bonuses earned from this and other offers (credit cards and bank accounts) to understand total gains and if the effort is worthwhile")
@@ -101,12 +106,19 @@ Notes / questions:
 - Default effort hours per offer type, or start blank?
 - Best-use or conservative cash-out point values as the default?
 - Import the history already in the workbook (P-2) as past bonuses, including ones now closed or clawed back?
+Decisions (James, 2026-11-04, second round):
+- P-11 is the single source of bonus amounts; P-13's bonus register reads from it and adds the taxable / not taxable / unsure flag.
+- Total return rule (James, 2026-11-04): wherever a total or annual return is shown (P-10 evaluator, P-11 report, P-12 net position, P-15 projection) it includes the estimated tax value of deductible carrying costs. The estimate uses interest paid from the statements and your income (P-13) at the marginal rate for the tax year, labelled as an estimate and informational only.
 
 ### P-12 - Smith Manoeuvre tracker
 Requested: 2026-11-04 (James: "track my smith maneuver progress - the outstanding debt, the investment value, total interest for tax purposes, etc. I can mark the loan and investment accounts associated with the smith maneuver manually")
 Type: minor (new feature, new account tags)        Status: Pending
 Plan: tag loan accounts (mortgage and HELOC segments) and non-registered investment accounts as "Smith Manoeuvre" by hand. Track: mortgage balance and principal repaid, HELOC balance split into investment-loan, capitalized interest and anything else, borrowing room, investment value and ACB, income received (dividends, interest, return of capital), interest paid per year (deductible carrying charge, claimed on line 22100), cumulative interest, estimated tax refund at a marginal rate you enter, and net position (investments minus debt). Warnings: HELOC withdrawals that do not match an investment purchase (tracing gap, personal use of the investment loan), registered accounts tagged by mistake (RRSP, TFSA, FHSA, RESP interest is not deductible), return of capital kept instead of reinvested, rate-rise stress test. Yearly export: interest by loan with borrowed amounts and dates, for your tax software and accountant.
 Notes / questions: lender and product? Is interest paid from cash or capitalized? Do you re-advance monthly? Are the loan accounts on a statement the app can read?
+Decisions (James, 2026-11-04, second round):
+- Interest is capitalized by hand each month. The app creates a monthly reminder per Smith Manoeuvre loan (through P-7, shown on the P-8 calendar). A reminder is not cleared until the statement shows the interest-capitalizing advance, or you confirm with the amount; until then it stays open and overdue, and overdue ones show at login.
+- Estimated tax value of the carrying costs = interest paid (from loan statements) at the marginal rate from your income (P-13), per tax year, labelled as an estimate. wherever a total or annual return is shown (P-10 evaluator, P-11 report, P-12 net position, P-15 projection) it includes the estimated tax value of deductible carrying costs. The estimate uses interest paid from the statements and your income (P-13) at the marginal rate for the tax year, labelled as an estimate and informational only.
+- Loans share one debt table with P-10. Moving or selling in a Smith Manoeuvre account triggers the tracing and capital gain warnings in P-10.
 
 ### P-13 - Tax support center (information only)
 Requested: 2026-11-04 (James: "Add a tax support center if not already included ... investment carrying costs, medical costs, capital gains and losses with ACB, tracking, expected T5 values for interest and dividends, etc. Benchmark other tax software for suggestions")
@@ -120,12 +132,31 @@ Plan: one place per tax year, clearly labelled information only (you still calcu
 - Registered accounts: RRSP, TFSA, FHSA and RESP (CESG) contributions and room, entered from your CRA My Account figures.
 - Document checklist, carry-forwards (losses, donations, unused credits), and CSV / PDF export for tax software.
 Notes / questions: overlaps P-11 only on bonus income (P-11 flags tax, P-13 keeps the register of amounts and taxable status); keep one source of bonus amounts. Single taxpayer or James and Vanessa separately? Do you want the tax year to follow the calendar year only? Which accredited software do you use?
+Decisions (James, 2026-11-04, second round):
+- Bonus amounts come from P-11; this register only adds the tax flag and the record for the return.
+- Holds the income figures and the tax-year rate tables used by the carrying-cost tax value estimate (P-12, P-10, P-11, P-15). Rate tables are updated each year and shown with their date.
 
 ### P-14 - Tax opportunity review
 Requested: 2026-11-04 (James: "Evaluate my total financial picture for tax opportunities")
 Type: minor (new feature, depends on P-2, P-12, P-13)        Status: Pending
 Plan: a list of informational checks run over your data, each with the numbers behind it and a "talk to your accountant" note: unused registered room, RESP grant room, loss harvesting candidates in non-registered accounts (and superficial-loss traps), investment interest not yet claimed, unclaimed medical or fee receipts, bonus income not yet recorded, foreign property reporting thresholds, income splitting opportunities. No advice to buy or sell; findings only.
 Notes / questions: needs enough data first (P-2 import, P-12, P-13). Until then the review is limited to what you tell me.
+
+### P-15 - Wealth overview: balance sheet, cash flow and projection
+Requested: 2026-11-04 (James: "an overall wealth view with two components, balance sheet and cash flow ... feed a projection view")
+Type: minor (builds on the existing net worth and budget pages; the forecast tab is a placeholder today)        Status: Pending
+Plan (first version):
+- Balance sheet: a snapshot as of a chosen date of what you own against what you owe. Assets: cash, chequing and savings, registered accounts (RRSP, TFSA, FHSA, RESP), non-registered investments, home value (entered by hand), other. Debts: mortgage, HELOC (split into Smith Manoeuvre and other), credit cards, loans. Net worth, Smith Manoeuvre subtotals (P-12) and money tied up in offers (P-10) shown separately.
+- Cash flow: the regular ins and outs that change the account values, for a month, a year or a custom range. Categories expand into subcategories, and the tree is editable.
+  - Income: Employment (paycheque, bonuses), Investment (capital gains, dividends, interest), Strategic (credit card, bank and investment offers, Smith Manoeuvre tax value, others).
+  - Expenditures: Spending (Run rate: bills, subscriptions, groceries, entertainment, home maintenance, others; Annual special: insurance, heating oil, trade show costs; Extraordinary: vacations and other large purchases) and Debt service (interest, penalties).
+  - Fed by statement categories (P-6), recurring payments (P-5), bonus earnings (P-11) and Smith Manoeuvre interest (P-12). Transfers between your own accounts are neutral. Mortgage and loan principal repayments are shown as a separate line, not as spending, so net worth stays consistent (assumption to confirm). Unrealized market change appears on the balance sheet, not in cash flow.
+- Projection: averages the cash flow values (run rate from a look-back window you choose, annual special items placed in their usual months, extraordinary items only when planned, offer payouts on their scheduled dates from P-10 plans) and projects the change in total wealth forward month by month. Optional investment growth assumption (setting; default the 7% benchmark, can be set to 0) and a HELOC rate-rise test.
+- Phone and desktop layouts are separate designs; information only.
+Notes / questions:
+- Should the projection include investment growth (7% benchmark) or show cash-flow-driven change only? Both could be shown as two lines.
+- Default look-back window for the run rate (for example 12 months) and default projection horizon (for example 10 years)?
+- Seed the annual special and extraordinary items you already told me about (December car insurance, March house insurance, heating oil, April/May trade show costs, the November 2026 Mexico trip)?
 
 ## Done
 (none yet)
