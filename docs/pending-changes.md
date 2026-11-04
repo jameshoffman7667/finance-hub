@@ -76,10 +76,13 @@ Plan (first version):
 - Terms that are unclear (pooled versus per account, whether a transfer-out counts as a withdrawal) are shown as assumptions to confirm, never silently chosen.
 - Plan: the chosen strategy saved as ordered dated steps (enrol, open account, start transfer, fund-by, do-not-withdraw-before, payout dates), each step creating reminders through P-7 and showing on the P-8 calendar. Until those exist, steps are listed with dates only.
 - Terms entry: paste text or a URL, the app proposes the structured fields, and you review before saving. Pages are fetched only on request and facts are stored with a link back (same rules as P-9).
+Decisions (James, 2026-11-04):
+- Benchmark return 7% (setting), also the expected return of any market-invested account. Opportunity cost applies only when capital is not still earning: invested capital that stays invested costs nothing; chequing / savings money is compared at its interest rate against the 7%.
+- Scope covers investment, bank account and credit card offers. Cards have almost no opportunity cost beyond the credit score effect; bank accounts are evaluated like investments, including whether leaving early makes sense.
+- Evaluate against the cost of any debt held; an offer may not make sense while holding debt.
 Notes / questions:
-- First test case to build against: Scotia iTRADE WIN27 (3% registered / 1% non-registered, hold Nov 3 2026 to Feb 28 2029, enrol by Apr 1 2027, fund by May 31 2027) versus TD Spring 2026 (hold to Jul 31 2027) and Questrade 2%/4% (24 payments, 5% withdrawal limit).
-- Rate for freed capital: a default benchmark in settings (editable), or a per-plan value?
-- Should the evaluator also cover credit-card and bank-account offers (minimum spend, fee, clawback period), or investment offers only at first?
+- First test case to build against: Scotia iTRADE WIN27 (3% registered / 1% non-registered, hold Nov 3 2026 to Feb 28 2029, enrol by Apr 1 2027, fund by May 31 2027) versus TD Spring 2026 (hold to Jul 31 2027) and Questrade 2%/4% (24 payments from Sept 2026, 5% withdrawal limit). Full detail and expected figures are in the handoff document for P-10 / P-11.
+- Should invested capital also be checked against debt rates, or only cash-like capital?
 
 ### P-11 - Bonus earnings ledger and effort / return report
 Requested: 2026-11-04 (James: "track the bonuses earned from this and other offers (credit cards and bank accounts) to understand total gains and if the effort is worthwhile")
@@ -90,8 +93,13 @@ Plan (first version):
 - Effort: optional hours per offer, with a default estimate per offer type, so a dollars-per-hour figure can be shown.
 - Reports: gross and net gains by year, by type (card, bank, investment transfer) and by issuer; annualized return on locked capital for investment offers; dollars per hour; a "worth it" flag against a minimum dollars-per-hour you set; a tile on the dashboard. Totals are labelled as estimates when any part is estimated.
 - Taxes are a flag only (a reminder that cash bonuses may be taxable and some issuers send no slip), not a calculation.
+Decisions (James, 2026-11-04):
+- Worth-it threshold $50 per hour (setting).
+- Points valuations come from an online source (Credit Card Genius, cross-checked with Prince of Travel), stored with source and date, refreshed quarterly and confirmed before saving.
+- Cost of locked capital follows the P-10 rule: 7% benchmark, applied only when the capital is not still earning.
 Notes / questions:
-- What minimum dollars per hour counts as worth it, what cents per point should be used, and what benchmark rate (for example a high-interest savings rate) for the cost of locked capital?
+- Default effort hours per offer type, or start blank?
+- Best-use or conservative cash-out point values as the default?
 - Import the history already in the workbook (P-2) as past bonuses, including ones now closed or clawed back?
 
 ## Done
