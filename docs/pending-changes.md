@@ -81,7 +81,7 @@ Decisions (James, 2026-11-04):
 - Scope covers investment, bank account and credit card offers. Cards have almost no opportunity cost beyond the credit score effect; bank accounts are evaluated like investments, including whether leaving early makes sense.
 - Evaluate against the cost of any debt held; an offer may not make sense while holding debt.
 Notes / questions:
-- First test case to build against: Scotia iTRADE WIN27 (3% registered / 1% non-registered, hold Nov 3 2026 to Feb 28 2029, enrol by Apr 1 2027, fund by May 31 2027) versus TD Spring 2026 (hold to Jul 31 2027) and Questrade 2%/4% (24 payments from Sept 2026, 5% withdrawal limit). Full detail and expected figures are in the handoff document for P-10 / P-11.
+- First test case to build against: Scotia iTRADE WIN27 (3% registered / 1% non-registered, hold Nov 3 2026 to Feb 28 2029, enrol by Apr 1 2027, fund by May 31 2027) versus TD Spring 2026 (hold to Jul 31 2027) and Questrade 2%/4% (24 payments from Sept 2026, 5% withdrawal limit). Full detail and expected figures (hypothetical fixture amounts) are in docs/handoff-P10-P11.md.
 - Should invested capital also be checked against debt rates, or only cash-like capital?
 Decisions (James, 2026-11-04, second round):
 - Points valuation default is cash value, with the best-use value shown beside it (seed best-use values in the handoff). The workbook now has a best-use column.
@@ -95,7 +95,7 @@ Type: minor (new feature)        Status: Pending
 Plan (first version):
 - Every bonus gets expected and received amounts with dates and a status (Pending / Partly paid / Paid / Clawed back / Forfeited). Installment offers record each payment as it arrives. Fed automatically from P-2, P-4 and P-6 where an award is detected, manual otherwise. Card points are valued at a cents-per-point setting.
 - Costs against each bonus: annual fees, interest paid, transfer fees net of reimbursement, foreign exchange, and the return given up on locked capital (a benchmark rate setting, applied to the capital and the days it was locked).
-- Effort: optional hours per offer, with a default estimate per offer type, so a dollars-per-hour figure can be shown.
+- Effort: actual time is tracked per offer (enter hours or use a start / stop timer). Expected time per offer type starts at 2 hours per credit card, 4 hours per bank account and 4 hours per investment account; once a few offers of a type are finished the app proposes the average actual time as the new expectation and you confirm. Dollars per hour uses actual time, or the expectation when no time is logged yet.
 - Reports: gross and net gains by year, by type (card, bank, investment transfer) and by issuer; annualized return on locked capital for investment offers; dollars per hour; a "worth it" flag against a minimum dollars-per-hour you set; a tile on the dashboard. Totals are labelled as estimates when any part is estimated.
 - Taxes are a flag only (a reminder that cash bonuses may be taxable and some issuers send no slip), not a calculation.
 Decisions (James, 2026-11-04):
@@ -103,8 +103,6 @@ Decisions (James, 2026-11-04):
 - Points valuations come from an online source (Credit Card Genius, cross-checked with Prince of Travel), stored with source and date, refreshed quarterly and confirmed before saving.
 - Cost of locked capital follows the P-10 rule: 7% benchmark, applied only when the capital is not still earning.
 Notes / questions:
-- Default effort hours per offer type, or start blank?
-- Best-use or conservative cash-out point values as the default?
 - Import the history already in the workbook (P-2) as past bonuses, including ones now closed or clawed back?
 Decisions (James, 2026-11-04, second round):
 - P-11 is the single source of bonus amounts; P-13's bonus register reads from it and adds the taxable / not taxable / unsure flag.
@@ -149,14 +147,14 @@ Plan (first version):
 - Balance sheet: a snapshot as of a chosen date of what you own against what you owe. Assets: cash, chequing and savings, registered accounts (RRSP, TFSA, FHSA, RESP), non-registered investments, home value (entered by hand), other. Debts: mortgage, HELOC (split into Smith Manoeuvre and other), credit cards, loans. Net worth, Smith Manoeuvre subtotals (P-12) and money tied up in offers (P-10) shown separately.
 - Cash flow: the regular ins and outs that change the account values, for a month, a year or a custom range. Categories expand into subcategories, and the tree is editable.
   - Income: Employment (paycheque, bonuses), Investment (capital gains, dividends, interest), Strategic (credit card, bank and investment offers, Smith Manoeuvre tax value, others).
-  - Expenditures: Spending (Run rate: bills, subscriptions, groceries, entertainment, home maintenance, others; Annual special: insurance, heating oil, trade show costs; Extraordinary: vacations and other large purchases) and Debt service (interest, penalties).
-  - Fed by statement categories (P-6), recurring payments (P-5), bonus earnings (P-11) and Smith Manoeuvre interest (P-12). Transfers between your own accounts are neutral. Mortgage and loan principal repayments are shown as a separate line, not as spending, so net worth stays consistent (assumption to confirm). Unrealized market change appears on the balance sheet, not in cash flow.
-- Projection: averages the cash flow values (run rate from a look-back window you choose, annual special items placed in their usual months, extraordinary items only when planned, offer payouts on their scheduled dates from P-10 plans) and projects the change in total wealth forward month by month. Optional investment growth assumption (setting; default the 7% benchmark, can be set to 0) and a HELOC rate-rise test.
+  - Expenditures: Spending (Run rate: bills, subscriptions, groceries, entertainment, home maintenance, others; Annual special: insurance, fuel, business costs; Extraordinary: vacations and other large purchases) and Debt service (interest, penalties).
+  - Fed by statement categories (P-6), recurring payments (P-5), bonus earnings (P-11) and Smith Manoeuvre interest (P-12). Transfers between your own accounts are neutral. Mortgage and loan principal repayments are shown as a separate line, not as spending, so net worth stays consistent (assumption to confirm). Investment growth is a line under Income > Investment based on actuals: the change in account value from statements, net of deposits, withdrawals and income already counted. It is shown separately from realized gains and flagged as unrealized (non-cash), and totals can be shown with or without it.
+- Projection: averages the cash flow values (run rate from a look-back window you choose, annual special items placed in their usual months, extraordinary items only when planned, offer payouts on their scheduled dates from P-10 plans) and projects the change in total wealth forward month by month. Everything is projected from averaged actuals except investment growth, which is projected at an assumed return (setting, default the 7% benchmark, can be set to 0) because averaged actual growth is too volatile. Includes a HELOC rate-rise test. Defaults: 12-month look-back for the run rate and a 10-year horizon, both editable.
+- Potential spends: enter spends you are considering (amount, month or date, one-time or recurring, category, optional card) and see how they fit into the projected monthly spending: a month-by-month view with and without them, months where cash flow turns negative, and the effect on the wealth projection. Each can be marked considering, approved or dropped; approved ones become planned items in the projection. A potential spend can also be matched against a card's remaining minimum spend (P-3, P-6).
+- Planned annual special and extraordinary items are seeded from the owner's notes and stored in the app's database, not in this repository.
 - Phone and desktop layouts are separate designs; information only.
-Notes / questions:
-- Should the projection include investment growth (7% benchmark) or show cash-flow-driven change only? Both could be shown as two lines.
-- Default look-back window for the run rate (for example 12 months) and default projection horizon (for example 10 years)?
-- Seed the annual special and extraordinary items you already told me about (December car insurance, March house insurance, heating oil, April/May trade show costs, the November 2026 Mexico trip)?
+Decisions (James, 2026-11-05): investment growth is a cash-flow line from actuals and the 7% assumption is only for projecting forward; defaults 12 months and 10 years; seed the planned items; add potential spends; track time per offer (see P-11).
+Notes / questions: none open.
 
 ## Done
 (none yet)
