@@ -150,3 +150,18 @@ dialog h2 { margin-bottom: .8rem; }
 .bar-row > span:last-child { text-align: right; }
 .card > a { display: inline-block; margin-top: .8rem; }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
+
+/* ---------- cards, bonuses, recurring (v0.2.0) ---------- */
+dialog.wide { width: min(860px, calc(100vw - 2rem)); }
+.formgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0 .9rem; }
+.formgrid .field { margin-bottom: .7rem; }
+.unconf label, .unconf .title, .unconf .muted { color: #c62828; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .unconf label, :root:not([data-theme="light"]) .unconf .title, :root:not([data-theme="light"]) .unconf .muted { color: #ff8a80; } }
+:root[data-theme="dark"] .unconf label, :root[data-theme="dark"] .unconf .title, :root[data-theme="dark"] .unconf .muted { color: #ff8a80; }
+.pill.ok { background: color-mix(in srgb, var(--ok) 20%, var(--surface)); color: var(--ok); }
+fieldset.bonus { border: 1px solid var(--line); border-radius: 10px; margin: 0 0 .8rem; padding: .6rem .8rem .8rem; }
+fieldset.bonus legend { font-weight: 600; padding: 0 .4rem; }
+.btn.small { min-height: 36px; padding: 0 .75rem; font-size: .875rem; }
+.pill.red { background: color-mix(in srgb, #c62828 16%, var(--surface)); color: #c62828; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .pill.red { color: #ff8a80; } }
+:root[data-theme="dark"] .pill.red { color: #ff8a80; }

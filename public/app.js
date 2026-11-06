@@ -1,4 +1,5 @@
 // Finance Hub front end. No framework, no inline HTML: every node is built with h() so text is never parsed as markup.
+import { viewOffers } from './offers.js';
 const state = { info: null, route: '/', cache: {}, installEvent: null, swWaiting: null };
 const root = document.getElementById('app');
 
@@ -514,7 +515,7 @@ async function viewSettings() {
 // ---------- router ----------
 const VIEWS = {
   '/': viewOverview, '/budget': viewBudget, '/accounts': viewAccounts, '/settings': viewSettings, '/more': viewMore,
-  '/cards': async () => viewPlaceholder('Cards and bonuses', 'Track sign-up bonuses, card applications, cancellation dates and reminders in one place.', ['Bonus plans with AI help and reminder schedules', 'Google Calendar reminders you approve first', 'Credit card tracker: applied, active, cancelled', 'Planned versus achieved return']),
+  '/cards': viewOffers,
   '/invest': async () => viewPlaceholder('Investments', 'Holdings, adjusted cost base and transfers between institutions.', ['Questrade statement import', 'Canadian average-cost (ACB) tracking, including in-kind transfers', 'Holdings and performance']),
   '/tax': async () => viewPlaceholder('Tax', 'Capital gains and tax resources, built from your investment records.', ['Realised gains and losses by year', 'Superficial loss warnings', 'Contribution room tracking']),
 };
@@ -555,3 +556,5 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController && !reloading) { reloading = true; location.reload(); } });
 }
 render();
+
+export { h, get, post, patch, del, money, fmtDate, shell, go, params, dialog, emptyState, today, render };

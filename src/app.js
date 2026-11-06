@@ -8,6 +8,7 @@ import { encrypt, decrypt, sha256, randomToken, newTotpSecret, verifyTotp } from
 import { parseStatement, loadRules, categorize } from './importer.js';
 import { parseCents, parseDate } from './money.js';
 import { toCsv } from './csv.js';
+import { mountOffers } from './offers.js';
 
 const ACCOUNT_TYPES = {
   chequing: 'asset', savings: 'asset', investment: 'asset', registered: 'asset', property: 'asset', other_asset: 'asset',
@@ -106,7 +107,7 @@ export function createApp({ db, config, log }) {
   const api = express.Router();
   api.use(requireAccess);
   const smallJson = express.json({ limit: '1mb' });
-  api.use((req, res, next) => (req.method === 'POST' && req.path.startsWith('/imports') ? next() : smallJson(req, res, next)));
+  api.use((req, res, next) => (req.method === 'POST' && (req.path.startsWith('/imports') || req.path.startsWith('/workbook')) ? next() : smallJson(req, res, next)));
   api.use((req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
   // Mutating requests must come from our own origin.
   api.use((req, res, next) => {
@@ -554,7 +555,7 @@ export function createApp({ db, config, log }) {
   api.get('/export.json', requireAuth, requireStepUp, route((req, res) => {
     audit(req, req.session.user_id, 'export', 'json');
     const dump = {};
-    for (const t of ['accounts', 'valuations', 'categories', 'rules', 'import_batches', 'transactions']) dump[t] = db.prepare(`SELECT * FROM ${t}`).all();
+    for (const t of ['accounts', 'valuations', 'categories', 'rules', 'import_batches', 'transactions', 'cards', 'card_bonuses', 'inst_accounts', 'acct_bonuses', 'recurring', 'issuer_rules']) dump[t] = db.prepare(`SELECT * FROM ${t}`).all();
     res.set('Content-Disposition', 'attachment; filename="finance-hub-export.json"').json({ app: 'finance-hub', version: config.version, exported_at: nowIso(), ...dump });
   }));
   api.get('/export/transactions.csv', requireAuth, requireStepUp, route((req, res) => {
@@ -567,6 +568,8 @@ export function createApp({ db, config, log }) {
   api.get('/audit', requireAuth, route((req, res) => {
     res.json({ entries: db.prepare('SELECT at, action, detail, ip FROM audit_log ORDER BY id DESC LIMIT 200').all() });
   }));
+
+  mountOffers({ api, db, requireAuth, route, bad, HttpError, today: () => todayLocal(config.tz), bigBody, audit, nowIso });
 
   api.use((req, res) => res.status(404).json({ error: 'Not found' }));
   app.use('/api', api);
