@@ -1,0 +1,160 @@
+# Pending changes
+
+Requests are logged here, not built. Nothing is built until James sends a build message. IDs are never reused.
+
+## Pending
+
+### P-1 - Link receipts from paperless-ngx to card transactions
+Requested: 2026-10-31 (James: "is there a way to connect finance hub to paperless-ngx and cross reference credit card statement items with receipts to get a fuller picture of spending?")
+Type: minor (new feature, new settings)        Status: Pending
+Plan (first version):
+- Settings `PAPERLESS_URL` (LAN, http://192.168.4.11:8073) and `PAPERLESS_TOKEN` (read-only API token, never in the repo or the browser). The server calls Paperless; receipt text is never sent to the browser, only matches and a link.
+- Read documents from `/api/documents/`: date, correspondent, title, notes, and the total.
+- Match each card transaction to a receipt by exact amount, date within a few days, and merchant similarity. Confident matches are linked; weaker ones go to a review list to accept or reject. Manual decisions are never overwritten (same rule as categories).
+- Show a receipt link on matched transactions, a "no receipt" filter above an amount, and lists of unmatched receipts and unmatched charges.
+- PayPal receipts are all under one "PayPal" correspondent, so the merchant must be read from the title or notes.
+Later (separate release): split one charge across categories from receipt line items.
+Notes / questions:
+- Where does the receipt total come from? Best: the Outlook import writes it into a Paperless custom field. Otherwise it is read from the OCR text, which is less reliable (about 3,700 emails in "Purchases", some will have no clear total).
+- Finance Hub is reachable through Cloudflare Access but the Paperless API is LAN-only: the container must reach 192.168.4.11:8073 directly (compose network or host route). Needs a check on the server.
+- Currency handling for foreign receipts: match on the card-posted amount, or the receipt currency?
+
+### P-2 - Import card, bank and investment history from the workbook
+Requested: 2026-11-02 (James: "All these items should be trackable in the app", with the filled workbook finance-hub-card-bank-investment-history.xlsx)
+Type: minor (new feature, new data model)        Status: Pending
+Plan: import the workbook sheets (Cards, Bank accounts, Bank account bonuses, Investment accounts, Investment bonuses, Recurring payments, Issuer rules) and keep them editable in the app.
+- Card = one record with up to 4 bonuses on it (no separate bonus table in the UI); fields include status Open / Frozen (zero balance and locked) / Closed (plus Downgraded, Pending, Declined), card locked, final balance settled date, minimum spend progress, sign-up cashback, bonus consumed, bonus clawback months, statement and payment due days, credit balance to spend.
+- Last 4 digits only. Never store full card or account numbers.
+Notes / questions: keep the workbook as a re-importable format? Treat red-text cells as unconfirmed until accepted?
+
+### P-3 - Reapplication rules and dates
+Requested: 2026-11-02 (James: "track reapplication rules and dates ... same card or any card from the same issuer ... read welcome bonus terms")
+Type: minor (new feature)        Status: Pending
+Plan: a rule per issuer / product with scope (same card, same family, any card from the issuer), once per lifetime, wait months, counted from (application, approval, bonus received, closed or downgraded date), blocked while a matching card is still held, and minimum days between applications. Eligible-again date is worked out across all matching cards. Store the offer terms (text, link, offer period) with each bonus, because terms change per offer.
+Notes / questions: official terms read so far for TD First Class Travel, BMO Ascend and RBC Avion; Amex pages are behind a cookie wall; others not found. Rules from forums are labelled unverified.
+
+### P-4 - Bank account bonuses and investment accounts / transfer bonuses
+Requested: 2026-11-02 (James: "add tabs for investment accounts, investment account transfer/deposit bonuses and bank account bonuses")
+Type: minor (new feature)        Status: Pending
+Plan: bank accounts with one row per offer; investment accounts with transfer / deposit / referral bonuses, fee reimbursement and clawback period (keep funds until). Same reapplication logic as P-3.
+
+### P-5 - Recurring payments tracker
+Requested: 2026-11-02 (James: "tab to track recurring payments - names, price, frequency, date and payment method")
+Type: minor (new feature)        Status: Pending
+Plan: name, price, frequency, a known charge date, card or bank account, auto-pay, status; next charge, monthly and yearly cost calculated. Detected recurring charges from statements (P-6) are proposed here, not added silently.
+
+### P-6 - Statement upload: spend progress, bonus awards, recurring charges
+Requested: 2026-11-02 (James: "When I upload statements look for the spend progress, bonus point awards or consumption, recurring spends")
+Type: minor (new feature, per-issuer parsing)        Status: Pending
+Plan: CSV first, then PDF parsers per issuer. Spend progress = eligible purchases since approval (net of refunds; excluding cash advances, fees and interest, as in typical terms), shown as an estimate with manual override. Bonus point lines on a statement mark an award; rewards-program redemptions are usually not on statements, so "consumed" may stay manual.
+Notes / questions: which statement formats do you have (PDF, CSV from online banking)? How should manual edits and automatic values be reconciled?
+
+### P-7 - Notifications
+Requested: 2026-11-02 (James: "provision for notifications of recurring payments, credit card payment dates, bonus award dates, reapplication dates")
+Type: minor (new feature, new settings)        Status: Pending
+Plan: events from P-2 to P-6 (recurring charge due, card payment due, bonus qualify-by and award dates, clawback window ending, eligible-again dates, next application allowed). Channels: in-app, web push (the app is a PWA; iPhone needs it installed on the home screen), email through the existing SMTP2GO settings. Per-event lead days.
+
+### P-8 - Calendar in the app, with Google Calendar
+Requested: 2026-11-02 (James: "put this all on a calendar within the app with ability to link to a google calendar (or use a google calendar in the app?)")
+Type: minor (new feature)        Status: Pending
+Options: (a) in-app calendar as the source of truth plus a private subscribe-by-URL calendar feed (iCal) that Google Calendar can subscribe to: simple, read-only, but Google refreshes subscribed feeds slowly (hours); (b) two-way or push sync with the Google Calendar API: events appear quickly, needs a Google Cloud OAuth setup and stored tokens, adds a secret to protect. Recommended order: (a) first, (b) later if the delay is a problem.
+Notes / questions: which Google calendar (the existing reminders go to the personal calendar)?
+
+### P-9 - Offer watchlist: compare sign-up bonuses and cashback from comparison sites, and RedFlagDeals
+Requested: 2026-11-02 (James: "compare sign up cash back bonuses per card from sites like Finly Wealth, Great Canadian Rebates, Frugal Flyer, Borrowell ... track posts about credit card offers on RedFlagDeals")
+Type: minor (new feature, outside data)        Status: Pending
+Plan: a watchlist of cards you hold or want, with offer value, rebate, expiry, source link and date seen. Pages are fetched only on request or on a slow schedule, cached, and only facts are stored with a link back. Compare against the issuer's own terms and your eligibility from P-3. RedFlagDeals: use whatever feed or email alert the forum offers and filter by card names.
+Notes / questions: the pages read so far have no structured data or API (offer text is prose), so extraction needs review before saving. Terms of use of each site and robots rules must be checked before any scheduled fetch. Rebate-site cashback is separate from the issuer bonus and usually has its own conditions (new cardholder, income, credit score).
+
+### P-10 - Offer planner: link offer terms, evaluate the best strategy, build a plan with reminders
+Requested: 2026-11-04 (James: "link current and potential offer terms, evaluate the optimal strategy and make a plan and associated calendar reminders", after a worked comparison of the Scotia iTRADE WIN27 transfer offer against the TD Spring 2026 and Questrade 2%/4% offers)
+Type: minor (new feature, new data model)        Status: Pending
+Plan (first version):
+- Offer record, for offers you hold and ones you are considering: issuer, product, offer window, source link, saved terms text and date seen, plus structured terms: what qualifies (transfer-in, deposit, spend), rate by account type (registered / non-registered), cap, minimum, enrol-by and fund-by dates, hold-from and hold-until dates, measuring dates, payout schedule (lump sum or installments), and what a withdrawal or transfer-out does (reduces the qualifying amount, forfeits everything remaining, or is allowed up to a percentage), whether the effect is pooled across accounts or per account, offers that cannot be combined, fee reimbursements, tax note. Status: Potential / Enrolled / Earning / Paid / Forfeited. Reapplication limits come from P-3 and P-4.
+- Holdings: accounts with institution, type, current value and the offer each one is earning under, so in-flight bonuses at risk are known.
+- Evaluator (fixed rules in code, not AI): for each option on a set of holdings it reports total cash, when the cash arrives, how long the capital is locked, the equivalent annual return (bonus divided by years locked, and an IRR using the payout dates), bonuses forfeited by leaving, and the net of moving versus staying. It also reports the break-even: the annual return the freed capital would have to earn elsewhere for staying to win. Results are ranked by annual return, with total cash shown but not used to rank.
+- Terms that are unclear (pooled versus per account, whether a transfer-out counts as a withdrawal) are shown as assumptions to confirm, never silently chosen.
+- Plan: the chosen strategy saved as ordered dated steps (enrol, open account, start transfer, fund-by, do-not-withdraw-before, payout dates), each step creating reminders through P-7 and showing on the P-8 calendar. Until those exist, steps are listed with dates only.
+- Terms entry: paste text or a URL, the app proposes the structured fields, and you review before saving. Pages are fetched only on request and facts are stored with a link back (same rules as P-9).
+Decisions (James, 2026-11-04):
+- Benchmark return 7% (setting), also the expected return of any market-invested account. Opportunity cost applies only when capital is not still earning: invested capital that stays invested costs nothing; chequing / savings money is compared at its interest rate against the 7%.
+- Scope covers investment, bank account and credit card offers. Cards have almost no opportunity cost beyond the credit score effect; bank accounts are evaluated like investments, including whether leaving early makes sense.
+- Evaluate against the cost of any debt held; an offer may not make sense while holding debt.
+Notes / questions:
+- First test case to build against: Scotia iTRADE WIN27 (3% registered / 1% non-registered, hold Nov 3 2026 to Feb 28 2029, enrol by Apr 1 2027, fund by May 31 2027) versus TD Spring 2026 (hold to Jul 31 2027) and Questrade 2%/4% (24 payments from Sept 2026, 5% withdrawal limit). Full detail and expected figures (hypothetical fixture amounts) are in docs/handoff-P10-P11.md.
+- Should invested capital also be checked against debt rates, or only cash-like capital?
+Decisions (James, 2026-11-04, second round):
+- Points valuation default is cash value, with the best-use value shown beside it (seed best-use values in the handoff). The workbook now has a best-use column.
+- Debt check: skip holdings tagged Smith Manoeuvre (P-12), because investing borrowed money is the strategy. Debts and loans share one table with P-12 so the HELOC rate feeds both.
+- If an option needs a sale in a non-registered account, warn about the taxable gain and the superficial-loss rule (P-13); for a Smith Manoeuvre account also warn that moving the money could break the interest tracing.
+- Total return rule (James, 2026-11-04): wherever a total or annual return is shown (P-10 evaluator, P-11 report, P-12 net position, P-15 projection) it includes the estimated tax value of deductible carrying costs. The estimate uses interest paid from the statements and your income (P-13) at the marginal rate for the tax year, labelled as an estimate and informational only.
+
+### P-11 - Bonus earnings ledger and effort / return report
+Requested: 2026-11-04 (James: "track the bonuses earned from this and other offers (credit cards and bank accounts) to understand total gains and if the effort is worthwhile")
+Type: minor (new feature)        Status: Pending
+Plan (first version):
+- Every bonus gets expected and received amounts with dates and a status (Pending / Partly paid / Paid / Clawed back / Forfeited). Installment offers record each payment as it arrives. Fed automatically from P-2, P-4 and P-6 where an award is detected, manual otherwise. Card points are valued at a cents-per-point setting.
+- Costs against each bonus: annual fees, interest paid, transfer fees net of reimbursement, foreign exchange, and the return given up on locked capital (a benchmark rate setting, applied to the capital and the days it was locked).
+- Effort: actual time is tracked per offer (enter hours or use a start / stop timer). Expected time per offer type starts at 2 hours per credit card, 4 hours per bank account and 4 hours per investment account; once a few offers of a type are finished the app proposes the average actual time as the new expectation and you confirm. Dollars per hour uses actual time, or the expectation when no time is logged yet.
+- Reports: gross and net gains by year, by type (card, bank, investment transfer) and by issuer; annualized return on locked capital for investment offers; dollars per hour; a "worth it" flag against a minimum dollars-per-hour you set; a tile on the dashboard. Totals are labelled as estimates when any part is estimated.
+- Taxes are a flag only (a reminder that cash bonuses may be taxable and some issuers send no slip), not a calculation.
+Decisions (James, 2026-11-04):
+- Worth-it threshold $50 per hour (setting).
+- Points valuations come from an online source (Credit Card Genius, cross-checked with Prince of Travel), stored with source and date, refreshed quarterly and confirmed before saving.
+- Cost of locked capital follows the P-10 rule: 7% benchmark, applied only when the capital is not still earning.
+Notes / questions:
+- Import the history already in the workbook (P-2) as past bonuses, including ones now closed or clawed back?
+Decisions (James, 2026-11-04, second round):
+- P-11 is the single source of bonus amounts; P-13's bonus register reads from it and adds the taxable / not taxable / unsure flag.
+- Total return rule (James, 2026-11-04): wherever a total or annual return is shown (P-10 evaluator, P-11 report, P-12 net position, P-15 projection) it includes the estimated tax value of deductible carrying costs. The estimate uses interest paid from the statements and your income (P-13) at the marginal rate for the tax year, labelled as an estimate and informational only.
+
+### P-12 - Smith Manoeuvre tracker
+Requested: 2026-11-04 (James: "track my smith maneuver progress - the outstanding debt, the investment value, total interest for tax purposes, etc. I can mark the loan and investment accounts associated with the smith maneuver manually")
+Type: minor (new feature, new account tags)        Status: Pending
+Plan: tag loan accounts (mortgage and HELOC segments) and non-registered investment accounts as "Smith Manoeuvre" by hand. Track: mortgage balance and principal repaid, HELOC balance split into investment-loan, capitalized interest and anything else, borrowing room, investment value and ACB, income received (dividends, interest, return of capital), interest paid per year (deductible carrying charge, claimed on line 22100), cumulative interest, estimated tax refund at a marginal rate you enter, and net position (investments minus debt). Warnings: HELOC withdrawals that do not match an investment purchase (tracing gap, personal use of the investment loan), registered accounts tagged by mistake (RRSP, TFSA, FHSA, RESP interest is not deductible), return of capital kept instead of reinvested, rate-rise stress test. Yearly export: interest by loan with borrowed amounts and dates, for your tax software and accountant.
+Notes / questions: lender and product? Is interest paid from cash or capitalized? Do you re-advance monthly? Are the loan accounts on a statement the app can read?
+Decisions (James, 2026-11-04, second round):
+- Interest is capitalized by hand each month. The app creates a monthly reminder per Smith Manoeuvre loan (through P-7, shown on the P-8 calendar). A reminder is not cleared until the statement shows the interest-capitalizing advance, or you confirm with the amount; until then it stays open and overdue, and overdue ones show at login.
+- Estimated tax value of the carrying costs = interest paid (from loan statements) at the marginal rate from your income (P-13), per tax year, labelled as an estimate. wherever a total or annual return is shown (P-10 evaluator, P-11 report, P-12 net position, P-15 projection) it includes the estimated tax value of deductible carrying costs. The estimate uses interest paid from the statements and your income (P-13) at the marginal rate for the tax year, labelled as an estimate and informational only.
+- Loans share one debt table with P-10. Moving or selling in a Smith Manoeuvre account triggers the tracing and capital gain warnings in P-10.
+
+### P-13 - Tax support center (information only)
+Requested: 2026-11-04 (James: "Add a tax support center if not already included ... investment carrying costs, medical costs, capital gains and losses with ACB, tracking, expected T5 values for interest and dividends, etc. Benchmark other tax software for suggestions")
+Type: minor (new feature area; the ACB part was already on the roadmap)        Status: Pending
+Plan: one place per tax year, clearly labelled information only (you still calculate and file in accredited software). Sections:
+- Investment carrying charges: interest on investment loans (from P-12), investment counsel / safekeeping fees on non-registered accounts, with receipts linked from paperless-ngx (P-1).
+- Medical expenses: receipts by person, any 12-month period ending in the tax year (finds the best window), family pooling, insurance reimbursements subtracted, running total against the claim threshold.
+- Capital gains and losses with ACB: pooled across brokers per taxpayer, reinvested distributions, return of capital, foreign currency at Bank of Canada rates, stock splits, superficial-loss warnings (30 days either side, including purchases in spouse or registered accounts), transfers between institutions keeping the ACB, net capital loss carry-forwards, a Schedule 3 style summary.
+- Expected slips: expected T5 (interest, dividends), T3, T5008 and T4 amounts per institution from statements; upload the real slips when they arrive and the app shows the differences.
+- Bonus register: bank, brokerage, referral and credit card bonuses with a taxable / not taxable / unsure flag and the amount, so nothing is forgotten.
+- Registered accounts: RRSP, TFSA, FHSA and RESP (CESG) contributions and room, entered from your CRA My Account figures.
+- Document checklist, carry-forwards (losses, donations, unused credits), and CSV / PDF export for tax software.
+Notes / questions: overlaps P-11 only on bonus income (P-11 flags tax, P-13 keeps the register of amounts and taxable status); keep one source of bonus amounts. Single taxpayer or James and Vanessa separately? Do you want the tax year to follow the calendar year only? Which accredited software do you use?
+Decisions (James, 2026-11-04, second round):
+- Bonus amounts come from P-11; this register only adds the tax flag and the record for the return.
+- Holds the income figures and the tax-year rate tables used by the carrying-cost tax value estimate (P-12, P-10, P-11, P-15). Rate tables are updated each year and shown with their date.
+
+### P-14 - Tax opportunity review
+Requested: 2026-11-04 (James: "Evaluate my total financial picture for tax opportunities")
+Type: minor (new feature, depends on P-2, P-12, P-13)        Status: Pending
+Plan: a list of informational checks run over your data, each with the numbers behind it and a "talk to your accountant" note: unused registered room, RESP grant room, loss harvesting candidates in non-registered accounts (and superficial-loss traps), investment interest not yet claimed, unclaimed medical or fee receipts, bonus income not yet recorded, foreign property reporting thresholds, income splitting opportunities. No advice to buy or sell; findings only.
+Notes / questions: needs enough data first (P-2 import, P-12, P-13). Until then the review is limited to what you tell me.
+
+### P-15 - Wealth overview: balance sheet, cash flow and projection
+Requested: 2026-11-04 (James: "an overall wealth view with two components, balance sheet and cash flow ... feed a projection view")
+Type: minor (builds on the existing net worth and budget pages; the forecast tab is a placeholder today)        Status: Pending
+Plan (first version):
+- Balance sheet: a snapshot as of a chosen date of what you own against what you owe. Assets: cash, chequing and savings, registered accounts (RRSP, TFSA, FHSA, RESP), non-registered investments, home value (entered by hand), other. Debts: mortgage, HELOC (split into Smith Manoeuvre and other), credit cards, loans. Net worth, Smith Manoeuvre subtotals (P-12) and money tied up in offers (P-10) shown separately.
+- Cash flow: the regular ins and outs that change the account values, for a month, a year or a custom range. Categories expand into subcategories, and the tree is editable.
+  - Income: Employment (paycheque, bonuses), Investment (capital gains, dividends, interest), Strategic (credit card, bank and investment offers, Smith Manoeuvre tax value, others).
+  - Expenditures: Spending (Run rate: bills, subscriptions, groceries, entertainment, home maintenance, others; Annual special: insurance, fuel, business costs; Extraordinary: vacations and other large purchases) and Debt service (interest, penalties).
+  - Fed by statement categories (P-6), recurring payments (P-5), bonus earnings (P-11) and Smith Manoeuvre interest (P-12). Transfers between your own accounts are neutral. Mortgage and loan principal repayments are shown as a separate line, not as spending, so net worth stays consistent (assumption to confirm). Investment growth is a line under Income > Investment based on actuals: the change in account value from statements, net of deposits, withdrawals and income already counted. It is shown separately from realized gains and flagged as unrealized (non-cash), and totals can be shown with or without it.
+- Projection: averages the cash flow values (run rate from a look-back window you choose, annual special items placed in their usual months, extraordinary items only when planned, offer payouts on their scheduled dates from P-10 plans) and projects the change in total wealth forward month by month. Everything is projected from averaged actuals except investment growth, which is projected at an assumed return (setting, default the 7% benchmark, can be set to 0) because averaged actual growth is too volatile. Includes a HELOC rate-rise test. Defaults: 12-month look-back for the run rate and a 10-year horizon, both editable.
+- Potential spends: enter spends you are considering (amount, month or date, one-time or recurring, category, optional card) and see how they fit into the projected monthly spending: a month-by-month view with and without them, months where cash flow turns negative, and the effect on the wealth projection. Each can be marked considering, approved or dropped; approved ones become planned items in the projection. A potential spend can also be matched against a card's remaining minimum spend (P-3, P-6).
+- Planned annual special and extraordinary items are seeded from the owner's notes and stored in the app's database, not in this repository.
+- Phone and desktop layouts are separate designs; information only.
+Decisions (James, 2026-11-05): investment growth is a cash-flow line from actuals and the 7% assumption is only for projecting forward; defaults 12 months and 10 years; seed the planned items; add potential spends; track time per offer (see P-11).
+Notes / questions: none open.
+
+## Done
+(none yet)
