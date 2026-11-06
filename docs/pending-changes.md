@@ -19,30 +19,6 @@ Notes / questions:
 - Finance Hub is reachable through Cloudflare Access but the Paperless API is LAN-only: the container must reach 192.168.4.11:8073 directly (compose network or host route). Needs a check on the server.
 - Currency handling for foreign receipts: match on the card-posted amount, or the receipt currency?
 
-### P-2 - Import card, bank and investment history from the workbook
-Requested: 2026-11-02 (James: "All these items should be trackable in the app", with the filled workbook finance-hub-card-bank-investment-history.xlsx)
-Type: minor (new feature, new data model)        Status: Pending
-Plan: import the workbook sheets (Cards, Bank accounts, Bank account bonuses, Investment accounts, Investment bonuses, Recurring payments, Issuer rules) and keep them editable in the app.
-- Card = one record with up to 4 bonuses on it (no separate bonus table in the UI); fields include status Open / Frozen (zero balance and locked) / Closed (plus Downgraded, Pending, Declined), card locked, final balance settled date, minimum spend progress, sign-up cashback, bonus consumed, bonus clawback months, statement and payment due days, credit balance to spend.
-- Last 4 digits only. Never store full card or account numbers.
-Notes / questions: keep the workbook as a re-importable format? Treat red-text cells as unconfirmed until accepted?
-
-### P-3 - Reapplication rules and dates
-Requested: 2026-11-02 (James: "track reapplication rules and dates ... same card or any card from the same issuer ... read welcome bonus terms")
-Type: minor (new feature)        Status: Pending
-Plan: a rule per issuer / product with scope (same card, same family, any card from the issuer), once per lifetime, wait months, counted from (application, approval, bonus received, closed or downgraded date), blocked while a matching card is still held, and minimum days between applications. Eligible-again date is worked out across all matching cards. Store the offer terms (text, link, offer period) with each bonus, because terms change per offer.
-Notes / questions: official terms read so far for TD First Class Travel, BMO Ascend and RBC Avion; Amex pages are behind a cookie wall; others not found. Rules from forums are labelled unverified.
-
-### P-4 - Bank account bonuses and investment accounts / transfer bonuses
-Requested: 2026-11-02 (James: "add tabs for investment accounts, investment account transfer/deposit bonuses and bank account bonuses")
-Type: minor (new feature)        Status: Pending
-Plan: bank accounts with one row per offer; investment accounts with transfer / deposit / referral bonuses, fee reimbursement and clawback period (keep funds until). Same reapplication logic as P-3.
-
-### P-5 - Recurring payments tracker
-Requested: 2026-11-02 (James: "tab to track recurring payments - names, price, frequency, date and payment method")
-Type: minor (new feature)        Status: Pending
-Plan: name, price, frequency, a known charge date, card or bank account, auto-pay, status; next charge, monthly and yearly cost calculated. Detected recurring charges from statements (P-6) are proposed here, not added silently.
-
 ### P-6 - Statement upload: spend progress, bonus awards, recurring charges
 Requested: 2026-11-02 (James: "When I upload statements look for the spend progress, bonus point awards or consumption, recurring spends")
 Type: minor (new feature, per-issuer parsing)        Status: Pending
@@ -157,4 +133,35 @@ Decisions (James, 2026-11-05): investment growth is a cash-flow line from actual
 Notes / questions: none open.
 
 ## Done
-(none yet)
+
+### P-2 - Import card, bank and investment history from the workbook
+Requested: 2026-11-02 (James: "All these items should be trackable in the app", with the filled workbook finance-hub-card-bank-investment-history.xlsx)
+Type: minor (new feature, new data model)        Status: Built in v0.2.0
+Plan: import the workbook sheets (Cards, Bank accounts, Bank account bonuses, Investment accounts, Investment bonuses, Recurring payments, Issuer rules) and keep them editable in the app.
+- Card = one record with up to 4 bonuses on it (no separate bonus table in the UI); fields include status Open / Frozen (zero balance and locked) / Closed (plus Downgraded, Pending, Declined), card locked, final balance settled date, minimum spend progress, sign-up cashback, bonus consumed, bonus clawback months, statement and payment due days, credit balance to spend.
+- Last 4 digits only. Never store full card or account numbers.
+Notes / questions: keep the workbook as a re-importable format? Treat red-text cells as unconfirmed until accepted?
+
+Built: workbook (.xlsx) upload on the Cards page > Import workbook, with preview, add-only or overwrite, and red-text cells kept as "to check" until confirmed or edited. Not built: exporting back to the workbook; the workbook's Review notes sheet is not imported.
+
+### P-3 - Reapplication rules and dates
+Requested: 2026-11-02 (James: "track reapplication rules and dates ... same card or any card from the same issuer ... read welcome bonus terms")
+Type: minor (new feature)        Status: Built in v0.2.0
+Plan: a rule per issuer / product with scope (same card, same family, any card from the issuer), once per lifetime, wait months, counted from (application, approval, bonus received, closed or downgraded date), blocked while a matching card is still held, and minimum days between applications. Eligible-again date is worked out across all matching cards. Store the offer terms (text, link, offer period) with each bonus, because terms change per offer.
+Notes / questions: official terms read so far for TD First Class Travel, BMO Ascend and RBC Avion; Amex pages are behind a cookie wall; others not found. Rules from forums are labelled unverified.
+
+Built: rules with scope, once per lifetime, wait months, counted from, blocked while held and days between applications; eligible-again date worked out across every matching card; each bonus stores offer link, offer dates and saved terms text. Rules not confirmed against official terms show as Unverified.
+
+### P-4 - Bank account bonuses and investment accounts / transfer bonuses
+Requested: 2026-11-02 (James: "add tabs for investment accounts, investment account transfer/deposit bonuses and bank account bonuses")
+Type: minor (new feature)        Status: Built in v0.2.0
+Plan: bank accounts with one row per offer; investment accounts with transfer / deposit / referral bonuses, fee reimbursement and clawback period (keep funds until). Same reapplication logic as P-3.
+
+Built: bank and investment accounts with any number of bonuses each (requirement, deposit, fee reimbursement, qualify-by, keep-funds-until clawback date) and the same re-application check.
+
+### P-5 - Recurring payments tracker
+Requested: 2026-11-02 (James: "tab to track recurring payments - names, price, frequency, date and payment method")
+Type: minor (new feature)        Status: Built in v0.2.0
+Plan: name, price, frequency, a known charge date, card or bank account, auto-pay, status; next charge, monthly and yearly cost calculated. Detected recurring charges from statements (P-6) are proposed here, not added silently.
+
+Built: add and edit by hand or import; next charge, monthly and yearly cost, payment method (card, account or other); reminders are listed on the Cards page summary. Proposals from statements wait for P-6, notifications for P-7.

@@ -1,20 +1,20 @@
-# Finance Hub: functional specification (current state, v0.1.3)
+# Finance Hub: functional specification (current state, v0.2.0)
 
-Personal finance manager for one household on James's home server. This file describes what the app does now; later features (bonuses, investments, forecast, tax) are listed under Not yet built. The full product plan lives in the Project "Financial Management".
+Personal finance manager for one household on James's home server. This file describes what the app does now; later features (statement analysis, notifications, calendar, investments, forecast, tax) are listed under Not yet built. The full product plan lives in the Project "Financial Management".
 
 ## Purpose and scope in this release
 
-Foundation release: sign in securely, record accounts and balances, import bank statements from CSV, categorise transactions, and see net worth and spending by category. Used by one login (James); a second person can be added in a later release.
+Sign in securely, record accounts and balances, import bank statements from CSV, categorise transactions, and see net worth and spending by category. From v0.2.0 also: track credit cards, bank and investment accounts and their sign-up bonuses, re-application rules with eligible-again dates, and recurring payments, optionally loaded from the history workbook. Used by one login (James); a second person can be added in a later release.
 
 ## Areas of the app
 
 Seven areas, shown in the desktop sidebar. Phone bottom navigation shows Overview, Budget, Cards, Invest and More (More lists Tax, Accounts and imports, Settings).
 
-| Area | State in v0.1.0 |
+| Area | State |
 | --- | --- |
 | Overview | Built. Net worth, trend chart, this month's spending, "uncategorised" reminder |
 | Budget and forecast | Spending by category by month, transactions with categorise, categories and rules. Forecast tab is a placeholder |
-| Cards and bonuses | Placeholder page |
+| Cards and bonuses | Built in v0.2.0: cards, bank accounts, investment accounts, recurring payments, re-apply rules, workbook import (see Cards and bonuses below) |
 | Investments | Placeholder page |
 | Tax | Placeholder page |
 | Accounts and imports | Built. Accounts, balances, CSV import with preview, import history with rollback |
@@ -55,6 +55,19 @@ Amounts are stored as integer cents. Negative means money out. Upload limit `MAX
 - Transactions tab: search, "uncategorised only", tap a transaction to set its category, optionally creating a rule from text in its description (also categorises matching uncategorised rows).
 - Spending by month: spent = money out net of refunds in expense categories plus uncategorised; income = income categories; transfers are ignored. Month picker, bars per category, detail table.
 
+## Cards and bonuses (v0.2.0)
+
+One page, six tabs: Credit cards, Bank accounts, Investment accounts, Recurring payments, Re-apply rules, Import workbook. Every list opens an edit form; Add buttons create records. Only the last 4 digits of a card or account number are stored (the database and the form refuse anything longer).
+
+- **Credit cards.** One record per card with up to 4 bonuses on it. Status: Open, Frozen (zero balance, locked), Closed, Downgraded, Pending, Declined. Fields: owner, issuer, product, family, network, personal or business, last 4, locked, application and approval dates with date confidence, credit limit, annual fee, first-year fee waived, hard check, referral, rewards program, point value in cents per point (cash and best use), statement and payment due days, downgrade date and target, closed date, final balance settled date, why closed, credit balance to spend, minimum spend progress with as-of date, sign-up cashback received, bonus consumed (No / Partly / Yes) and date, clawback months, rule, notes. Each bonus: type, offer text, points or cash, spend required, months to qualify, outcome (In progress, Earned, Missed, Forfeited), date received, offer link, offer start and end, saved terms text.
+- **Worked out for each card:** qualify-by date (approval date plus months), next deadline, spend still needed, an alert within 30 days of the deadline or after it, points earned, bonus value at the cash and best-use point values, keep-the-card-until date (latest earned bonus plus clawback months), next payment due date, and the re-application result.
+- **Bank and investment accounts.** Institution, type, name, last 4, status (Open, Closed by me, Closed by institution, Converted, Transferred out, Dormant), opened and closed dates, fees, and any number of bonuses each: type, offer, amount offered, requirement, minimum deposit or transfer, amount deposited, fee reimbursed, months to qualify, months funds must stay, outcome, date received, amount received, referral, offer link and terms. Worked out: qualify-by, keep-funds-until with a clawback status, bonuses received, re-application result.
+- **Re-apply rules.** A rule has an issuer or institution, optional product names (comma separated), a scope (same card, same card family, any card from the issuer, any account from the institution), once per lifetime, wait months, which date the wait counts from (application, approval, bonus received, closed or downgraded, downgrade), blocked while a matching card or account is still held, minimum days between applications, source and last-checked date, and a Confirmed flag. A card or account uses the rule it names, otherwise the most specific rule for its issuer (one naming the product beats a blanket rule). Result per card or account, checked in this order: no rule on file; once per lifetime and already used; blocked because a matching one is still held; wait period not set; date missing; "Eligible from DATE" or "Eligible now". The wait counts from the latest matching date across every card or account the rule covers; a downgrade counts as closing the old product. Next application allowed = latest application date plus the minimum days.
+- **Recurring payments.** Name, category, price, frequency (weekly, every 2 weeks, monthly, every 2 months, quarterly, every 6 months, yearly), any known charge date, paid by (card, account or other text), auto-pay, status (Active, Paused, Cancelled), end date, remind-me days. Worked out: next charge, monthly and yearly cost, payment method. Month steps keep the day where possible and use the last day of shorter months.
+- **Summary** at the top of the Credit cards tab: counts of open, frozen and closed cards and a list of alerts (bonus deadlines, clawback periods still running, recurring charges due within their reminder window). Reminders are shown in the app only; sending them is not built yet.
+- **Import workbook.** Upload the history workbook (.xlsx; sheets Cards, Bank accounts, Bank account bonuses, Investment accounts, Investment bonuses, Recurring payments, Issuer rules; header row 4; example rows skipped). The file is read on the server and not kept. A preview shows counts, existing matches and problems (an unreadable optional value is left blank with a warning; a bonus pointing at an unknown account is skipped). Mode "add new only" skips records whose ID or name already exists so edits made in the app are safe; "replace" overwrites them. Cells with red text are stored as "to check" (shown in red with a To check label) until the field is edited or "Mark all as checked" is pressed. Rules that were red are marked Unverified.
+- **Not built yet:** statement upload analysis (spend progress, awards, detected recurring charges), notifications and e-mail, calendar and Google Calendar, offer watchlist, exporting back to the workbook.
+
 ## Settings
 
 Install app (Chrome/Edge button; iOS instructions), change password, export everything as JSON or transactions as CSV (password re-entry), security log, version, sign out.
@@ -84,12 +97,12 @@ See `deploy/.env.example`. Required: `APP_SECRET_KEY` (32+ characters; the app r
 ## Data and storage
 
 - `/data/finance-hub.db` (SQLite, WAL: copy `.db`, `-wal` and `-shm` together, or stop the container first). `/data/backups/` receives a copy before any data-changing migration. `/files` is reserved for statements (not used yet).
-- Schema version 1. Migrations are forward-only and run at start-up inside a transaction.
+- Schema version 2 (v0.2.0 adds cards, card_bonuses, inst_accounts, acct_bonuses, recurring, issuer_rules; no data is changed, so no pre-migration copy is made). Migrations are forward-only and run at start-up inside a transaction.
 - Time stored in UTC; dates are plain calendar dates; display uses America/Toronto.
 
 ## API (JSON, all under /api, signed-in unless noted)
 
-`GET /healthz` (no auth, no private data, no outside services; exactly `{"status":"ok","version":"<image tag>"}`, 503 `status:"error"` if the local database cannot be read); `GET /api/state`; `POST /api/setup`, `/api/login`, `/api/totp/enable`, `/api/logout`, `/api/stepup`, `/api/password`; accounts (`GET/POST /api/accounts`, `PATCH /api/accounts/:id`, valuations); categories and rules; `POST /api/imports/preview`, `POST /api/imports`, `GET /api/imports`, `DELETE /api/imports/:id`; `GET /api/transactions`, `PATCH /api/transactions/:id`; `GET /api/reports/spending`, `/api/reports/networth`, `/api/overview`; `GET /api/export.json`, `/api/export/transactions.csv` (step-up); `GET /api/audit`.
+`GET /healthz` (no auth, no private data, no outside services; exactly `{"status":"ok","version":"<image tag>"}`, 503 `status:"error"` if the local database cannot be read); `GET /api/state`; `POST /api/setup`, `/api/login`, `/api/totp/enable`, `/api/logout`, `/api/stepup`, `/api/password`; accounts (`GET/POST /api/accounts`, `PATCH /api/accounts/:id`, valuations); categories and rules; `POST /api/imports/preview`, `POST /api/imports`, `GET /api/imports`, `DELETE /api/imports/:id`; `GET /api/transactions`, `PATCH /api/transactions/:id`; `GET /api/reports/spending`, `/api/reports/networth`, `/api/overview`; `GET /api/export.json`, `/api/export/transactions.csv` (step-up); `GET /api/audit`. Offers (v0.2.0): `GET /api/offers/schema`, `GET /api/offers/summary`; for each of `cards`, `accounts`, `recurring`, `rules`: `GET /api/offers/<name>`, `POST /api/offers/<name>`, `PATCH /api/offers/<name>/:id` (bonuses sent with it replace the existing ones), `POST /api/offers/<name>/:id/confirm`, `DELETE /api/offers/<name>/:id`; `POST /api/workbook/preview` and `/api/workbook/import` (JSON with `file_base64`, optional `mode` add_only or overwrite). The JSON export includes these tables.
 
 ## Operations
 
@@ -105,7 +118,7 @@ Logs go to stdout, one line per event. SIGTERM stops accepting requests, closes 
 
 ## Not yet built (planned)
 
-Bonus tracker and reminders with Google Calendar, AI plan builder, Questrade import and ACB tracking, further institutions, forecast and wealth projection, tax tools, weekly offer research, live data connections.
+Statement analysis for bonuses and recurring charges, notifications, calendar with Google Calendar, offer watchlist, offer planner, Questrade import and ACB tracking, further institutions, forecast and wealth projection, tax tools, weekly offer research, live data connections.
 
 ## Releases
 A release is a push to `main` that changes the version in `package.json` (CHANGELOG entry required: Short up to 50 characters, Long up to 250). The `release` GitHub Actions workflow reads the version X.Y.Z, stops if the tag vX.Y.Z or a GitHub release for it already exists or the CHANGELOG entry is missing or invalid, builds and pushes the image tags X.Y.Z, X.Y and latest, then runs `gh release create vX.Y.Z --target $GITHUB_SHA`, which also creates the tag. A push to `main` that does not change the version does nothing. A manually pushed `vX.Y.Z` tag runs the same workflow as a fallback; both triggers share a concurrency group per version, so only one of them can release a version.

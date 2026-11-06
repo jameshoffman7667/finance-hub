@@ -2,6 +2,10 @@
 
 Newest first. One entry per released version; entries are never rewritten.
 
+## v0.2.0 - 2026-11-05
+**Short:** Track card, bank and investment bonuses
+**Long:** Cards (open, frozen, closed), bank and investment accounts with bonuses, re-apply rules with eligible-again dates, recurring payments, and workbook import. Red-text cells stay marked to check. Covers P-2 to P-5.
+
 ## v0.1.3 - 2026-10-22
 **Short:** Release by pushing main; no tag push needed
 **Long:** The release workflow now runs on a push to main that changes the version in package.json, builds the images and creates the GitHub release and tag itself. The v*.*.* tag trigger stays as a manual fallback. Includes v0.1.2.
