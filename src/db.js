@@ -276,6 +276,18 @@ CREATE INDEX idx_loan_events ON loan_events(debt_id, event_date);
 CREATE INDEX idx_trades ON acb_trades(security, trade_date);
 `,
   },
+  {
+    version: 6,
+    destructive: false,
+    sql: `
+ALTER TABLE categories ADD COLUMN flow_group TEXT;
+CREATE TABLE plan_items (
+  id INTEGER PRIMARY KEY, name TEXT NOT NULL, amount_cents INTEGER NOT NULL, kind TEXT NOT NULL, recurrence TEXT NOT NULL, start_date TEXT NOT NULL, end_date TEXT,
+  status TEXT NOT NULL, category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL, card_id INTEGER REFERENCES cards(id) ON DELETE SET NULL, note TEXT,
+  unconfirmed TEXT NOT NULL DEFAULT '[]'
+);
+`,
+  },
 ];
 
 export const LATEST_SCHEMA = MIGRATIONS[MIGRATIONS.length - 1].version;

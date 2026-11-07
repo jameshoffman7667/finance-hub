@@ -25,6 +25,9 @@ export const ENUMS = {
   withdrawal_scope: E('pooled', 'per_account', 'unknown'),
   holding_type: E('rrsp', 'tfsa', 'resp', 'fhsa', 'nonreg', 'chequing', 'savings'),
   ledger_kind: E('card', 'bank', 'investment'),
+  plan_kind: E('annual_special', 'extraordinary', 'potential'),
+  plan_recurrence: E('once', 'monthly', 'yearly'),
+  plan_status: E('considering', 'approved', 'dropped'),
   loan_type: E('mortgage', 'heloc', 'loan', 'other'),
   loan_event_kind: E('advance_invest', 'advance_other', 'capitalized_interest', 'interest_paid', 'principal_paid'),
   income_kind: E('dividend', 'interest', 'return_of_capital', 'distribution'),
@@ -160,6 +163,11 @@ export const SPECS = {
   carry: {
     table: 'carryforwards', order: 'from_year DESC, kind',
     fields: [f('kind', 'enum', { enum: 'carry_kind' }), f('from_year', 'int', { min: 1990, max: 2100 }), f('amount_cents', 'money'), f('used_cents', 'money', { optional: true }), f('note', 'text', { optional: true, max: 300 })],
+  },
+  plan_items: {
+    table: 'plan_items', order: 'start_date, name',
+    fields: [f('name', 'text'), f('amount_cents', 'money'), f('kind', 'enum', { enum: 'plan_kind' }), f('recurrence', 'enum', { enum: 'plan_recurrence' }), f('start_date', 'date'), f('end_date', 'date', { optional: true }), f('status', 'enum', { enum: 'plan_status' }),
+      f('category_id', 'int', { optional: true, ref: 'categories' }), f('card_id', 'int', { optional: true, ref: 'cards' }), f('note', 'text', { optional: true, max: 300 })],
   },
   recurring: {
     table: 'recurring', order: "CASE status WHEN 'active' THEN 0 ELSE 1 END, name",

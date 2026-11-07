@@ -102,6 +102,18 @@ Six more tabs on the Cards and bonuses page: Offers, Holdings and debts, Compare
 - **Data:** schema 5 adds loan_events, income_events, tax_years, tax_receipts, acb_trades, tax_slips, registered_room, carryforwards, tax_checklist; columns on debts (loan_type, limit_cents, cap_day, opened_on), holdings (acb_cents, foreign_prop), ledger_entries (tax_flag).
 - **Not built yet:** receipt scans from paperless-ngx (P-1), Questrade statement import, automatic exchange rates, a tax calculation.
 
+## Wealth overview (v0.6.0)
+
+A Wealth page (also under More on phones) with five tabs.
+
+- **Balance sheet.** As of a chosen date: assets by group (cash, registered, investments, property, other) and debts (mortgage, cards, loans, other) from your account values, plus loans from the planner split into Smith Manoeuvre and other; net worth; Smith Manoeuvre investments; money tied up in offers (holdings counted toward an offer). Loans should be entered in one place only.
+- **Cash flow.** Any range (this month, last 12 months, a year, custom). Income: Employment, Investment (dividends, interest, realised capital gains and losses), Strategic (bonuses received, Smith Manoeuvre estimated tax value). Spending: Run rate, Annual special, Extraordinary, Debt service (including Smith loan interest). Each category goes under a group (default: income to Employment, expense to Run rate; editable in Settings and categories); transfers are left out; uncategorised items are listed as such. Loan principal repaid is its own line, not spending. Investment growth is a separate unrealised, non-cash line from the change in investment account values minus recorded transactions in those accounts.
+- **Projection.** Month by month for the length you set (default 10 years) from averages over a look-back (default 12 months) of income, run-rate spending and debt service; annual special items in their month each year; approved extraordinary and potential items when planned; bonus payouts on their scheduled dates; investments at an assumed return (default 7%, 0 turns it off); cash left over stays in cash unless you choose to invest it; an extra HELOC rate test. A second line shows the plan with the spends you are only considering, and months where cash flow turns negative are listed. Falls back to recurring payments when there are no transactions in the look-back.
+- **Planned and potential spends.** Name, amount, kind (annual special, extraordinary, potential), once, monthly or yearly, dates, status (considering, approved, dropped), optional category and card (shows the card's remaining minimum spend).
+- **API:** `GET /api/wealth/balance?date`, `GET /api/wealth/cashflow?from&to`, `GET /api/wealth/projection`, `GET /api/wealth/items`, `GET|PUT /api/wealth/settings`, `GET /api/wealth/categories`, `PATCH /api/wealth/categories/:id`, record routes `/api/offers/plan_items`.
+- **Data:** schema 6 adds plan_items and categories.flow_group. Settings key: wealth.
+- **Not built yet:** seeding yearly items from notes, automatic ties between the projection and offer plans beyond ledger payouts, goals.
+
 ## Settings
 
 Install app (Chrome/Edge button; iOS instructions), change password, export everything as JSON or transactions as CSV (password re-entry), security log, version, sign out.
@@ -131,7 +143,7 @@ See `deploy/.env.example`. Required: `APP_SECRET_KEY` (32+ characters; the app r
 ## Data and storage
 
 - `/data/finance-hub.db` (SQLite, WAL: copy `.db`, `-wal` and `-shm` together, or stop the container first). `/data/backups/` receives a copy before any data-changing migration. `/files` is reserved for statements (not used yet).
-- Schema version 5 (v0.5.0 adds loan_events, income_events, tax_years, tax_receipts, acb_trades, tax_slips, registered_room, carryforwards, tax_checklist; v0.4.0 adds offer_terms, holdings, debts, ledger_entries, plans, plan_steps, effort_logs; v0.3.0 adds notify_prefs, notifications, push_subs, statement_runs; v0.2.0 adds cards, card_bonuses, inst_accounts, acct_bonuses, recurring, issuer_rules; no data is changed, so no pre-migration copy is made). Migrations are forward-only and run at start-up inside a transaction.
+- Schema version 6 (v0.6.0 adds plan_items and categories.flow_group; v0.5.0 adds loan_events, income_events, tax_years, tax_receipts, acb_trades, tax_slips, registered_room, carryforwards, tax_checklist; v0.4.0 adds offer_terms, holdings, debts, ledger_entries, plans, plan_steps, effort_logs; v0.3.0 adds notify_prefs, notifications, push_subs, statement_runs; v0.2.0 adds cards, card_bonuses, inst_accounts, acct_bonuses, recurring, issuer_rules; no data is changed, so no pre-migration copy is made). Migrations are forward-only and run at start-up inside a transaction.
 - Time stored in UTC; dates are plain calendar dates; display uses America/Toronto.
 
 ## API (JSON, all under /api, signed-in unless noted)

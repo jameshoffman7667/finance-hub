@@ -189,3 +189,5 @@ fieldset.bonus legend { font-weight: 600; padding: 0 .4rem; }
 .cmp-table tbody th { font-weight: 600; min-width: 140px; }
 .struck { text-decoration: line-through; opacity: .7; }
 fieldset { border: 1px solid var(--line, #ccd); border-radius: 8px; margin: 8px 0; }
+
+.chart .line2 { stroke: var(--muted, #889); stroke-dasharray: 5 4; stroke-width: 2; }

@@ -2,6 +2,10 @@
 
 Newest first. One entry per released version; entries are never rewritten.
 
+## v0.6.0 - 2026-11-07
+**Short:** Add wealth overview and projection
+**Long:** Balance sheet, cash flow from your categories, and a month-by-month projection of wealth with growth, a HELOC rate test and spends you are considering. Planned yearly and large spends. Covers P-15.
+
 ## v0.5.0 - 2026-11-07
 **Short:** Add Smith Manoeuvre and tax support
 **Long:** Track Smith Manoeuvre loans, interest and monthly capitalize reminders. New tax area: capital gains with cost base, medical, slips, room, carry-forwards and a review of opportunities. Covers P-12, P-13 and P-14.

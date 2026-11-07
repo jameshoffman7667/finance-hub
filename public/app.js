@@ -2,6 +2,7 @@
 import { viewOffers } from './offers.js';
 import { viewInvest } from './smith.js';
 import { viewTax } from './tax.js';
+import { viewWealth } from './wealth.js';
 const state = { info: null, route: '/', cache: {}, installEvent: null, swWaiting: null };
 const root = document.getElementById('app');
 
@@ -65,11 +66,12 @@ const AREAS = [
   { path: '/cards', label: 'Cards and bonuses', short: 'Cards', icon: 'cards' },
   { path: '/invest', label: 'Investments', short: 'Invest', icon: 'invest' },
   { path: '/tax', label: 'Tax', icon: 'tax' },
+  { path: '/wealth', label: 'Wealth', icon: 'overview' },
   { path: '/accounts', label: 'Accounts and imports', short: 'Accounts', icon: 'accounts' },
   { path: '/settings', label: 'Settings', icon: 'settings' },
 ];
 const MOBILE_NAV = [AREAS[0], AREAS[1], AREAS[2], AREAS[3], { path: '/more', label: 'More', icon: 'more' }];
-const isCurrent = (p) => (p === '/more' ? ['/more', '/tax', '/accounts', '/settings'].includes(state.route) : state.route === p);
+const isCurrent = (p) => (p === '/more' ? ['/more', '/tax', '/wealth', '/accounts', '/settings'].includes(state.route) : state.route === p);
 
 function go(path) {
   if (path === location.pathname) { render(); return; }
@@ -483,7 +485,7 @@ function viewPlaceholder(title, text, items) {
 }
 
 async function viewMore() {
-  return shell('More', h('div', { class: 'card' }, h('ul', { class: 'list' }, [AREAS[4], AREAS[5], AREAS[6]].map((a) => h('li', {}, h('button', { class: 'item', onclick: () => go(a.path) }, icon(a.icon), h('span', { class: 'grow title' }, a.label)))))));
+  return shell('More', h('div', { class: 'card' }, h('ul', { class: 'list' }, AREAS.slice(4).map((a) => h('li', {}, h('button', { class: 'item', onclick: () => go(a.path) }, icon(a.icon), h('span', { class: 'grow title' }, a.label)))))));
 }
 
 async function viewSettings() {
@@ -528,7 +530,7 @@ const VIEWS = {
   '/': viewOverview, '/budget': viewBudget, '/accounts': viewAccounts, '/settings': viewSettings, '/more': viewMore,
   '/cards': viewOffers,
   '/invest': viewInvest,
-  '/tax': viewTax,
+  '/tax': viewTax, '/wealth': viewWealth,
 };
 let renderSeq = 0;
 async function render() {

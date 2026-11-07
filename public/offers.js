@@ -21,6 +21,9 @@ const LABELS = {
   withdrawal_scope: { pooled: 'Pooled across accounts', per_account: 'Per account', unknown: 'Not confirmed' },
   holding_type: { rrsp: 'RRSP', tfsa: 'TFSA', resp: 'RESP', fhsa: 'FHSA', nonreg: 'Non-registered', chequing: 'Chequing', savings: 'Savings' },
   ledger_kind: { card: 'Credit card', bank: 'Bank account', investment: 'Investment transfer' },
+  plan_kind: { annual_special: 'Annual special (insurance, fuel, business)', extraordinary: 'Extraordinary (vacation, large purchase)', potential: 'Potential spend' },
+  plan_recurrence: { once: 'Once', monthly: 'Every month', yearly: 'Every year' },
+  plan_status: { considering: 'Considering', approved: 'Approved', dropped: 'Dropped' },
   loan_type: { mortgage: 'Mortgage', heloc: 'Home equity line (HELOC)', loan: 'Loan', other: 'Other' },
   loan_event_kind: { advance_invest: 'Advance used to invest', advance_other: 'Advance used for something else', capitalized_interest: 'Interest capitalized (added to the loan)', interest_paid: 'Interest paid', principal_paid: 'Principal paid' },
   income_kind: { dividend: 'Dividend', interest: 'Interest', return_of_capital: 'Return of capital', distribution: 'Distribution (T3)' },
@@ -48,7 +51,7 @@ const FIELD = {
   remind_days: 'Remind me (days before)', applies_to: 'Applies to (products or family, comma separated)', scope: 'Scope', once_per_lifetime: 'Bonus only once per lifetime?', wait_months: 'Wait before a new bonus (months)',
   counted_from: 'Months counted from', blocked_while_held: 'Blocked while you still hold a matching card?', min_days_between: 'Min days between applications', source: 'Source / how sure are you', last_checked: 'Rule last checked',
   verified: 'Confirmed against the issuer\'s official terms?',
-  loan_type: 'Loan type', limit_cents: 'Credit limit ($)', cap_day: 'Interest is capitalized on (day of month)', opened_on: 'Opened', debt_id: 'Loan', holding_id: 'Holding it bought / paid into', event_date: 'Date',
+  recurrence: 'How often', start_date: 'Date (or first date)', end_date: 'Last date (optional)', category_id: 'Budget category', loan_type: 'Loan type', limit_cents: 'Credit limit ($)', cap_day: 'Interest is capitalized on (day of month)', opened_on: 'Opened', debt_id: 'Loan', holding_id: 'Holding it bought / paid into', event_date: 'Date',
   acb_cents: 'Adjusted cost base ($)', foreign_prop: 'Foreign property?', year: 'Tax year', person: 'Person', income_cents: 'Net income ($)', marginal_pct: 'Marginal tax rate (%)', medical_threshold_cents: 'Fixed medical threshold for the year ($)',
   tax_year: 'Tax year', spent_on: 'Date', payee: 'Paid to', reimbursed_cents: 'Reimbursed by insurance ($)', claimed: 'Already claimed?', security: 'Security', trade_date: 'Date', qty: 'Quantity', fx_rate: 'Exchange rate to CAD (blank for CAD)',
   registered: 'In a registered account (left out of cost base)?', account: 'Account', room_cents: 'Room for the year ($)', contributed_cents: 'Contributed so far ($)', from_year: 'Year it arose', used_cents: 'Used so far ($)', reinvested: 'Reinvested?', tax_flag: 'Tax treatment',
@@ -99,8 +102,8 @@ const payload = (ws) => Object.fromEntries(ws.map((w) => [w.key, w.read()]));
 async function editor(entity, kindTab, record, onDone) {
   const sc = await schema();
   const spec = sc.specs[entity];
-  const isNew = !record;
-  const rec = record || { status: entity === 'recurring' ? 'active' : entity === 'accounts' ? 'open' : entity === 'cards' ? 'open' : undefined, kind: kindTab === 'invest' ? 'invest' : 'bank', scope: 'same_card', counted_from: 'approval', frequency: 'monthly', currency: 'CAD' };
+  const isNew = !record || record.id == null;
+  const rec = !isNew ? record : { status: entity === 'recurring' ? 'active' : entity === 'accounts' ? 'open' : entity === 'cards' ? 'open' : undefined, kind: kindTab === 'invest' ? 'invest' : 'bank', scope: 'same_card', counted_from: 'approval', frequency: 'monthly', currency: 'CAD' , ...(record || {}) };
   const [cardsList, acctList, rulesList] = await Promise.all([
     entity === 'recurring' ? get('/api/offers/cards') : null, entity === 'recurring' ? get('/api/offers/accounts') : null, entity === 'cards' || entity === 'accounts' ? get('/api/offers/rules') : null]);
   const skip = new Set(entity === 'accounts' ? ['label', 'kind'] : ['label']);
@@ -108,7 +111,7 @@ async function editor(entity, kindTab, record, onDone) {
   const holdList = ['loan_events', 'income_events', 'trades'].includes(entity) ? await get('/api/offers/holdings') : null;
   const debtList = entity === 'loan_events' ? await get('/api/offers/debts') : null;
   const un = rec.unconfirmed || [];
-  dialog(`${isNew ? 'Add' : 'Edit'} ${{ cards: 'credit card', recurring: 'recurring payment', rules: 'rule', offers: 'offer', holdings: 'holding', debts: 'debt', ledger: 'bonus record', loan_events: 'loan record', income_events: 'income record', tax_years: 'tax year', receipts: 'receipt', trades: 'trade', slips: 'slip', room: 'registered room', carry: 'carry-forward' }[entity] || (rec.kind === 'invest' ? 'investment account' : 'bank account')}`, (close) => {
+  dialog(`${isNew ? 'Add' : 'Edit'} ${{ cards: 'credit card', recurring: 'recurring payment', rules: 'rule', offers: 'offer', holdings: 'holding', debts: 'debt', ledger: 'bonus record', loan_events: 'loan record', income_events: 'income record', tax_years: 'tax year', receipts: 'receipt', plan_items: 'planned or potential spend', trades: 'trade', slips: 'slip', room: 'registered room', carry: 'carry-forward' }[entity] || (rec.kind === 'invest' ? 'investment account' : 'bank account')}`, (close) => {
     const err = h('p', { class: 'form-error', role: 'alert' });
     const ws = spec.fields.filter((fd) => !skip.has(fd.key)).map((fd) => {
       const opts = { unconfirmed: un, prefix: 'e' };
