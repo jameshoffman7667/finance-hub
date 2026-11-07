@@ -228,6 +228,11 @@ async function viewOverview() {
     spend.categories.length ? categoryBars(spend.categories.slice(0, 6)) : h('p', { class: 'muted' }, 'No spending this month yet. Import a statement to fill this in.'),
     link('/budget', 'See budget'));
   out.push(h('div', { class: 'grid cols' }, worth, month));
+  try {
+    const lr = await get('/api/planner/report');
+    if (lr.total.count > 0) out.push(h('section', { class: 'card' }, h('h2', {}, 'Bonus earnings'), h('div', { class: 'big num' }, money(lr.total.net_cents) + (lr.total.estimate ? ' (estimate)' : '')),
+      h('p', { class: 'muted small' }, `${lr.total.count} offers tracked, ${money(lr.total.gross_cents)} received${lr.total.per_hour_cents != null ? `, ${money(lr.total.per_hour_cents)} per hour` : ''}.`), link('/cards?tab=ledger', 'Open the bonus ledger')));
+  } catch { /* the tile is optional */ }
   if (!o.lastImport) out.push(h('div', { class: 'notice' }, h('span', {}, 'No statements imported yet.'), link('/accounts?tab=import', h('span', { class: 'btn small' }, 'Import a statement'))));
   return shell('Overview', out);
 }

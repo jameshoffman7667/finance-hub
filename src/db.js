@@ -184,6 +184,47 @@ CREATE TABLE statement_runs (
 );
 `,
   },
+  {
+    version: 4,
+    destructive: false,
+    sql: `
+CREATE TABLE offer_terms (
+  id INTEGER PRIMARY KEY,
+  kind TEXT NOT NULL, issuer TEXT NOT NULL, product TEXT NOT NULL, status TEXT NOT NULL,
+  window_start TEXT, window_end TEXT, source_url TEXT, seen_on TEXT, terms_text TEXT, qualifies TEXT,
+  min_cents INTEGER, cap_cents INTEGER, rate_registered REAL, rate_nonreg REAL, fixed_cents INTEGER, points INTEGER, program TEXT, annual_fee_cents INTEGER, interest_pct REAL, spend_cents INTEGER,
+  enrol_by TEXT, fund_by TEXT, hold_from TEXT, hold_until TEXT, payouts TEXT, paid_cents INTEGER,
+  withdrawal_effect TEXT, withdrawal_scope TEXT, withdrawal_percent REAL, exemptions TEXT, combinable TEXT, fee_reimbursed_cents INTEGER, tax_note TEXT,
+  verified INTEGER, unconfirmed TEXT NOT NULL DEFAULT '[]'
+);
+CREATE TABLE holdings (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL, institution TEXT, account_type TEXT NOT NULL, value_cents INTEGER NOT NULL, invested INTEGER, interest_rate REAL,
+  offer_id INTEGER REFERENCES offer_terms(id) ON DELETE SET NULL, counted_cents INTEGER, smith INTEGER, notes TEXT,
+  unconfirmed TEXT NOT NULL DEFAULT '[]'
+);
+CREATE TABLE debts (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL, kind TEXT, balance_cents INTEGER NOT NULL, rate REAL NOT NULL, smith INTEGER, notes TEXT,
+  unconfirmed TEXT NOT NULL DEFAULT '[]'
+);
+CREATE TABLE ledger_entries (
+  id INTEGER PRIMARY KEY,
+  kind TEXT NOT NULL, issuer TEXT NOT NULL, title TEXT NOT NULL, status TEXT NOT NULL,
+  expected_cents INTEGER, received_cents INTEGER, received_on TEXT, capital_cents INTEGER, locked_from TEXT, locked_to TEXT, capital_earning INTEGER,
+  fees_cents INTEGER, interest_cents INTEGER, transfer_fee_cents INTEGER, fx_cents INTEGER, offer_id INTEGER REFERENCES offer_terms(id) ON DELETE SET NULL, notes TEXT,
+  unconfirmed TEXT NOT NULL DEFAULT '[]'
+);
+CREATE TABLE plans (id INTEGER PRIMARY KEY, name TEXT NOT NULL, offer_id INTEGER REFERENCES offer_terms(id) ON DELETE SET NULL, created_at TEXT NOT NULL);
+CREATE TABLE plan_steps (
+  id INTEGER PRIMARY KEY, plan_id INTEGER NOT NULL REFERENCES plans(id) ON DELETE CASCADE,
+  step_date TEXT, title TEXT NOT NULL, done INTEGER NOT NULL DEFAULT 0, remind INTEGER NOT NULL DEFAULT 1, note TEXT
+);
+CREATE TABLE effort_logs (id INTEGER PRIMARY KEY, ref_type TEXT NOT NULL, ref_id INTEGER NOT NULL, hours REAL NOT NULL, logged_on TEXT NOT NULL, note TEXT);
+CREATE INDEX idx_effort_ref ON effort_logs(ref_type, ref_id);
+CREATE INDEX idx_steps_plan ON plan_steps(plan_id);
+`,
+  },
 ];
 
 export const LATEST_SCHEMA = MIGRATIONS[MIGRATIONS.length - 1].version;

@@ -94,6 +94,7 @@ export function mountOffers({ api, db, requireAuth, route, bad, HttpError, today
     if (name === 'cards') return decorateCards(loadAll('cards'), rules, t);
     if (name === 'accounts') return decorateAccounts(loadAll('accounts'), rules, t);
     if (name === 'recurring') return decorateRecurring(loadAll('recurring'), loadAll('cards'), loadAll('accounts'), t);
+    if (name === 'plan_steps') return db.prepare('SELECT s.*, p.name AS plan_name FROM plan_steps s JOIN plans p ON p.id = s.plan_id WHERE s.done = 0 AND s.remind = 1 AND s.step_date IS NOT NULL').all();
     return loadAll(name);
   };
 

@@ -19,6 +19,13 @@ export const ENUMS = {
   frequency: E('weekly', 'biweekly', 'monthly', 'bimonthly', 'quarterly', 'semiannual', 'yearly'),
   rec_status: E('active', 'paused', 'cancelled'),
   acct_kind: E('bank', 'invest'),
+  offer_kind: E('investment_transfer', 'bank_account', 'credit_card'),
+  offer_status: E('potential', 'enrolled', 'earning', 'paid', 'forfeited'),
+  withdrawal_effect: E('reduces_qualifying_amount', 'forfeits_all_remaining', 'allowed_up_to_percent', 'none', 'unknown'),
+  withdrawal_scope: E('pooled', 'per_account', 'unknown'),
+  holding_type: E('rrsp', 'tfsa', 'resp', 'fhsa', 'nonreg', 'chequing', 'savings'),
+  ledger_kind: E('card', 'bank', 'investment'),
+  ledger_status: E('pending', 'partly_paid', 'paid', 'clawed_back', 'forfeited'),
 };
 
 // [key, type, extra]   types: text, longtext, date, money, int, real, bool, enum
@@ -78,6 +85,41 @@ export const SPECS = {
       },
     },
   },
+  offers: {
+    table: 'offer_terms', order: "CASE status WHEN 'earning' THEN 0 WHEN 'enrolled' THEN 1 WHEN 'potential' THEN 2 ELSE 3 END, issuer, product",
+    fields: [
+      f('kind', 'enum', { enum: 'offer_kind' }), f('issuer', 'text'), f('product', 'text'), f('status', 'enum', { enum: 'offer_status' }),
+      f('window_start', 'date', { optional: true }), f('window_end', 'date', { optional: true }), f('source_url', 'text', { optional: true, max: 500 }), f('seen_on', 'date', { optional: true }),
+      f('terms_text', 'longtext', { optional: true, max: 20000 }), f('qualifies', 'text', { optional: true, max: 400 }),
+      f('min_cents', 'money', { optional: true }), f('cap_cents', 'money', { optional: true }), f('rate_registered', 'real', { optional: true }), f('rate_nonreg', 'real', { optional: true }),
+      f('fixed_cents', 'money', { optional: true }), f('points', 'int', { optional: true }), f('program', 'text', { optional: true }), f('spend_cents', 'money', { optional: true }), f('annual_fee_cents', 'money', { optional: true }), f('interest_pct', 'real', { optional: true }),
+      f('enrol_by', 'date', { optional: true }), f('fund_by', 'date', { optional: true }), f('hold_from', 'date', { optional: true }), f('hold_until', 'date', { optional: true }),
+      f('payouts', 'payouts', { optional: true }), f('paid_cents', 'money', { optional: true }),
+      f('withdrawal_effect', 'enum', { enum: 'withdrawal_effect', optional: true }), f('withdrawal_scope', 'enum', { enum: 'withdrawal_scope', optional: true }), f('withdrawal_percent', 'real', { optional: true }),
+      f('exemptions', 'longtext', { optional: true }), f('combinable', 'longtext', { optional: true }), f('fee_reimbursed_cents', 'money', { optional: true }), f('tax_note', 'longtext', { optional: true }),
+      f('verified', 'bool', { optional: true }),
+    ],
+  },
+  holdings: {
+    table: 'holdings', order: 'institution, name',
+    fields: [
+      f('name', 'text'), f('institution', 'text', { optional: true }), f('account_type', 'enum', { enum: 'holding_type' }), f('value_cents', 'money'), f('invested', 'bool', { optional: true }),
+      f('interest_rate', 'real', { optional: true }), f('offer_id', 'int', { optional: true, ref: 'offer_terms' }), f('counted_cents', 'money', { optional: true }), f('smith', 'bool', { optional: true }), f('notes', 'longtext', { optional: true }),
+    ],
+  },
+  debts: {
+    table: 'debts', order: 'rate DESC, name',
+    fields: [f('name', 'text'), f('kind', 'text', { optional: true }), f('balance_cents', 'money'), f('rate', 'real'), f('smith', 'bool', { optional: true }), f('notes', 'longtext', { optional: true })],
+  },
+  ledger: {
+    table: 'ledger_entries', order: 'received_on DESC, id DESC',
+    fields: [
+      f('kind', 'enum', { enum: 'ledger_kind' }), f('issuer', 'text'), f('title', 'text'), f('status', 'enum', { enum: 'ledger_status' }), f('expected_cents', 'money', { optional: true }), f('received_cents', 'money', { optional: true }),
+      f('received_on', 'date', { optional: true }), f('capital_cents', 'money', { optional: true }), f('locked_from', 'date', { optional: true }), f('locked_to', 'date', { optional: true }), f('capital_earning', 'bool', { optional: true }),
+      f('fees_cents', 'money', { optional: true }), f('interest_cents', 'money', { optional: true }), f('transfer_fee_cents', 'money', { optional: true }), f('fx_cents', 'money', { optional: true }),
+      f('offer_id', 'int', { optional: true, ref: 'offer_terms' }), f('notes', 'longtext', { optional: true }),
+    ],
+  },
   recurring: {
     table: 'recurring', order: "CASE status WHEN 'active' THEN 0 ELSE 1 END, name",
     fields: [
@@ -114,6 +156,17 @@ export function coerce(field, v) {
       if (s.length > max) throw new FieldError(`${field.key}: at most ${max} characters`);
       if (field.pattern && !field.pattern.test(s)) throw new FieldError(`${field.key}: ${field.hint || 'invalid'}`);
       return s;
+    }
+    case 'payouts': {
+      if (typeof v !== 'string') throw new FieldError(`${field.key}: expected text`);
+      const out = [];
+      for (const line of v.split(/\r?\n/).map((x) => x.trim()).filter(Boolean)) {
+        const m = /^(\d{4}-\d{2}-\d{2})\s+(?:(\d+(?:\.\d+)?)\s*%|\$?\s*([\d,]+(?:\.\d{1,2})?))$/.exec(line);
+        if (!m || !parseDate(m[1])) throw new FieldError(`${field.key}: each line is a date then 40% or $500 (got "${line.slice(0, 30)}")`);
+        out.push(m[2] ? { date: m[1], pct: Number(m[2]) } : { date: m[1], cents: parseCents(m[3]) });
+        if (out.length > 120) throw new FieldError(`${field.key}: too many lines`);
+      }
+      return JSON.stringify(out);
     }
     case 'date': { const d = parseDate(v); if (!d || typeof v !== 'string') throw new FieldError(`${field.key}: use YYYY-MM-DD`); return d; }
     case 'money': {

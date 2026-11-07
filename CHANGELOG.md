@@ -2,6 +2,10 @@
 
 Newest first. One entry per released version; entries are never rewritten.
 
+## v0.4.0 - 2026-11-07
+**Short:** Add offer planner and bonus ledger
+**Long:** Save offer terms, compare staying with moving by return per year, and turn the choice into dated plan steps with reminders. Track each bonus with costs and time to see if it paid off. Covers P-10 and P-11.
+
 ## v0.3.0 - 2026-11-07
 **Short:** Add statements, reminders and calendar
 **Long:** Read card statement CSVs for spend progress, bonus awards and repeating charges. Reminders in the inbox, by e-mail and web push. Calendar with a private feed for Google Calendar. Covers P-6, P-7 and P-8.

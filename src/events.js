@@ -10,6 +10,7 @@ export const KINDS = {
   eligible_again: { label: 'Eligible for a new bonus again', lead: 14 },
   next_application: { label: 'Next application allowed', lead: 7 },
   bonus_received: { label: 'Bonus received', lead: 0, history: true },
+  plan_step: { label: 'Offer plan step', lead: 7 },
 };
 
 const monthsBetween = (from, to) => {
@@ -20,7 +21,7 @@ const monthsBetween = (from, to) => {
 const clampDay = (y, m, d) => `${y}-${String(m).padStart(2, '0')}-${String(Math.min(d, new Date(Date.UTC(y, m, 0)).getUTCDate())).padStart(2, '0')}`;
 
 // views: the decorated cards, accounts and recurring lists. Returns events with from <= date <= to, sorted.
-export function buildEvents({ cards, accounts, recurring }, from, to) {
+export function buildEvents({ cards, accounts, recurring, planSteps = [] }, from, to) {
   const out = [];
   const add = (kind, ref, id, date, title, detail) => { if (date && date >= from && date <= to) out.push({ key: `${kind}:${ref}${id}:${date}`, kind, date, title, detail: detail || '' }); };
   for (const r of recurring) {
@@ -48,6 +49,7 @@ export function buildEvents({ cards, accounts, recurring }, from, to) {
     }
     add('eligible_again', 'a', a.id, a.eligibility?.eligibleFrom, `Eligible again: ${a.institution}`, a.eligibility?.rule || '');
   }
+  for (const st of planSteps) add('plan_step', 'p', st.id, st.step_date, st.title, st.note || st.plan_name || '');
   return out.sort((x, y) => (x.date === y.date ? x.title.localeCompare(y.title) : x.date < y.date ? -1 : 1));
 }
 

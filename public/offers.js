@@ -1,8 +1,9 @@
 // Cards, bank and investment accounts, bonuses, recurring payments and re-application rules.
 // Loaded by app.js. Everything is built with h(), so text from the database is never parsed as markup.
+import { offersTab, holdingsTab, compareTab, plansTab, ledgerTab, plannerSettingsTab } from './planner.js';
 import { h, get, post, put, patch, del, money, fmtDate, shell, go, params, dialog, emptyState, today, render } from './app.js';
 
-const TABS = [['cards', 'Credit cards'], ['bank', 'Bank accounts'], ['invest', 'Investment accounts'], ['recurring', 'Recurring payments'], ['rules', 'Re-apply rules'], ['calendar', 'Calendar'], ['reminders', 'Reminders'], ['statements', 'Statements'], ['import', 'Import workbook']];
+const TABS = [['cards', 'Credit cards'], ['bank', 'Bank accounts'], ['invest', 'Investment accounts'], ['recurring', 'Recurring payments'], ['rules', 'Re-apply rules'], ['calendar', 'Calendar'], ['reminders', 'Reminders'], ['statements', 'Statements'], ['offers', 'Offers'], ['holdings', 'Holdings and debts'], ['compare', 'Compare'], ['plans', 'Plans'], ['ledger', 'Bonus ledger'], ['psettings', 'Planner settings'], ['import', 'Import workbook']];
 const ENTITY_OF = { cards: 'cards', bank: 'accounts', invest: 'accounts', recurring: 'recurring', rules: 'rules' };
 const LABELS = {
   card_status: { open: 'Open', frozen: 'Frozen (zero balance, locked)', closed: 'Closed', downgraded: 'Downgraded / product-changed', pending: 'Pending', declined: 'Declined' },
@@ -14,6 +15,13 @@ const LABELS = {
   scope: { same_card: 'Same card', same_family: 'Same card family', any_card: 'Any card from the issuer', any_account: 'Any account from the institution' },
   counted_from: { application: 'Application date', approval: 'Approval date', bonus_received: 'Bonus received date', closed: 'Closed or downgraded date', downgrade: 'Downgrade date' },
   consumed: { no: 'No', partly: 'Partly', yes: 'Yes' },
+  offer_kind: { investment_transfer: 'Investment transfer', bank_account: 'Bank account', credit_card: 'Credit card' },
+  offer_status: { potential: 'Potential', enrolled: 'Enrolled', earning: 'Earning', paid: 'Paid', forfeited: 'Forfeited' },
+  withdrawal_effect: { reduces_qualifying_amount: 'Reduces the qualifying amount', forfeits_all_remaining: 'Forfeits everything still unpaid', allowed_up_to_percent: 'Allowed up to a percent, more forfeits all', none: 'No effect', unknown: 'Not known' },
+  withdrawal_scope: { pooled: 'Pooled across accounts', per_account: 'Per account', unknown: 'Not confirmed' },
+  holding_type: { rrsp: 'RRSP', tfsa: 'TFSA', resp: 'RESP', fhsa: 'FHSA', nonreg: 'Non-registered', chequing: 'Chequing', savings: 'Savings' },
+  ledger_kind: { card: 'Credit card', bank: 'Bank account', investment: 'Investment transfer' },
+  ledger_status: { pending: 'Pending', partly_paid: 'Partly paid', paid: 'Paid', clawed_back: 'Clawed back', forfeited: 'Forfeited' },
 };
 const FIELD = {
   label: 'ID', owner: 'Owner', issuer: 'Issuer', product: 'Card product', family: 'Card family (for same-product rules)', holder: 'Personal or business', last4: 'Last 4 digits only',
@@ -30,7 +38,15 @@ const FIELD = {
   frequency: 'Frequency', anchor_date: 'A date it was or will be charged', card_id: 'Paid by card', acct_id: 'Paid from account', other_method: 'Other payment method', auto_pay: 'Auto-pay?', end_date: 'End date',
   remind_days: 'Remind me (days before)', applies_to: 'Applies to (products or family, comma separated)', scope: 'Scope', once_per_lifetime: 'Bonus only once per lifetime?', wait_months: 'Wait before a new bonus (months)',
   counted_from: 'Months counted from', blocked_while_held: 'Blocked while you still hold a matching card?', min_days_between: 'Min days between applications', source: 'Source / how sure are you', last_checked: 'Rule last checked',
-  verified: 'Confirmed against the issuer\'s official terms?', network: 'Network', kind: 'Kind', notes: 'Notes', status: 'Status',
+  verified: 'Confirmed against the issuer\'s official terms?',
+  window_start: 'Offer window starts', window_end: 'Offer window ends', source_url: 'Source link', seen_on: 'Date seen', qualifies: 'What qualifies', min_cents: 'Minimum to qualify ($)', cap_cents: 'Largest bonus ($)',
+  rate_registered: 'Rate, registered accounts (%)', rate_nonreg: 'Rate, non-registered accounts (%)', fixed_cents: 'Fixed cash bonus ($)', points: 'Points offered', program: 'Rewards program (as named in Planner settings)', spend_cents: 'Spend required ($)',
+  interest_pct: 'Interest rate on the balance (%)', enrol_by: 'Enrol by', fund_by: 'Fund by', hold_from: 'Hold period starts', hold_until: 'Hold period ends', payouts: 'Payout dates (one per line: date, then 40% or $500)',
+  paid_cents: 'Total paid so far ($)', withdrawal_effect: 'What a withdrawal does', withdrawal_scope: 'Does that apply per account or across all accounts?', withdrawal_percent: 'Withdrawal allowed up to (% of qualifying amount)',
+  exemptions: 'Exemptions', combinable: 'Can be combined with other offers?', tax_note: 'Tax note', value_cents: 'Current value ($)', invested: 'Invested in the market?', interest_rate: 'Interest rate (%)', offer_id: 'Offer it counts toward',
+  counted_cents: 'Amount counted as transferred in ($)', smith: 'Bought with borrowed money (Smith Manoeuvre)?', balance_cents: 'Balance owing ($)', rate: 'Interest rate (%)', title: 'Title', expected_cents: 'Bonus expected ($)',
+  capital_cents: 'Money locked in ($)', locked_from: 'Locked from', locked_to: 'Locked until', capital_earning: 'Was that money still earning meanwhile?', fees_cents: 'Fees ($)', interest_cents: 'Interest paid ($)',
+  transfer_fee_cents: 'Transfer fees, net of reimbursement ($)', fx_cents: 'Foreign exchange cost ($)', network: 'Network', kind: 'Kind', notes: 'Notes', status: 'Status',
 };
 const prettify = (k) => FIELD[k] || (k.charAt(0).toUpperCase() + k.slice(1)).replaceAll('_', ' ');
 let schemaCache = null;
@@ -50,6 +66,10 @@ function widget(sc, fd, value, opts = {}) {
   const sel = (choices) => h('select', { id }, h('option', { value: '' }, '—'), choices.map(([v, l]) => h('option', { value: v, selected: String(value) === String(v) }, l)));
   if (fd.type === 'enum') { input = sel(sc.enums[fd.enum].map((v) => [v, enumLabel(sc, fd, v)])); read = () => input.value; }
   else if (fd.type === 'bool') { input = sel([['yes', 'Yes'], ['no', 'No']].map((x) => x)); input.value = value === 1 ? 'yes' : value === 0 ? 'no' : ''; read = () => (input.value === 'yes' ? true : input.value === 'no' ? false : null); }
+  else if (fd.type === 'payouts') {
+    let lines = ''; try { lines = JSON.parse(value || '[]').map((p) => `${p.date} ${p.pct != null ? `${p.pct}%` : `$${(p.cents / 100).toFixed(2)}`}`).join('\n'); } catch { lines = ''; }
+    input = h('textarea', { id, rows: 4, placeholder: '2028-04-28 40%\n2029-03-30 60%' }, lines); read = () => input.value;
+  }
   else if (fd.type === 'longtext') { input = h('textarea', { id, rows: 2 }, value ?? ''); read = () => input.value; }
   else if (fd.type === 'date') { input = h('input', { id, type: 'date', value: value ?? '' }); read = () => input.value; }
   else if (fd.type === 'money') { input = h('input', { id, inputmode: 'decimal', placeholder: '0.00', value: value == null ? '' : cents(value) }); read = () => input.value; }
@@ -70,14 +90,16 @@ async function editor(entity, kindTab, record, onDone) {
   const rec = record || { status: entity === 'recurring' ? 'active' : entity === 'accounts' ? 'open' : entity === 'cards' ? 'open' : undefined, kind: kindTab === 'invest' ? 'invest' : 'bank', scope: 'same_card', counted_from: 'approval', frequency: 'monthly', currency: 'CAD' };
   const [cardsList, acctList, rulesList] = await Promise.all([
     entity === 'recurring' ? get('/api/offers/cards') : null, entity === 'recurring' ? get('/api/offers/accounts') : null, entity === 'cards' || entity === 'accounts' ? get('/api/offers/rules') : null]);
-  const skip = new Set(['label', 'kind']);
+  const skip = new Set(entity === 'accounts' ? ['label', 'kind'] : ['label']);
+  const offersList = ['holdings', 'ledger'].includes(entity) ? await get('/api/offers/offers') : null;
   const un = rec.unconfirmed || [];
-  dialog(`${isNew ? 'Add' : 'Edit'} ${entity === 'cards' ? 'credit card' : entity === 'accounts' ? (rec.kind === 'invest' ? 'investment account' : 'bank account') : entity === 'recurring' ? 'recurring payment' : 'rule'}`, (close) => {
+  dialog(`${isNew ? 'Add' : 'Edit'} ${{ cards: 'credit card', recurring: 'recurring payment', rules: 'rule', offers: 'offer', holdings: 'holding', debts: 'debt', ledger: 'bonus record' }[entity] || (rec.kind === 'invest' ? 'investment account' : 'bank account')}`, (close) => {
     const err = h('p', { class: 'form-error', role: 'alert' });
     const ws = spec.fields.filter((fd) => !skip.has(fd.key)).map((fd) => {
       const opts = { unconfirmed: un, prefix: 'e' };
       if (fd.key === 'status' && entity === 'cards') fd = { ...fd, enum: 'card_status' };
       if (fd.key === 'status' && entity === 'accounts') fd = { ...fd, type: 'enum', enum: 'acct_status' };
+      if (fd.key === 'offer_id' && offersList) opts.choices = offersList.items.map((o) => [String(o.id), `${o.issuer} ${o.product}`]);
       if (fd.key === 'rule_name' && rulesList) opts.choices = rulesList.items.map((r) => [r.name, r.name]);
       if (fd.key === 'card_id' && cardsList) opts.choices = cardsList.items.map((c) => [String(c.id), `${c.label} ${c.issuer} ${c.product}`]);
       if (fd.key === 'acct_id' && acctList) opts.choices = acctList.items.map((a) => [String(a.id), `${a.label} ${a.institution} ${a.account_type}`]);
@@ -103,7 +125,7 @@ async function editor(entity, kindTab, record, onDone) {
       e.preventDefault(); err.textContent = '';
       try {
         const body = payload(ws);
-        for (const w of ws) if (w.type === 'int' && (body[w.key] === '' || body[w.key] == null)) body[w.key] = null; else if ((w.key === 'card_id' || w.key === 'acct_id') && body[w.key]) body[w.key] = Number(body[w.key]);
+        for (const w of ws) if (w.type === 'int' && (body[w.key] === '' || body[w.key] == null)) body[w.key] = null; else if ((w.key === 'card_id' || w.key === 'acct_id' || w.key === 'offer_id') && body[w.key]) body[w.key] = Number(body[w.key]);
         for (const w of ws) if (w.type === 'real' && body[w.key] !== '') body[w.key] = body[w.key] === null ? null : Number(body[w.key]);
         if (isNew && entity === 'accounts') body.kind = rec.kind;
         if (bonusSpec) body.bonuses = bonusRows.map((r) => payload(r.bws));
@@ -316,6 +338,7 @@ async function statementsTab(reload) {
     cardsOpen.length ? h('div', { class: 'formgrid' }, h('div', { class: 'field' }, h('label', { for: 'stc' }, 'Card'), pick), h('div', { class: 'field' }, h('label', { for: 'stf' }, 'Statement (CSV)'), file), h('div', { class: 'field' }, h('label', { for: 'sts' }, 'Which amounts are charges?'), sign), h('div', { class: 'field' }, h('label', { for: 'std' }, 'Date format'), order)) : emptyState('No open cards', 'Add a card first.'), err, out);
 }
 
+export { widget, payload, schema, row, LABELS, enumLabel, editor, prettify };
 export async function viewOffers() {
   const tab = params().get('tab') || 'cards';
   const sc = await schema();
@@ -329,6 +352,12 @@ export async function viewOffers() {
   else if (tab === 'calendar') body = await calendarTab();
   else if (tab === 'reminders') body = await remindersTab(reload);
   else if (tab === 'statements') body = await statementsTab(reload);
+  else if (tab === 'offers') body = await offersTab();
+  else if (tab === 'holdings') body = await holdingsTab();
+  else if (tab === 'compare') body = await compareTab();
+  else if (tab === 'plans') body = await plansTab();
+  else if (tab === 'ledger') body = await ledgerTab();
+  else if (tab === 'psettings') body = await plannerSettingsTab();
   else body = importTab(reload);
   return shell('Cards and bonuses', [bar, body]);
 }

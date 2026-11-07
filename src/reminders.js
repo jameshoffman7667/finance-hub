@@ -10,7 +10,7 @@ export function mountReminders({ bigBody, app, api, db, config, requireAuth, rou
     if (!t) { t = crypto.randomBytes(24).toString('hex'); notifier.setSetting('ical_token', t); }
     return t;
   };
-  const events = (from, to) => buildEvents({ cards: view('cards'), accounts: view('accounts'), recurring: view('recurring') }, from, to);
+  const events = (from, to) => buildEvents({ cards: view('cards'), accounts: view('accounts'), recurring: view('recurring'), planSteps: view('plan_steps') }, from, to);
 
   // The feed has no sign-in: the long random address is the secret. Titles carry no amounts.
   app.get('/cal/:token.ics', (req, res) => {

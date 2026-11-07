@@ -79,6 +79,21 @@ Three more tabs on the Cards and bonuses page.
 - **Data:** schema 3 adds notify_prefs, notifications, push_subs, statement_runs. Settings table keys: notify_email, ical_token, vapid (push keys).
 - **Not built yet:** PDF statements, bank-account statements, two-way Google Calendar sync.
 
+## Offer planner and bonus ledger (v0.4.0)
+
+Six more tabs on the Cards and bonuses page: Offers, Holdings and debts, Compare, Plans, Bonus ledger, Planner settings.
+
+- **Offers.** One record per offer (investment transfer, bank account or credit card) with status (Potential, Enrolled, Earning, Paid, Forfeited), window, source link, saved terms text and the structured terms: minimum, largest bonus, rate for registered and non-registered money, fixed cash or points (with the program), spend required, annual fee, enrol-by, fund-by, hold start and end, dated payouts (one per line: a date then 40% or $500), and what a withdrawal does (reduces the qualifying amount, forfeits everything unpaid, allowed up to a percent, none, unknown) and whether that is pooled or per account. Terms are typed in by hand in this release.
+- **Holdings and debts.** A holding is an account that could move: type (RRSP, TFSA, RESP, FHSA, non-registered, chequing, savings), value, whether it is invested, interest rate, the offer it counts toward and the amount counted, and whether it was bought with borrowed money. Debts have a balance and a rate.
+- **Evaluator (fixed rules in code).** For an amount and a start date: bonus, payout dates, lock-up years, simple annual return and IRR (money out at the start, back at the hold end, bonus at the payout dates), opportunity cost, debt flag. Opportunity cost applies only to money that is not invested (the benchmark minus its interest, for the lock-up); invested money keeps earning either way, so it costs nothing. The debt flag appears only for cash-like money and only when a debt rate is higher than the offer's return; holdings marked as bought with borrowed money are skipped. Credit cards: bonus (cash plus points at the cash value, best-use value shown beside it) minus first-year fee, interest, extra spend and an optional cost per credit check. Moving a non-registered holding or a borrowed-money holding shows information-only tax warnings.
+- **Compare.** Pick a holding and offers; for each option: bonus, return per year, locked years, what leaving the current offer gives up (by its withdrawal rule, pooled across holdings counted under it), net versus staying, and the break-even (the yearly return the freed money must earn elsewhere for staying to win, over the extra lock-up). Ranked by return per year, not total cash. Anything not known (pooled or per account, real transfer amounts and dates, unconfirmed terms) is listed as an assumption.
+- **Plans.** A plan is a list of dated steps, made from an offer (enrol, fund, hold start, each payout, hold end, window close) or by hand. Steps with Remind on appear in Reminders (event Offer plan step, 7 days before by default), on the Calendar and in the private feed.
+- **Bonus ledger.** Records of bonuses (card, bank, investment) with expected and received amounts, dates, status (Pending, Partly paid, Paid, Clawed back, Forfeited), money locked and its dates, whether it kept earning, and costs (fees, interest, transfer fees net of reimbursement, foreign exchange). Time is logged per record in hours; expected hours start at 2 per card, 4 per bank account and 4 per investment transfer, and the settings tab proposes the average of finished records for you to accept. Reports: received and net by type, year and issuer, return per year on locked money, dollars per hour and a worth-it flag against the line you set ($50 an hour by default). Totals that include an estimate are labelled. A tile on Overview shows the net. Taxes: a note only (cash bonuses may be taxable; some issuers send no slip).
+- **Planner settings.** Benchmark return (7%), worth-it line ($50 per hour), cost of a credit check ($0), expected hours, and the table of points values (cents per point: cash and best use, with source and date; edited by hand and checked quarterly).
+- **API:** `/api/offers/offers|holdings|debts|ledger` (list, add, change, delete like the other record types), `POST /api/planner/evaluate|compare`, `GET|POST /api/planner/plans`, `POST /api/planner/plans/:id/steps`, `PATCH|DELETE /api/planner/steps/:id`, `DELETE /api/planner/plans/:id`, `GET|POST /api/planner/effort`, `DELETE /api/planner/effort/:id`, `GET /api/planner/report`, `POST /api/planner/ledger/from-offer/:id`, `GET|PUT /api/planner/settings`.
+- **Data:** schema 4 adds offer_terms, holdings, debts, ledger_entries, plans, plan_steps, effort_logs. Settings key: planner.
+- **Not built yet:** fetching offer pages or proposing terms from pasted text, automatic points-value refresh, automatic ledger entries from statement awards.
+
 ## Settings
 
 Install app (Chrome/Edge button; iOS instructions), change password, export everything as JSON or transactions as CSV (password re-entry), security log, version, sign out.
@@ -108,7 +123,7 @@ See `deploy/.env.example`. Required: `APP_SECRET_KEY` (32+ characters; the app r
 ## Data and storage
 
 - `/data/finance-hub.db` (SQLite, WAL: copy `.db`, `-wal` and `-shm` together, or stop the container first). `/data/backups/` receives a copy before any data-changing migration. `/files` is reserved for statements (not used yet).
-- Schema version 3 (v0.3.0 adds notify_prefs, notifications, push_subs, statement_runs; v0.2.0 adds cards, card_bonuses, inst_accounts, acct_bonuses, recurring, issuer_rules; no data is changed, so no pre-migration copy is made). Migrations are forward-only and run at start-up inside a transaction.
+- Schema version 4 (v0.4.0 adds offer_terms, holdings, debts, ledger_entries, plans, plan_steps, effort_logs; v0.3.0 adds notify_prefs, notifications, push_subs, statement_runs; v0.2.0 adds cards, card_bonuses, inst_accounts, acct_bonuses, recurring, issuer_rules; no data is changed, so no pre-migration copy is made). Migrations are forward-only and run at start-up inside a transaction.
 - Time stored in UTC; dates are plain calendar dates; display uses America/Toronto.
 
 ## API (JSON, all under /api, signed-in unless noted)
@@ -129,7 +144,7 @@ Logs go to stdout, one line per event. SIGTERM stops accepting requests, closes 
 
 ## Not yet built (planned)
 
-Statement analysis for bonuses and recurring charges, notifications, calendar with Google Calendar, offer watchlist, offer planner, Questrade import and ACB tracking, further institutions, forecast and wealth projection, tax tools, weekly offer research, live data connections.
+Offer watchlist, Questrade import and ACB tracking, further institutions, forecast and wealth projection, tax tools, weekly offer research, live data connections.
 
 ## Releases
 A release is a push to `main` that changes the version in `package.json` (CHANGELOG entry required: Short up to 50 characters, Long up to 250). The `release` GitHub Actions workflow reads the version X.Y.Z, stops if the tag vX.Y.Z or a GitHub release for it already exists or the CHANGELOG entry is missing or invalid, builds and pushes the image tags X.Y.Z, X.Y and latest, then runs `gh release create vX.Y.Z --target $GITHUB_SHA`, which also creates the tag. A push to `main` that does not change the version does nothing. A manually pushed `vX.Y.Z` tag runs the same workflow as a fallback; both triggers share a concurrency group per version, so only one of them can release a version.

@@ -177,3 +177,15 @@ fieldset.bonus legend { font-weight: 600; padding: 0 .4rem; }
 .legend { display: flex; flex-wrap: wrap; gap: .3rem 1rem; } .center { text-align: center; }
 .item.static { cursor: default; gap: .6rem; } input.narrow { width: 4.5rem; } label.check { display: flex; gap: .5rem; align-items: center; margin: .4rem 0; }
 @media (min-width: 900px) { .daycell { min-height: 76px; } }
+
+/* Offer planner */
+.only-desktop { display: none; }
+@media (min-width: 900px) { .only-phone { display: none; } .only-desktop { display: block; } }
+.actions { padding: 0 var(--gap, 12px) 8px; gap: 8px; flex-wrap: wrap; }
+.kv { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; margin: 8px 0; }
+.kv dt { color: var(--muted, #667); }
+.kv dd { margin: 0; text-align: right; }
+.cmp-table th, .cmp-table td { vertical-align: top; text-align: left; min-width: 150px; }
+.cmp-table tbody th { font-weight: 600; min-width: 140px; }
+.struck { text-decoration: line-through; opacity: .7; }
+fieldset { border: 1px solid var(--line, #ccd); border-radius: 8px; margin: 8px 0; }

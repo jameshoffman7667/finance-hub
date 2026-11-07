@@ -25,48 +25,6 @@ Type: minor (new feature, outside data)        Status: Pending
 Plan: a watchlist of cards you hold or want, with offer value, rebate, expiry, source link and date seen. Pages are fetched only on request or on a slow schedule, cached, and only facts are stored with a link back. Compare against the issuer's own terms and your eligibility from P-3. RedFlagDeals: use whatever feed or email alert the forum offers and filter by card names.
 Notes / questions: the pages read so far have no structured data or API (offer text is prose), so extraction needs review before saving. Terms of use of each site and robots rules must be checked before any scheduled fetch. Rebate-site cashback is separate from the issuer bonus and usually has its own conditions (new cardholder, income, credit score).
 
-### P-10 - Offer planner: link offer terms, evaluate the best strategy, build a plan with reminders
-Requested: 2026-11-04 (James: "link current and potential offer terms, evaluate the optimal strategy and make a plan and associated calendar reminders", after a worked comparison of the Scotia iTRADE WIN27 transfer offer against the TD Spring 2026 and Questrade 2%/4% offers)
-Type: minor (new feature, new data model)        Status: Pending
-Plan (first version):
-- Offer record, for offers you hold and ones you are considering: issuer, product, offer window, source link, saved terms text and date seen, plus structured terms: what qualifies (transfer-in, deposit, spend), rate by account type (registered / non-registered), cap, minimum, enrol-by and fund-by dates, hold-from and hold-until dates, measuring dates, payout schedule (lump sum or installments), and what a withdrawal or transfer-out does (reduces the qualifying amount, forfeits everything remaining, or is allowed up to a percentage), whether the effect is pooled across accounts or per account, offers that cannot be combined, fee reimbursements, tax note. Status: Potential / Enrolled / Earning / Paid / Forfeited. Reapplication limits come from P-3 and P-4.
-- Holdings: accounts with institution, type, current value and the offer each one is earning under, so in-flight bonuses at risk are known.
-- Evaluator (fixed rules in code, not AI): for each option on a set of holdings it reports total cash, when the cash arrives, how long the capital is locked, the equivalent annual return (bonus divided by years locked, and an IRR using the payout dates), bonuses forfeited by leaving, and the net of moving versus staying. It also reports the break-even: the annual return the freed capital would have to earn elsewhere for staying to win. Results are ranked by annual return, with total cash shown but not used to rank.
-- Terms that are unclear (pooled versus per account, whether a transfer-out counts as a withdrawal) are shown as assumptions to confirm, never silently chosen.
-- Plan: the chosen strategy saved as ordered dated steps (enrol, open account, start transfer, fund-by, do-not-withdraw-before, payout dates), each step creating reminders through P-7 and showing on the P-8 calendar. Until those exist, steps are listed with dates only.
-- Terms entry: paste text or a URL, the app proposes the structured fields, and you review before saving. Pages are fetched only on request and facts are stored with a link back (same rules as P-9).
-Decisions (James, 2026-11-04):
-- Benchmark return 7% (setting), also the expected return of any market-invested account. Opportunity cost applies only when capital is not still earning: invested capital that stays invested costs nothing; chequing / savings money is compared at its interest rate against the 7%.
-- Scope covers investment, bank account and credit card offers. Cards have almost no opportunity cost beyond the credit score effect; bank accounts are evaluated like investments, including whether leaving early makes sense.
-- Evaluate against the cost of any debt held; an offer may not make sense while holding debt.
-Notes / questions:
-- First test case to build against: Scotia iTRADE WIN27 (3% registered / 1% non-registered, hold Nov 3 2026 to Feb 28 2029, enrol by Apr 1 2027, fund by May 31 2027) versus TD Spring 2026 (hold to Jul 31 2027) and Questrade 2%/4% (24 payments from Sept 2026, 5% withdrawal limit). Full detail and expected figures (hypothetical fixture amounts) are in docs/handoff-P10-P11.md.
-- Should invested capital also be checked against debt rates, or only cash-like capital?
-Decisions (James, 2026-11-04, second round):
-- Points valuation default is cash value, with the best-use value shown beside it (seed best-use values in the handoff). The workbook now has a best-use column.
-- Debt check: skip holdings tagged Smith Manoeuvre (P-12), because investing borrowed money is the strategy. Debts and loans share one table with P-12 so the HELOC rate feeds both.
-- If an option needs a sale in a non-registered account, warn about the taxable gain and the superficial-loss rule (P-13); for a Smith Manoeuvre account also warn that moving the money could break the interest tracing.
-- Total return rule (James, 2026-11-04): wherever a total or annual return is shown (P-10 evaluator, P-11 report, P-12 net position, P-15 projection) it includes the estimated tax value of deductible carrying costs. The estimate uses interest paid from the statements and your income (P-13) at the marginal rate for the tax year, labelled as an estimate and informational only.
-
-### P-11 - Bonus earnings ledger and effort / return report
-Requested: 2026-11-04 (James: "track the bonuses earned from this and other offers (credit cards and bank accounts) to understand total gains and if the effort is worthwhile")
-Type: minor (new feature)        Status: Pending
-Plan (first version):
-- Every bonus gets expected and received amounts with dates and a status (Pending / Partly paid / Paid / Clawed back / Forfeited). Installment offers record each payment as it arrives. Fed automatically from P-2, P-4 and P-6 where an award is detected, manual otherwise. Card points are valued at a cents-per-point setting.
-- Costs against each bonus: annual fees, interest paid, transfer fees net of reimbursement, foreign exchange, and the return given up on locked capital (a benchmark rate setting, applied to the capital and the days it was locked).
-- Effort: actual time is tracked per offer (enter hours or use a start / stop timer). Expected time per offer type starts at 2 hours per credit card, 4 hours per bank account and 4 hours per investment account; once a few offers of a type are finished the app proposes the average actual time as the new expectation and you confirm. Dollars per hour uses actual time, or the expectation when no time is logged yet.
-- Reports: gross and net gains by year, by type (card, bank, investment transfer) and by issuer; annualized return on locked capital for investment offers; dollars per hour; a "worth it" flag against a minimum dollars-per-hour you set; a tile on the dashboard. Totals are labelled as estimates when any part is estimated.
-- Taxes are a flag only (a reminder that cash bonuses may be taxable and some issuers send no slip), not a calculation.
-Decisions (James, 2026-11-04):
-- Worth-it threshold $50 per hour (setting).
-- Points valuations come from an online source (Credit Card Genius, cross-checked with Prince of Travel), stored with source and date, refreshed quarterly and confirmed before saving.
-- Cost of locked capital follows the P-10 rule: 7% benchmark, applied only when the capital is not still earning.
-Notes / questions:
-- Import the history already in the workbook (P-2) as past bonuses, including ones now closed or clawed back?
-Decisions (James, 2026-11-04, second round):
-- P-11 is the single source of bonus amounts; P-13's bonus register reads from it and adds the taxable / not taxable / unsure flag.
-- Total return rule (James, 2026-11-04): wherever a total or annual return is shown (P-10 evaluator, P-11 report, P-12 net position, P-15 projection) it includes the estimated tax value of deductible carrying costs. The estimate uses interest paid from the statements and your income (P-13) at the marginal rate for the tax year, labelled as an estimate and informational only.
-
 ### P-12 - Smith Manoeuvre tracker
 Requested: 2026-11-04 (James: "track my smith maneuver progress - the outstanding debt, the investment value, total interest for tax purposes, etc. I can mark the loan and investment accounts associated with the smith maneuver manually")
 Type: minor (new feature, new account tags)        Status: Pending
@@ -171,3 +129,45 @@ Options: (a) in-app calendar as the source of truth plus a private subscribe-by-
 Notes / questions: which Google calendar (the existing reminders go to the personal calendar)?
 
 Built: in-app Calendar tab (month grid, day list) and a private .ics feed address for Google Calendar (option a). Needs a Cloudflare Access bypass for /cal/*. Not built: two-way Google Calendar API sync (option b).
+
+### P-10 - Offer planner: link offer terms, evaluate the best strategy, build a plan with reminders
+Requested: 2026-11-04 (James: "link current and potential offer terms, evaluate the optimal strategy and make a plan and associated calendar reminders", after a worked comparison of the Scotia iTRADE WIN27 transfer offer against the TD Spring 2026 and Questrade 2%/4% offers)
+Type: minor (new feature, new data model)        Status: Built in v0.4.0 (terms are typed in; proposing terms from pasted text or a link is not built and moves to P-9; debt check skips borrowed-money holdings and compares only cash-like money)
+Plan (first version):
+- Offer record, for offers you hold and ones you are considering: issuer, product, offer window, source link, saved terms text and date seen, plus structured terms: what qualifies (transfer-in, deposit, spend), rate by account type (registered / non-registered), cap, minimum, enrol-by and fund-by dates, hold-from and hold-until dates, measuring dates, payout schedule (lump sum or installments), and what a withdrawal or transfer-out does (reduces the qualifying amount, forfeits everything remaining, or is allowed up to a percentage), whether the effect is pooled across accounts or per account, offers that cannot be combined, fee reimbursements, tax note. Status: Potential / Enrolled / Earning / Paid / Forfeited. Reapplication limits come from P-3 and P-4.
+- Holdings: accounts with institution, type, current value and the offer each one is earning under, so in-flight bonuses at risk are known.
+- Evaluator (fixed rules in code, not AI): for each option on a set of holdings it reports total cash, when the cash arrives, how long the capital is locked, the equivalent annual return (bonus divided by years locked, and an IRR using the payout dates), bonuses forfeited by leaving, and the net of moving versus staying. It also reports the break-even: the annual return the freed capital would have to earn elsewhere for staying to win. Results are ranked by annual return, with total cash shown but not used to rank.
+- Terms that are unclear (pooled versus per account, whether a transfer-out counts as a withdrawal) are shown as assumptions to confirm, never silently chosen.
+- Plan: the chosen strategy saved as ordered dated steps (enrol, open account, start transfer, fund-by, do-not-withdraw-before, payout dates), each step creating reminders through P-7 and showing on the P-8 calendar. Until those exist, steps are listed with dates only.
+- Terms entry: paste text or a URL, the app proposes the structured fields, and you review before saving. Pages are fetched only on request and facts are stored with a link back (same rules as P-9).
+Decisions (James, 2026-11-04):
+- Benchmark return 7% (setting), also the expected return of any market-invested account. Opportunity cost applies only when capital is not still earning: invested capital that stays invested costs nothing; chequing / savings money is compared at its interest rate against the 7%.
+- Scope covers investment, bank account and credit card offers. Cards have almost no opportunity cost beyond the credit score effect; bank accounts are evaluated like investments, including whether leaving early makes sense.
+- Evaluate against the cost of any debt held; an offer may not make sense while holding debt.
+Notes / questions:
+- First test case to build against: Scotia iTRADE WIN27 (3% registered / 1% non-registered, hold Nov 3 2026 to Feb 28 2029, enrol by Apr 1 2027, fund by May 31 2027) versus TD Spring 2026 (hold to Jul 31 2027) and Questrade 2%/4% (24 payments from Sept 2026, 5% withdrawal limit). Full detail and expected figures (hypothetical fixture amounts) are in docs/handoff-P10-P11.md.
+- Should invested capital also be checked against debt rates, or only cash-like capital?
+Decisions (James, 2026-11-04, second round):
+- Points valuation default is cash value, with the best-use value shown beside it (seed best-use values in the handoff). The workbook now has a best-use column.
+- Debt check: skip holdings tagged Smith Manoeuvre (P-12), because investing borrowed money is the strategy. Debts and loans share one table with P-12 so the HELOC rate feeds both.
+- If an option needs a sale in a non-registered account, warn about the taxable gain and the superficial-loss rule (P-13); for a Smith Manoeuvre account also warn that moving the money could break the interest tracing.
+- Total return rule (James, 2026-11-04): wherever a total or annual return is shown (P-10 evaluator, P-11 report, P-12 net position, P-15 projection) it includes the estimated tax value of deductible carrying costs. The estimate uses interest paid from the statements and your income (P-13) at the marginal rate for the tax year, labelled as an estimate and informational only.
+
+### P-11 - Bonus earnings ledger and effort / return report
+Requested: 2026-11-04 (James: "track the bonuses earned from this and other offers (credit cards and bank accounts) to understand total gains and if the effort is worthwhile")
+Type: minor (new feature)        Status: Built in v0.4.0 (time is entered as hours, no timer yet; point values are edited by hand each quarter; automatic entries from statement awards not yet)
+Plan (first version):
+- Every bonus gets expected and received amounts with dates and a status (Pending / Partly paid / Paid / Clawed back / Forfeited). Installment offers record each payment as it arrives. Fed automatically from P-2, P-4 and P-6 where an award is detected, manual otherwise. Card points are valued at a cents-per-point setting.
+- Costs against each bonus: annual fees, interest paid, transfer fees net of reimbursement, foreign exchange, and the return given up on locked capital (a benchmark rate setting, applied to the capital and the days it was locked).
+- Effort: actual time is tracked per offer (enter hours or use a start / stop timer). Expected time per offer type starts at 2 hours per credit card, 4 hours per bank account and 4 hours per investment account; once a few offers of a type are finished the app proposes the average actual time as the new expectation and you confirm. Dollars per hour uses actual time, or the expectation when no time is logged yet.
+- Reports: gross and net gains by year, by type (card, bank, investment transfer) and by issuer; annualized return on locked capital for investment offers; dollars per hour; a "worth it" flag against a minimum dollars-per-hour you set; a tile on the dashboard. Totals are labelled as estimates when any part is estimated.
+- Taxes are a flag only (a reminder that cash bonuses may be taxable and some issuers send no slip), not a calculation.
+Decisions (James, 2026-11-04):
+- Worth-it threshold $50 per hour (setting).
+- Points valuations come from an online source (Credit Card Genius, cross-checked with Prince of Travel), stored with source and date, refreshed quarterly and confirmed before saving.
+- Cost of locked capital follows the P-10 rule: 7% benchmark, applied only when the capital is not still earning.
+Notes / questions:
+- Import the history already in the workbook (P-2) as past bonuses, including ones now closed or clawed back?
+Decisions (James, 2026-11-04, second round):
+- P-11 is the single source of bonus amounts; P-13's bonus register reads from it and adds the taxable / not taxable / unsure flag.
+- Total return rule (James, 2026-11-04): wherever a total or annual return is shown (P-10 evaluator, P-11 report, P-12 net position, P-15 projection) it includes the estimated tax value of deductible carrying costs. The estimate uses interest paid from the statements and your income (P-13) at the marginal rate for the tax year, labelled as an estimate and informational only.

@@ -83,7 +83,7 @@ test('notifications: lead days, no duplicates, read state, settings validation, 
   const { a, c, id } = await setup();
   await c.patch(`/api/offers/cards/${id}`, { due_day: 28 });
   const set = await c.get('/api/notifications/settings');
-  assert.equal(set.json.prefs.length, 6); assert.equal(set.json.smtp_configured, false);
+  assert.equal(set.json.prefs.length, 7); assert.equal(set.json.smtp_configured, false);
   assert.equal((await c.put('/api/notifications/settings', { prefs: [{ kind: 'card_payment', enabled: true, lead_days: 999 }] })).status, 400);
   assert.equal((await c.put('/api/notifications/settings', { email: 'nope' })).status, 400);
   assert.equal((await c.put('/api/notifications/settings', { email: 'me@example.com', prefs: [{ kind: 'bonus_deadline', enabled: true, lead_days: 400 }] })).status, 400);
