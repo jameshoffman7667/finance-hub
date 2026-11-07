@@ -25,38 +25,6 @@ Type: minor (new feature, outside data)        Status: Pending
 Plan: a watchlist of cards you hold or want, with offer value, rebate, expiry, source link and date seen. Pages are fetched only on request or on a slow schedule, cached, and only facts are stored with a link back. Compare against the issuer's own terms and your eligibility from P-3. RedFlagDeals: use whatever feed or email alert the forum offers and filter by card names.
 Notes / questions: the pages read so far have no structured data or API (offer text is prose), so extraction needs review before saving. Terms of use of each site and robots rules must be checked before any scheduled fetch. Rebate-site cashback is separate from the issuer bonus and usually has its own conditions (new cardholder, income, credit score).
 
-### P-12 - Smith Manoeuvre tracker
-Requested: 2026-11-04 (James: "track my smith maneuver progress - the outstanding debt, the investment value, total interest for tax purposes, etc. I can mark the loan and investment accounts associated with the smith maneuver manually")
-Type: minor (new feature, new account tags)        Status: Pending
-Plan: tag loan accounts (mortgage and HELOC segments) and non-registered investment accounts as "Smith Manoeuvre" by hand. Track: mortgage balance and principal repaid, HELOC balance split into investment-loan, capitalized interest and anything else, borrowing room, investment value and ACB, income received (dividends, interest, return of capital), interest paid per year (deductible carrying charge, claimed on line 22100), cumulative interest, estimated tax refund at a marginal rate you enter, and net position (investments minus debt). Warnings: HELOC withdrawals that do not match an investment purchase (tracing gap, personal use of the investment loan), registered accounts tagged by mistake (RRSP, TFSA, FHSA, RESP interest is not deductible), return of capital kept instead of reinvested, rate-rise stress test. Yearly export: interest by loan with borrowed amounts and dates, for your tax software and accountant.
-Notes / questions: lender and product? Is interest paid from cash or capitalized? Do you re-advance monthly? Are the loan accounts on a statement the app can read?
-Decisions (James, 2026-11-04, second round):
-- Interest is capitalized by hand each month. The app creates a monthly reminder per Smith Manoeuvre loan (through P-7, shown on the P-8 calendar). A reminder is not cleared until the statement shows the interest-capitalizing advance, or you confirm with the amount; until then it stays open and overdue, and overdue ones show at login.
-- Estimated tax value of the carrying costs = interest paid (from loan statements) at the marginal rate from your income (P-13), per tax year, labelled as an estimate. wherever a total or annual return is shown (P-10 evaluator, P-11 report, P-12 net position, P-15 projection) it includes the estimated tax value of deductible carrying costs. The estimate uses interest paid from the statements and your income (P-13) at the marginal rate for the tax year, labelled as an estimate and informational only.
-- Loans share one debt table with P-10. Moving or selling in a Smith Manoeuvre account triggers the tracing and capital gain warnings in P-10.
-
-### P-13 - Tax support center (information only)
-Requested: 2026-11-04 (James: "Add a tax support center if not already included ... investment carrying costs, medical costs, capital gains and losses with ACB, tracking, expected T5 values for interest and dividends, etc. Benchmark other tax software for suggestions")
-Type: minor (new feature area; the ACB part was already on the roadmap)        Status: Pending
-Plan: one place per tax year, clearly labelled information only (you still calculate and file in accredited software). Sections:
-- Investment carrying charges: interest on investment loans (from P-12), investment counsel / safekeeping fees on non-registered accounts, with receipts linked from paperless-ngx (P-1).
-- Medical expenses: receipts by person, any 12-month period ending in the tax year (finds the best window), family pooling, insurance reimbursements subtracted, running total against the claim threshold.
-- Capital gains and losses with ACB: pooled across brokers per taxpayer, reinvested distributions, return of capital, foreign currency at Bank of Canada rates, stock splits, superficial-loss warnings (30 days either side, including purchases in spouse or registered accounts), transfers between institutions keeping the ACB, net capital loss carry-forwards, a Schedule 3 style summary.
-- Expected slips: expected T5 (interest, dividends), T3, T5008 and T4 amounts per institution from statements; upload the real slips when they arrive and the app shows the differences.
-- Bonus register: bank, brokerage, referral and credit card bonuses with a taxable / not taxable / unsure flag and the amount, so nothing is forgotten.
-- Registered accounts: RRSP, TFSA, FHSA and RESP (CESG) contributions and room, entered from your CRA My Account figures.
-- Document checklist, carry-forwards (losses, donations, unused credits), and CSV / PDF export for tax software.
-Notes / questions: overlaps P-11 only on bonus income (P-11 flags tax, P-13 keeps the register of amounts and taxable status); keep one source of bonus amounts. Single taxpayer or James and Vanessa separately? Do you want the tax year to follow the calendar year only? Which accredited software do you use?
-Decisions (James, 2026-11-04, second round):
-- Bonus amounts come from P-11; this register only adds the tax flag and the record for the return.
-- Holds the income figures and the tax-year rate tables used by the carrying-cost tax value estimate (P-12, P-10, P-11, P-15). Rate tables are updated each year and shown with their date.
-
-### P-14 - Tax opportunity review
-Requested: 2026-11-04 (James: "Evaluate my total financial picture for tax opportunities")
-Type: minor (new feature, depends on P-2, P-12, P-13)        Status: Pending
-Plan: a list of informational checks run over your data, each with the numbers behind it and a "talk to your accountant" note: unused registered room, RESP grant room, loss harvesting candidates in non-registered accounts (and superficial-loss traps), investment interest not yet claimed, unclaimed medical or fee receipts, bonus income not yet recorded, foreign property reporting thresholds, income splitting opportunities. No advice to buy or sell; findings only.
-Notes / questions: needs enough data first (P-2 import, P-12, P-13). Until then the review is limited to what you tell me.
-
 ### P-15 - Wealth overview: balance sheet, cash flow and projection
 Requested: 2026-11-04 (James: "an overall wealth view with two components, balance sheet and cash flow ... feed a projection view")
 Type: minor (builds on the existing net worth and budget pages; the forecast tab is a placeholder today)        Status: Pending
@@ -171,3 +139,35 @@ Notes / questions:
 Decisions (James, 2026-11-04, second round):
 - P-11 is the single source of bonus amounts; P-13's bonus register reads from it and adds the taxable / not taxable / unsure flag.
 - Total return rule (James, 2026-11-04): wherever a total or annual return is shown (P-10 evaluator, P-11 report, P-12 net position, P-15 projection) it includes the estimated tax value of deductible carrying costs. The estimate uses interest paid from the statements and your income (P-13) at the marginal rate for the tax year, labelled as an estimate and informational only.
+
+### P-12 - Smith Manoeuvre tracker
+Requested: 2026-11-04 (James: "track my smith maneuver progress - the outstanding debt, the investment value, total interest for tax purposes, etc. I can mark the loan and investment accounts associated with the smith maneuver manually")
+Type: minor (new feature, new account tags)        Status: Built in v0.5.0 (the estimated tax value is shown in the Smith summary only; the P-10 evaluator and P-11 report have no carrying costs to add yet)
+Plan: tag loan accounts (mortgage and HELOC segments) and non-registered investment accounts as "Smith Manoeuvre" by hand. Track: mortgage balance and principal repaid, HELOC balance split into investment-loan, capitalized interest and anything else, borrowing room, investment value and ACB, income received (dividends, interest, return of capital), interest paid per year (deductible carrying charge, claimed on line 22100), cumulative interest, estimated tax refund at a marginal rate you enter, and net position (investments minus debt). Warnings: HELOC withdrawals that do not match an investment purchase (tracing gap, personal use of the investment loan), registered accounts tagged by mistake (RRSP, TFSA, FHSA, RESP interest is not deductible), return of capital kept instead of reinvested, rate-rise stress test. Yearly export: interest by loan with borrowed amounts and dates, for your tax software and accountant.
+Notes / questions: lender and product? Is interest paid from cash or capitalized? Do you re-advance monthly? Are the loan accounts on a statement the app can read?
+Decisions (James, 2026-11-04, second round):
+- Interest is capitalized by hand each month. The app creates a monthly reminder per Smith Manoeuvre loan (through P-7, shown on the P-8 calendar). A reminder is not cleared until the statement shows the interest-capitalizing advance, or you confirm with the amount; until then it stays open and overdue, and overdue ones show at login.
+- Estimated tax value of the carrying costs = interest paid (from loan statements) at the marginal rate from your income (P-13), per tax year, labelled as an estimate. wherever a total or annual return is shown (P-10 evaluator, P-11 report, P-12 net position, P-15 projection) it includes the estimated tax value of deductible carrying costs. The estimate uses interest paid from the statements and your income (P-13) at the marginal rate for the tax year, labelled as an estimate and informational only.
+- Loans share one debt table with P-10. Moving or selling in a Smith Manoeuvre account triggers the tracing and capital gain warnings in P-10.
+
+### P-13 - Tax support center (information only)
+Requested: 2026-11-04 (James: "Add a tax support center if not already included ... investment carrying costs, medical costs, capital gains and losses with ACB, tracking, expected T5 values for interest and dividends, etc. Benchmark other tax software for suggestions")
+Type: minor (new feature area; the ACB part was already on the roadmap)        Status: Built in v0.5.0 (information only; receipts have no paperless links until P-1; single taxpayer rows with an optional person name)
+Plan: one place per tax year, clearly labelled information only (you still calculate and file in accredited software). Sections:
+- Investment carrying charges: interest on investment loans (from P-12), investment counsel / safekeeping fees on non-registered accounts, with receipts linked from paperless-ngx (P-1).
+- Medical expenses: receipts by person, any 12-month period ending in the tax year (finds the best window), family pooling, insurance reimbursements subtracted, running total against the claim threshold.
+- Capital gains and losses with ACB: pooled across brokers per taxpayer, reinvested distributions, return of capital, foreign currency at Bank of Canada rates, stock splits, superficial-loss warnings (30 days either side, including purchases in spouse or registered accounts), transfers between institutions keeping the ACB, net capital loss carry-forwards, a Schedule 3 style summary.
+- Expected slips: expected T5 (interest, dividends), T3, T5008 and T4 amounts per institution from statements; upload the real slips when they arrive and the app shows the differences.
+- Bonus register: bank, brokerage, referral and credit card bonuses with a taxable / not taxable / unsure flag and the amount, so nothing is forgotten.
+- Registered accounts: RRSP, TFSA, FHSA and RESP (CESG) contributions and room, entered from your CRA My Account figures.
+- Document checklist, carry-forwards (losses, donations, unused credits), and CSV / PDF export for tax software.
+Notes / questions: overlaps P-11 only on bonus income (P-11 flags tax, P-13 keeps the register of amounts and taxable status); keep one source of bonus amounts. Single taxpayer or James and Vanessa separately? Do you want the tax year to follow the calendar year only? Which accredited software do you use?
+Decisions (James, 2026-11-04, second round):
+- Bonus amounts come from P-11; this register only adds the tax flag and the record for the return.
+- Holds the income figures and the tax-year rate tables used by the carrying-cost tax value estimate (P-12, P-10, P-11, P-15). Rate tables are updated each year and shown with their date.
+
+### P-14 - Tax opportunity review
+Requested: 2026-11-04 (James: "Evaluate my total financial picture for tax opportunities")
+Type: minor (new feature, depends on P-2, P-12, P-13)        Status: Built in v0.5.0 (findings only)
+Plan: a list of informational checks run over your data, each with the numbers behind it and a "talk to your accountant" note: unused registered room, RESP grant room, loss harvesting candidates in non-registered accounts (and superficial-loss traps), investment interest not yet claimed, unclaimed medical or fee receipts, bonus income not yet recorded, foreign property reporting thresholds, income splitting opportunities. No advice to buy or sell; findings only.
+Notes / questions: needs enough data first (P-2 import, P-12, P-13). Until then the review is limited to what you tell me.

@@ -1,5 +1,7 @@
 // Finance Hub front end. No framework, no inline HTML: every node is built with h() so text is never parsed as markup.
 import { viewOffers } from './offers.js';
+import { viewInvest } from './smith.js';
+import { viewTax } from './tax.js';
 const state = { info: null, route: '/', cache: {}, installEvent: null, swWaiting: null };
 const root = document.getElementById('app');
 
@@ -216,6 +218,10 @@ async function viewOverview() {
   const nw = o.networth;
   const spend = await get('/api/reports/spending');
   const out = [];
+  try {
+    const sm = await get('/api/smith/summary');
+    if (sm.overdue.length) out.push(h('div', { class: 'notice warn' }, h('span', {}, `${sm.overdue.length} Smith Manoeuvre interest capitalization${sm.overdue.length === 1 ? ' is' : 's are'} overdue.`), link('/invest', h('span', { class: 'btn small' }, 'Open'))));
+  } catch { /* optional */ }
   if (o.uncategorised > 0) out.push(h('div', { class: 'notice warn' }, h('span', {}, `${o.uncategorised} transaction${o.uncategorised === 1 ? '' : 's'} need a category.`), link('/budget?tab=transactions&uncat=1', h('span', { class: 'btn small' }, 'Review'))));
   if (o.accounts === 0) {
     out.push(h('div', { class: 'card' }, emptyState('Start with an account', 'Add your first account, record its balance, then import a statement to see spending by category.', h('button', { class: 'btn primary', onclick: () => go('/accounts') }, 'Add an account'))));
@@ -521,8 +527,8 @@ async function viewSettings() {
 const VIEWS = {
   '/': viewOverview, '/budget': viewBudget, '/accounts': viewAccounts, '/settings': viewSettings, '/more': viewMore,
   '/cards': viewOffers,
-  '/invest': async () => viewPlaceholder('Investments', 'Holdings, adjusted cost base and transfers between institutions.', ['Questrade statement import', 'Canadian average-cost (ACB) tracking, including in-kind transfers', 'Holdings and performance']),
-  '/tax': async () => viewPlaceholder('Tax', 'Capital gains and tax resources, built from your investment records.', ['Realised gains and losses by year', 'Superficial loss warnings', 'Contribution room tracking']),
+  '/invest': viewInvest,
+  '/tax': viewTax,
 };
 let renderSeq = 0;
 async function render() {

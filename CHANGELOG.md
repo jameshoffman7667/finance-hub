@@ -2,6 +2,10 @@
 
 Newest first. One entry per released version; entries are never rewritten.
 
+## v0.5.0 - 2026-11-07
+**Short:** Add Smith Manoeuvre and tax support
+**Long:** Track Smith Manoeuvre loans, interest and monthly capitalize reminders. New tax area: capital gains with cost base, medical, slips, room, carry-forwards and a review of opportunities. Covers P-12, P-13 and P-14.
+
 ## v0.4.0 - 2026-11-07
 **Short:** Add offer planner and bonus ledger
 **Long:** Save offer terms, compare staying with moving by return per year, and turn the choice into dated plan steps with reminders. Track each bonus with costs and time to see if it paid off. Covers P-10 and P-11.

@@ -1,20 +1,19 @@
-# Release v0.4.0
-Image: mybadreligon/finance-hub:0.4.0   (built when this version is pushed to main; the workflow also creates the v0.4.0 tag and release)
-Short: Add offer planner and bonus ledger
-Long: Save offer terms, compare staying with moving by return per year, and turn the choice into dated plan steps with reminders. Track each bonus with costs and time to see if it paid off. Covers P-10 and P-11.
-Type: minor (new features, new tables). Pending entries built: P-10, P-11.
+# Release v0.5.0
+Image: mybadreligon/finance-hub:0.5.0   (built when this version is pushed to main; the workflow also creates the v0.5.0 tag and release)
+Short: Add Smith Manoeuvre and tax support
+Long: Track Smith Manoeuvre loans, interest and monthly capitalize reminders. New tax area: capital gains with cost base, medical, slips, room, carry-forwards and a review of opportunities. Covers P-12, P-13 and P-14.
+Type: minor (new features, new tables). Pending entries built: P-12, P-13, P-14.
 Host port: 8070 (PORT_HOST=8070)   Container port: 8070 (same; the app reads PORT)
 Public hostname: unchanged   Needs Caddy route: no (unchanged)
-New env vars: none. Cloudflare: unchanged (the /cal/* bypass from 0.3.0 still applies; plan steps with Remind on also appear in that feed).
-Data: schema 3 -> 4 at start-up adds seven tables (offer_terms, holdings, debts, ledger_entries, plans, plan_steps, effort_logs); nothing existing changes. Back up /data before the first start anyway (stop the container, copy finance-hub.db, -wal and -shm). Settings (benchmark, worth-it line, point values, expected hours) are stored in the existing settings table under the key planner.
-Resources: unchanged. Healthcheck: GET /healthz -> 200 {"status":"ok","version":"0.4.0"} (unchanged).
+New env vars: none. Cloudflare: unchanged (/cal/* bypass from 0.3.0 still applies).
+Data: schema 4 -> 5 at start-up adds nine tables and a few columns on debts, holdings and ledger_entries; nothing existing changes. Back up /data before the first start (stop the container, copy finance-hub.db, -wal and -shm).
+Resources: unchanged. Healthcheck: GET /healthz -> 200 {"status":"ok","version":"0.5.0"} (unchanged).
 Verify after deploy:
- 1. `docker ps` healthy; `wget -qO- http://127.0.0.1:8070/healthz` shows 0.4.0.
- 2. Cards and bonuses > Offers: add a test offer (e.g. rate 3% registered, hold dates, payouts 2028-04-28 40% and 2029-03-30 60%), press Make a plan, then open Plans and Calendar: the steps show with their dates.
- 3. Holdings and debts: add a holding that counts toward an offer; Compare: pick it and another offer; the result shows return per year, what leaving gives up, net versus staying and any assumptions.
- 4. Bonus ledger: Track the bonus on an offer, mark it Paid with an amount, log some time; the totals and the Overview tile update.
- 5. Planner settings: change the benchmark, press Save, reload: it is kept.
-PWA: manifest and install unchanged; cache name finance-hub-v0.4.0. Layouts checked locally in Chromium at 390x844 and 1440x900: no horizontal scroll on the new tabs; the compare view is stacked cards on phone and one table on desktop.
-Rollback: previous image tag 0.3.0. The new tables stay and are ignored by 0.3.0.
-Known issues: no web fetching of offer pages yet (terms are typed in; P-9 later); the point values are seeded from public sources dated 2026-11-04 and must be refreshed by hand each quarter; taxes are information only; real Docker build was not run in the authoring environment, so confirm the container starts healthy after deploy.
+ 1. `docker ps` healthy; `wget -qO- http://127.0.0.1:8070/healthz` shows 0.5.0.
+ 2. Investments: add a loan tagged Smith Manoeuvre with an interest day; a monthly reminder appears, Confirm with an amount clears it; the Overview shows a notice while one is overdue.
+ 3. Tax > Years: add the current year with income and marginal rate; Investments > Interest by year shows an estimated tax value.
+ 4. Tax > Capital gains: add a buy and a sale; the table and Schedule 3 style rows update; Tax > Review lists findings; Download CSV opens.
+PWA: manifest and install unchanged; cache name finance-hub-v0.5.0; the shell cache now also lists planner.js, smith.js and tax.js (planner.js was missing in 0.4.0, so Cards could fail offline). Layouts checked locally in Chromium at 390x844 and 1440x900: no horizontal scroll.
+Rollback: previous image tag 0.4.0. The new tables and columns stay and are ignored by 0.4.0.
+Known issues: tax figures are information only and rely on rates and thresholds you enter; no paperless-ngx receipt links yet (P-1); foreign amounts need the exchange rate typed on each trade; real Docker build was not run in the authoring environment, so confirm the container starts healthy after deploy.
 Backup tier: small/critical (Tier 1).

@@ -21,6 +21,15 @@ const LABELS = {
   withdrawal_scope: { pooled: 'Pooled across accounts', per_account: 'Per account', unknown: 'Not confirmed' },
   holding_type: { rrsp: 'RRSP', tfsa: 'TFSA', resp: 'RESP', fhsa: 'FHSA', nonreg: 'Non-registered', chequing: 'Chequing', savings: 'Savings' },
   ledger_kind: { card: 'Credit card', bank: 'Bank account', investment: 'Investment transfer' },
+  loan_type: { mortgage: 'Mortgage', heloc: 'Home equity line (HELOC)', loan: 'Loan', other: 'Other' },
+  loan_event_kind: { advance_invest: 'Advance used to invest', advance_other: 'Advance used for something else', capitalized_interest: 'Interest capitalized (added to the loan)', interest_paid: 'Interest paid', principal_paid: 'Principal paid' },
+  income_kind: { dividend: 'Dividend', interest: 'Interest', return_of_capital: 'Return of capital', distribution: 'Distribution (T3)' },
+  receipt_category: { medical: 'Medical', investment_fee: 'Investment fees', donation: 'Donation', other: 'Other' },
+  trade_kind: { buy: 'Buy', sell: 'Sell', reinvest: 'Reinvested distribution', return_of_capital: 'Return of capital', split: 'Split (enter the multiple, 2 for two-for-one)' },
+  slip_kind: { t5_interest: 'T5 interest', t5_dividends: 'T5 dividends', t3: 'T3', t5008: 'T5008', t4: 'T4', other: 'Other' },
+  room_account: { rrsp: 'RRSP', tfsa: 'TFSA', fhsa: 'FHSA', resp: 'RESP' },
+  tax_flag: { taxable: 'Taxable', not_taxable: 'Not taxable', unsure: 'Not sure' },
+  carry_kind: { net_capital_loss: 'Net capital loss', donation: 'Donations', tuition: 'Tuition', other: 'Other' },
   ledger_status: { pending: 'Pending', partly_paid: 'Partly paid', paid: 'Paid', clawed_back: 'Clawed back', forfeited: 'Forfeited' },
 };
 const FIELD = {
@@ -39,6 +48,10 @@ const FIELD = {
   remind_days: 'Remind me (days before)', applies_to: 'Applies to (products or family, comma separated)', scope: 'Scope', once_per_lifetime: 'Bonus only once per lifetime?', wait_months: 'Wait before a new bonus (months)',
   counted_from: 'Months counted from', blocked_while_held: 'Blocked while you still hold a matching card?', min_days_between: 'Min days between applications', source: 'Source / how sure are you', last_checked: 'Rule last checked',
   verified: 'Confirmed against the issuer\'s official terms?',
+  loan_type: 'Loan type', limit_cents: 'Credit limit ($)', cap_day: 'Interest is capitalized on (day of month)', opened_on: 'Opened', debt_id: 'Loan', holding_id: 'Holding it bought / paid into', event_date: 'Date',
+  acb_cents: 'Adjusted cost base ($)', foreign_prop: 'Foreign property?', year: 'Tax year', person: 'Person', income_cents: 'Net income ($)', marginal_pct: 'Marginal tax rate (%)', medical_threshold_cents: 'Fixed medical threshold for the year ($)',
+  tax_year: 'Tax year', spent_on: 'Date', payee: 'Paid to', reimbursed_cents: 'Reimbursed by insurance ($)', claimed: 'Already claimed?', security: 'Security', trade_date: 'Date', qty: 'Quantity', fx_rate: 'Exchange rate to CAD (blank for CAD)',
+  registered: 'In a registered account (left out of cost base)?', account: 'Account', room_cents: 'Room for the year ($)', contributed_cents: 'Contributed so far ($)', from_year: 'Year it arose', used_cents: 'Used so far ($)', reinvested: 'Reinvested?', tax_flag: 'Tax treatment',
   window_start: 'Offer window starts', window_end: 'Offer window ends', source_url: 'Source link', seen_on: 'Date seen', qualifies: 'What qualifies', min_cents: 'Minimum to qualify ($)', cap_cents: 'Largest bonus ($)',
   rate_registered: 'Rate, registered accounts (%)', rate_nonreg: 'Rate, non-registered accounts (%)', fixed_cents: 'Fixed cash bonus ($)', points: 'Points offered', program: 'Rewards program (as named in Planner settings)', spend_cents: 'Spend required ($)',
   interest_pct: 'Interest rate on the balance (%)', enrol_by: 'Enrol by', fund_by: 'Fund by', hold_from: 'Hold period starts', hold_until: 'Hold period ends', payouts: 'Payout dates (one per line: date, then 40% or $500)',
@@ -92,13 +105,17 @@ async function editor(entity, kindTab, record, onDone) {
     entity === 'recurring' ? get('/api/offers/cards') : null, entity === 'recurring' ? get('/api/offers/accounts') : null, entity === 'cards' || entity === 'accounts' ? get('/api/offers/rules') : null]);
   const skip = new Set(entity === 'accounts' ? ['label', 'kind'] : ['label']);
   const offersList = ['holdings', 'ledger'].includes(entity) ? await get('/api/offers/offers') : null;
+  const holdList = ['loan_events', 'income_events', 'trades'].includes(entity) ? await get('/api/offers/holdings') : null;
+  const debtList = entity === 'loan_events' ? await get('/api/offers/debts') : null;
   const un = rec.unconfirmed || [];
-  dialog(`${isNew ? 'Add' : 'Edit'} ${{ cards: 'credit card', recurring: 'recurring payment', rules: 'rule', offers: 'offer', holdings: 'holding', debts: 'debt', ledger: 'bonus record' }[entity] || (rec.kind === 'invest' ? 'investment account' : 'bank account')}`, (close) => {
+  dialog(`${isNew ? 'Add' : 'Edit'} ${{ cards: 'credit card', recurring: 'recurring payment', rules: 'rule', offers: 'offer', holdings: 'holding', debts: 'debt', ledger: 'bonus record', loan_events: 'loan record', income_events: 'income record', tax_years: 'tax year', receipts: 'receipt', trades: 'trade', slips: 'slip', room: 'registered room', carry: 'carry-forward' }[entity] || (rec.kind === 'invest' ? 'investment account' : 'bank account')}`, (close) => {
     const err = h('p', { class: 'form-error', role: 'alert' });
     const ws = spec.fields.filter((fd) => !skip.has(fd.key)).map((fd) => {
       const opts = { unconfirmed: un, prefix: 'e' };
       if (fd.key === 'status' && entity === 'cards') fd = { ...fd, enum: 'card_status' };
       if (fd.key === 'status' && entity === 'accounts') fd = { ...fd, type: 'enum', enum: 'acct_status' };
+      if (fd.key === 'holding_id' && holdList) opts.choices = holdList.items.map((x) => [String(x.id), `${x.institution || ''} ${x.name}`.trim()]);
+      if (fd.key === 'debt_id' && debtList) opts.choices = debtList.items.map((x) => [String(x.id), x.name]);
       if (fd.key === 'offer_id' && offersList) opts.choices = offersList.items.map((o) => [String(o.id), `${o.issuer} ${o.product}`]);
       if (fd.key === 'rule_name' && rulesList) opts.choices = rulesList.items.map((r) => [r.name, r.name]);
       if (fd.key === 'card_id' && cardsList) opts.choices = cardsList.items.map((c) => [String(c.id), `${c.label} ${c.issuer} ${c.product}`]);
@@ -125,7 +142,7 @@ async function editor(entity, kindTab, record, onDone) {
       e.preventDefault(); err.textContent = '';
       try {
         const body = payload(ws);
-        for (const w of ws) if (w.type === 'int' && (body[w.key] === '' || body[w.key] == null)) body[w.key] = null; else if ((w.key === 'card_id' || w.key === 'acct_id' || w.key === 'offer_id') && body[w.key]) body[w.key] = Number(body[w.key]);
+        for (const w of ws) if (w.type === 'int' && (body[w.key] === '' || body[w.key] == null)) body[w.key] = null; else if ((w.key === 'card_id' || w.key === 'acct_id' || w.key === 'offer_id' || w.key === 'holding_id' || w.key === 'debt_id') && body[w.key]) body[w.key] = Number(body[w.key]);
         for (const w of ws) if (w.type === 'real' && body[w.key] !== '') body[w.key] = body[w.key] === null ? null : Number(body[w.key]);
         if (isNew && entity === 'accounts') body.kind = rec.kind;
         if (bonusSpec) body.bonuses = bonusRows.map((r) => payload(r.bws));

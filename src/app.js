@@ -11,6 +11,7 @@ import { toCsv } from './csv.js';
 import { mountOffers } from './offers.js';
 import { mountReminders } from './reminders.js';
 import { mountPlanner } from './planner-routes.js';
+import { mountTax } from './tax-routes.js';
 import { createNotifier } from './notify.js';
 
 const ACCOUNT_TYPES = {
@@ -558,7 +559,7 @@ export function createApp({ db, config, log }) {
   api.get('/export.json', requireAuth, requireStepUp, route((req, res) => {
     audit(req, req.session.user_id, 'export', 'json');
     const dump = {};
-    for (const t of ['accounts', 'valuations', 'categories', 'rules', 'import_batches', 'transactions', 'cards', 'card_bonuses', 'inst_accounts', 'acct_bonuses', 'recurring', 'issuer_rules', 'offer_terms', 'holdings', 'debts', 'ledger_entries', 'plans', 'plan_steps', 'effort_logs']) dump[t] = db.prepare(`SELECT * FROM ${t}`).all();
+    for (const t of ['accounts', 'valuations', 'categories', 'rules', 'import_batches', 'transactions', 'cards', 'card_bonuses', 'inst_accounts', 'acct_bonuses', 'recurring', 'issuer_rules', 'offer_terms', 'holdings', 'debts', 'ledger_entries', 'plans', 'plan_steps', 'effort_logs', 'loan_events', 'income_events', 'tax_years', 'tax_receipts', 'acb_trades', 'tax_slips', 'registered_room', 'carryforwards', 'tax_checklist']) dump[t] = db.prepare(`SELECT * FROM ${t}`).all();
     res.set('Content-Disposition', 'attachment; filename="finance-hub-export.json"').json({ app: 'finance-hub', version: config.version, exported_at: nowIso(), ...dump });
   }));
   api.get('/export/transactions.csv', requireAuth, requireStepUp, route((req, res) => {
@@ -576,6 +577,7 @@ export function createApp({ db, config, log }) {
   const { view } = mountOffers({ api, db, requireAuth, route, bad, HttpError, today: todayFn, bigBody, audit, nowIso });
   const notifier = createNotifier({ db, config, log, view, today: todayFn, nowIso });
   mountPlanner({ api, db, requireAuth, route, bad, HttpError, today: todayFn, audit, nowIso, notifier });
+  mountTax({ api, db, requireAuth, route, bad, HttpError, today: todayFn, audit, nowIso });
   mountReminders({ bigBody, app, api, db, config, requireAuth, route, bad, HttpError, today: todayFn, audit, nowIso, notifier, view });
   // Check for due reminders shortly after start and then every hour.
   const remindTimer = setInterval(() => notifier.run().catch((e) => log.warn('reminder check failed', { err: e.message })), 3600e3);

@@ -25,6 +25,15 @@ export const ENUMS = {
   withdrawal_scope: E('pooled', 'per_account', 'unknown'),
   holding_type: E('rrsp', 'tfsa', 'resp', 'fhsa', 'nonreg', 'chequing', 'savings'),
   ledger_kind: E('card', 'bank', 'investment'),
+  loan_type: E('mortgage', 'heloc', 'loan', 'other'),
+  loan_event_kind: E('advance_invest', 'advance_other', 'capitalized_interest', 'interest_paid', 'principal_paid'),
+  income_kind: E('dividend', 'interest', 'return_of_capital', 'distribution'),
+  receipt_category: E('medical', 'investment_fee', 'donation', 'other'),
+  trade_kind: E('buy', 'sell', 'reinvest', 'return_of_capital', 'split'),
+  slip_kind: E('t5_interest', 't5_dividends', 't3', 't5008', 't4', 'other'),
+  room_account: E('rrsp', 'tfsa', 'fhsa', 'resp'),
+  tax_flag: E('taxable', 'not_taxable', 'unsure'),
+  carry_kind: E('net_capital_loss', 'donation', 'tuition', 'other'),
   ledger_status: E('pending', 'partly_paid', 'paid', 'clawed_back', 'forfeited'),
 };
 
@@ -104,21 +113,53 @@ export const SPECS = {
     table: 'holdings', order: 'institution, name',
     fields: [
       f('name', 'text'), f('institution', 'text', { optional: true }), f('account_type', 'enum', { enum: 'holding_type' }), f('value_cents', 'money'), f('invested', 'bool', { optional: true }),
-      f('interest_rate', 'real', { optional: true }), f('offer_id', 'int', { optional: true, ref: 'offer_terms' }), f('counted_cents', 'money', { optional: true }), f('smith', 'bool', { optional: true }), f('notes', 'longtext', { optional: true }),
+      f('interest_rate', 'real', { optional: true }), f('offer_id', 'int', { optional: true, ref: 'offer_terms' }), f('counted_cents', 'money', { optional: true }), f('acb_cents', 'money', { optional: true }), f('foreign_prop', 'bool', { optional: true }), f('smith', 'bool', { optional: true }), f('notes', 'longtext', { optional: true }),
     ],
   },
   debts: {
     table: 'debts', order: 'rate DESC, name',
-    fields: [f('name', 'text'), f('kind', 'text', { optional: true }), f('balance_cents', 'money'), f('rate', 'real'), f('smith', 'bool', { optional: true }), f('notes', 'longtext', { optional: true })],
+    fields: [f('name', 'text'), f('kind', 'text', { optional: true }), f('loan_type', 'enum', { enum: 'loan_type', optional: true }), f('balance_cents', 'money'), f('rate', 'real'), f('limit_cents', 'money', { optional: true }), f('cap_day', 'int', { optional: true, min: 1, max: 31 }), f('opened_on', 'date', { optional: true }), f('smith', 'bool', { optional: true }), f('notes', 'longtext', { optional: true })],
   },
   ledger: {
     table: 'ledger_entries', order: 'received_on DESC, id DESC',
     fields: [
       f('kind', 'enum', { enum: 'ledger_kind' }), f('issuer', 'text'), f('title', 'text'), f('status', 'enum', { enum: 'ledger_status' }), f('expected_cents', 'money', { optional: true }), f('received_cents', 'money', { optional: true }),
       f('received_on', 'date', { optional: true }), f('capital_cents', 'money', { optional: true }), f('locked_from', 'date', { optional: true }), f('locked_to', 'date', { optional: true }), f('capital_earning', 'bool', { optional: true }),
-      f('fees_cents', 'money', { optional: true }), f('interest_cents', 'money', { optional: true }), f('transfer_fee_cents', 'money', { optional: true }), f('fx_cents', 'money', { optional: true }),
+      f('fees_cents', 'money', { optional: true }), f('interest_cents', 'money', { optional: true }), f('transfer_fee_cents', 'money', { optional: true }), f('fx_cents', 'money', { optional: true }), f('tax_flag', 'enum', { enum: 'tax_flag', optional: true }),
       f('offer_id', 'int', { optional: true, ref: 'offer_terms' }), f('notes', 'longtext', { optional: true }),
     ],
+  },
+  loan_events: {
+    table: 'loan_events', order: 'event_date DESC, id DESC',
+    fields: [f('debt_id', 'int', { ref: 'debts' }), f('event_date', 'date'), f('kind', 'enum', { enum: 'loan_event_kind' }), f('amount_cents', 'money'), f('holding_id', 'int', { optional: true, ref: 'holdings' }), f('note', 'text', { optional: true, max: 300 })],
+  },
+  income_events: {
+    table: 'income_events', order: 'event_date DESC, id DESC',
+    fields: [f('holding_id', 'int', { ref: 'holdings' }), f('event_date', 'date'), f('kind', 'enum', { enum: 'income_kind' }), f('amount_cents', 'money'), f('reinvested', 'bool', { optional: true }), f('note', 'text', { optional: true, max: 300 })],
+  },
+  tax_years: {
+    table: 'tax_years', order: 'year DESC, person',
+    fields: [f('year', 'int', { min: 2000, max: 2100 }), f('person', 'text', { optional: true, max: 60 }), f('income_cents', 'money', { optional: true }), f('marginal_pct', 'real', { optional: true, max: 60 }), f('medical_threshold_cents', 'money', { optional: true }), f('note', 'longtext', { optional: true })],
+  },
+  receipts: {
+    table: 'tax_receipts', order: 'spent_on DESC, id DESC',
+    fields: [f('tax_year', 'int', { min: 2000, max: 2100 }), f('category', 'enum', { enum: 'receipt_category' }), f('person', 'text', { optional: true, max: 60 }), f('spent_on', 'date'), f('payee', 'text', { optional: true }), f('amount_cents', 'money'), f('reimbursed_cents', 'money', { optional: true }), f('claimed', 'bool', { optional: true }), f('note', 'text', { optional: true, max: 300 })],
+  },
+  trades: {
+    table: 'acb_trades', order: 'trade_date DESC, id DESC',
+    fields: [f('security', 'text', { max: 60 }), f('trade_date', 'date'), f('kind', 'enum', { enum: 'trade_kind' }), f('qty', 'real', { optional: true, max: 1e9 }), f('amount_cents', 'money'), f('fees_cents', 'money', { optional: true }), f('fx_rate', 'real', { optional: true, max: 1000 }), f('holding_id', 'int', { optional: true, ref: 'holdings' }), f('registered', 'bool', { optional: true }), f('note', 'text', { optional: true, max: 300 })],
+  },
+  slips: {
+    table: 'tax_slips', order: 'tax_year DESC, institution',
+    fields: [f('tax_year', 'int', { min: 2000, max: 2100 }), f('institution', 'text'), f('kind', 'enum', { enum: 'slip_kind' }), f('amount_cents', 'money'), f('note', 'text', { optional: true, max: 300 })],
+  },
+  room: {
+    table: 'registered_room', order: 'tax_year DESC, account',
+    fields: [f('tax_year', 'int', { min: 2000, max: 2100 }), f('account', 'enum', { enum: 'room_account' }), f('person', 'text', { optional: true, max: 60 }), f('room_cents', 'money'), f('contributed_cents', 'money', { optional: true }), f('note', 'text', { optional: true, max: 300 })],
+  },
+  carry: {
+    table: 'carryforwards', order: 'from_year DESC, kind',
+    fields: [f('kind', 'enum', { enum: 'carry_kind' }), f('from_year', 'int', { min: 1990, max: 2100 }), f('amount_cents', 'money'), f('used_cents', 'money', { optional: true }), f('note', 'text', { optional: true, max: 300 })],
   },
   recurring: {
     table: 'recurring', order: "CASE status WHEN 'active' THEN 0 ELSE 1 END, name",
@@ -180,7 +221,7 @@ export function coerce(field, v) {
       if (!Number.isInteger(n) || n < (field.min ?? 0) || n > (field.max ?? 1e9)) throw new FieldError(`${field.key}: whole number ${field.min ?? 0}-${field.max ?? ''}`);
       return n;
     }
-    case 'real': { const n = Number(v); if (!Number.isFinite(n) || n < 0 || n > 1000) throw new FieldError(`${field.key}: not a valid number`); return n; }
+    case 'real': { const n = Number(v); if (!Number.isFinite(n) || n < 0 || n > (field.max ?? 1000)) throw new FieldError(`${field.key}: not a valid number`); return n; }
     case 'bool': return v === true || v === 1 || v === 'yes' || v === 'Yes' ? 1 : v === false || v === 0 || v === 'no' || v === 'No' ? 0 : (() => { throw new FieldError(`${field.key}: yes or no`); })();
     case 'enum': if (!ENUMS[field.enum].includes(v)) throw new FieldError(`${field.key}: not one of ${ENUMS[field.enum].join(', ')}`); return v;
     default: throw new FieldError(`${field.key}: unsupported`);

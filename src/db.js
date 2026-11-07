@@ -225,6 +225,57 @@ CREATE INDEX idx_effort_ref ON effort_logs(ref_type, ref_id);
 CREATE INDEX idx_steps_plan ON plan_steps(plan_id);
 `,
   },
+  {
+    version: 5,
+    destructive: false,
+    sql: `
+ALTER TABLE debts ADD COLUMN loan_type TEXT;
+ALTER TABLE debts ADD COLUMN limit_cents INTEGER;
+ALTER TABLE debts ADD COLUMN cap_day INTEGER;
+ALTER TABLE debts ADD COLUMN opened_on TEXT;
+ALTER TABLE holdings ADD COLUMN acb_cents INTEGER;
+ALTER TABLE holdings ADD COLUMN foreign_prop INTEGER;
+ALTER TABLE ledger_entries ADD COLUMN tax_flag TEXT;
+CREATE TABLE loan_events (
+  id INTEGER PRIMARY KEY, debt_id INTEGER NOT NULL REFERENCES debts(id) ON DELETE CASCADE,
+  event_date TEXT NOT NULL, kind TEXT NOT NULL, amount_cents INTEGER NOT NULL, holding_id INTEGER REFERENCES holdings(id) ON DELETE SET NULL, note TEXT,
+  unconfirmed TEXT NOT NULL DEFAULT '[]'
+);
+CREATE TABLE income_events (
+  id INTEGER PRIMARY KEY, holding_id INTEGER NOT NULL REFERENCES holdings(id) ON DELETE CASCADE,
+  event_date TEXT NOT NULL, kind TEXT NOT NULL, amount_cents INTEGER NOT NULL, reinvested INTEGER, note TEXT,
+  unconfirmed TEXT NOT NULL DEFAULT '[]'
+);
+CREATE TABLE tax_years (
+  id INTEGER PRIMARY KEY, year INTEGER NOT NULL, person TEXT, income_cents INTEGER, marginal_pct REAL, medical_threshold_cents INTEGER, note TEXT,
+  unconfirmed TEXT NOT NULL DEFAULT '[]'
+);
+CREATE UNIQUE INDEX idx_tax_year_person ON tax_years(year, COALESCE(person, ''));
+CREATE TABLE tax_receipts (
+  id INTEGER PRIMARY KEY, tax_year INTEGER NOT NULL, category TEXT NOT NULL, person TEXT, spent_on TEXT NOT NULL, payee TEXT, amount_cents INTEGER NOT NULL, reimbursed_cents INTEGER, claimed INTEGER, note TEXT,
+  unconfirmed TEXT NOT NULL DEFAULT '[]'
+);
+CREATE TABLE acb_trades (
+  id INTEGER PRIMARY KEY, security TEXT NOT NULL, trade_date TEXT NOT NULL, kind TEXT NOT NULL, qty REAL, amount_cents INTEGER NOT NULL, fees_cents INTEGER, fx_rate REAL, holding_id INTEGER REFERENCES holdings(id) ON DELETE SET NULL, registered INTEGER, note TEXT,
+  unconfirmed TEXT NOT NULL DEFAULT '[]'
+);
+CREATE TABLE tax_slips (
+  id INTEGER PRIMARY KEY, tax_year INTEGER NOT NULL, institution TEXT NOT NULL, kind TEXT NOT NULL, amount_cents INTEGER NOT NULL, note TEXT,
+  unconfirmed TEXT NOT NULL DEFAULT '[]'
+);
+CREATE TABLE registered_room (
+  id INTEGER PRIMARY KEY, tax_year INTEGER NOT NULL, account TEXT NOT NULL, person TEXT, room_cents INTEGER NOT NULL, contributed_cents INTEGER, note TEXT,
+  unconfirmed TEXT NOT NULL DEFAULT '[]'
+);
+CREATE TABLE carryforwards (
+  id INTEGER PRIMARY KEY, kind TEXT NOT NULL, from_year INTEGER NOT NULL, amount_cents INTEGER NOT NULL, used_cents INTEGER, note TEXT,
+  unconfirmed TEXT NOT NULL DEFAULT '[]'
+);
+CREATE TABLE tax_checklist (tax_year INTEGER NOT NULL, item TEXT NOT NULL, done INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (tax_year, item));
+CREATE INDEX idx_loan_events ON loan_events(debt_id, event_date);
+CREATE INDEX idx_trades ON acb_trades(security, trade_date);
+`,
+  },
 ];
 
 export const LATEST_SCHEMA = MIGRATIONS[MIGRATIONS.length - 1].version;

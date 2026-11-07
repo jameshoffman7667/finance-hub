@@ -53,7 +53,7 @@ export function createNotifier({ db, config, log, view, today, nowIso }) {
 
   const run = async () => {
     const t = today();
-    const events = buildEvents({ cards: view('cards'), accounts: view('accounts'), recurring: view('recurring'), planSteps: view('plan_steps') }, t, addDays(t, 120));
+    const events = buildEvents({ cards: view('cards'), accounts: view('accounts'), recurring: view('recurring'), planSteps: view('plan_steps'), smith: view('smith_reminders') }, t, addDays(t, 120), { overdue: true });
     const pm = new Map(prefs().map((p) => [p.kind, p]));
     const to = getSetting('notify_email');
     let created = 0;

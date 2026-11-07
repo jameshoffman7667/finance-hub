@@ -5,6 +5,7 @@ import { addMonths, daysBetween } from './dates.js';
 import { evaluate, fromCard, fromAccount } from './eligibility.js';
 import { nextCharge, yearlyCents, monthlyCents, FREQUENCIES } from './recurring.js';
 import { previewWorkbook, applyWorkbook } from './workbook.js';
+import { capitalizationReminders } from './smith.js';
 
 const nextDayOfMonth = (day, today) => {
   if (!day) return null;
@@ -95,6 +96,11 @@ export function mountOffers({ api, db, requireAuth, route, bad, HttpError, today
     if (name === 'accounts') return decorateAccounts(loadAll('accounts'), rules, t);
     if (name === 'recurring') return decorateRecurring(loadAll('recurring'), loadAll('cards'), loadAll('accounts'), t);
     if (name === 'plan_steps') return db.prepare('SELECT s.*, p.name AS plan_name FROM plan_steps s JOIN plans p ON p.id = s.plan_id WHERE s.done = 0 AND s.remind = 1 AND s.step_date IS NOT NULL').all();
+    if (name === 'smith_reminders') {
+      const loans = db.prepare('SELECT * FROM debts WHERE smith = 1 AND cap_day IS NOT NULL').all();
+      const ev = db.prepare("SELECT debt_id, kind, event_date FROM loan_events WHERE kind = 'capitalized_interest'").all();
+      return capitalizationReminders(loans, ev, t);
+    }
     return loadAll(name);
   };
 
