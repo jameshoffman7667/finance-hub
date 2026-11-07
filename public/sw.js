@@ -1,5 +1,5 @@
 // Finance Hub service worker. Caches the app shell only; never API responses or signed-in pages.
-const VERSION = '0.2.0';
+const VERSION = '0.3.0';
 const CACHE = `finance-hub-v${VERSION}`;
 const SHELL = ['/', '/offline.html', '/app.css', '/app.js', '/offers.js', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/apple-touch-icon.png'];
 
@@ -32,4 +32,15 @@ self.addEventListener('fetch', (event) => {
   if (SHELL.includes(url.pathname) || url.pathname.startsWith('/icons/')) {
     event.respondWith(caches.match(req).then((hit) => hit || fetch(req)));
   }
+});
+
+self.addEventListener('push', (event) => {
+  let d = {};
+  try { d = event.data ? event.data.json() : {}; } catch { d = { title: 'Finance Hub', body: event.data ? event.data.text() : '' }; }
+  event.waitUntil(self.registration.showNotification(d.title || 'Finance Hub', { body: d.body || '', icon: '/icons/icon-192.png', data: { url: d.url || '/cards?tab=reminders' } }));
+});
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || '/';
+  event.waitUntil(self.clients.matchAll({ type: 'window' }).then((list) => { const c = list.find((w) => 'focus' in w); return c ? (c.navigate(url), c.focus()) : self.clients.openWindow(url); }));
 });

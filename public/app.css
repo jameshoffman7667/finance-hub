@@ -165,3 +165,15 @@ fieldset.bonus legend { font-weight: 600; padding: 0 .4rem; }
 .pill.red { background: color-mix(in srgb, #c62828 16%, var(--surface)); color: #c62828; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .pill.red { color: #ff8a80; } }
 :root[data-theme="dark"] .pill.red { color: #ff8a80; }
+
+/* ---------- calendar and reminders (v0.3.0) ---------- */
+.calgrid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; margin: .8rem 0; }
+.calgrid .dow { text-align: center; font-size: .75rem; color: var(--muted); padding: .2rem 0; }
+.daycell { min-height: 52px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: inherit; display: flex; flex-direction: column; align-items: flex-start; padding: .25rem .35rem; cursor: pointer; font: inherit; }
+.daycell.other { opacity: .45; } .daycell.today { border-color: var(--accent); } .daycell.picked { outline: 2px solid var(--accent); }
+.daycell .dnum { font-size: .8rem; } .dots { display: flex; gap: 3px; flex-wrap: wrap; margin-top: auto; }
+.dots i, .legend i, .kdot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.k-rec { background: #5c6bc0 !important; } .k-pay { background: #ef6c00 !important; } .k-due { background: #c62828 !important; } .k-claw { background: #8e24aa !important; } .k-elig { background: #2e7d32 !important; } .k-got { background: #00897b !important; }
+.legend { display: flex; flex-wrap: wrap; gap: .3rem 1rem; } .center { text-align: center; }
+.item.static { cursor: default; gap: .6rem; } input.narrow { width: 4.5rem; } label.check { display: flex; gap: .5rem; align-items: center; margin: .4rem 0; }
+@media (min-width: 900px) { .daycell { min-height: 76px; } }

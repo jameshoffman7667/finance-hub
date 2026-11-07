@@ -1,8 +1,8 @@
 // Cards, bank and investment accounts, bonuses, recurring payments and re-application rules.
 // Loaded by app.js. Everything is built with h(), so text from the database is never parsed as markup.
-import { h, get, post, patch, del, money, fmtDate, shell, go, params, dialog, emptyState, today, render } from './app.js';
+import { h, get, post, put, patch, del, money, fmtDate, shell, go, params, dialog, emptyState, today, render } from './app.js';
 
-const TABS = [['cards', 'Credit cards'], ['bank', 'Bank accounts'], ['invest', 'Investment accounts'], ['recurring', 'Recurring payments'], ['rules', 'Re-apply rules'], ['import', 'Import workbook']];
+const TABS = [['cards', 'Credit cards'], ['bank', 'Bank accounts'], ['invest', 'Investment accounts'], ['recurring', 'Recurring payments'], ['rules', 'Re-apply rules'], ['calendar', 'Calendar'], ['reminders', 'Reminders'], ['statements', 'Statements'], ['import', 'Import workbook']];
 const ENTITY_OF = { cards: 'cards', bank: 'accounts', invest: 'accounts', recurring: 'recurring', rules: 'rules' };
 const LABELS = {
   card_status: { open: 'Open', frozen: 'Frozen (zero balance, locked)', closed: 'Closed', downgraded: 'Downgraded / product-changed', pending: 'Pending', declined: 'Declined' },
@@ -202,6 +202,120 @@ function importTab(reload) {
     h('div', { class: 'field' }, h('label', { for: 'wbf' }, 'Workbook'), file), err, out);
 }
 
+
+// ---------- calendar ----------
+const KIND_CLASS = { recurring: 'k-rec', card_payment: 'k-pay', bonus_deadline: 'k-due', clawback_end: 'k-claw', eligible_again: 'k-elig', next_application: 'k-elig', bonus_received: 'k-got' };
+const iso = (d) => d.toISOString().slice(0, 10);
+async function calendarTab() {
+  const q = params();
+  const ym = /^\d{4}-\d{2}$/.test(q.get('m') || '') ? q.get('m') : today().slice(0, 7);
+  const [y, m] = ym.split('-').map(Number);
+  const first = new Date(Date.UTC(y, m - 1, 1));
+  const start = new Date(first); start.setUTCDate(1 - first.getUTCDay());
+  const end = new Date(start); end.setUTCDate(start.getUTCDate() + 41);
+  const { events, kinds } = await get(`/api/calendar?from=${iso(start)}&to=${iso(end)}`);
+  const feed = await get('/api/calendar/feed');
+  const by = new Map(); for (const e of events) (by.get(e.date) || by.set(e.date, []).get(e.date)).push(e);
+  const sel = q.get('d') || (today().startsWith(ym) ? today() : `${ym}-01`);
+  const shift = (n) => { const d = new Date(Date.UTC(y, m - 1 + n, 1)); return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`; };
+  const cells = [];
+  for (let i = 0; i < 42; i++) {
+    const d = new Date(start); d.setUTCDate(start.getUTCDate() + i); const id = iso(d); const evs = by.get(id) || [];
+    cells.push(h('button', { class: 'daycell' + (id.slice(0, 7) !== ym ? ' other' : '') + (id === today() ? ' today' : '') + (id === sel ? ' picked' : ''), 'aria-label': `${id}, ${evs.length} events`, onclick: () => go(`/cards?tab=calendar&m=${ym}&d=${id}`) },
+      h('span', { class: 'dnum' }, d.getUTCDate()), h('span', { class: 'dots' }, evs.slice(0, 4).map((e) => h('i', { class: KIND_CLASS[e.kind] || '' })))));
+  }
+  const chosen = by.get(sel) || [];
+  const urlInput = h('input', { readonly: true, value: feed.url, 'aria-label': 'Calendar feed address', onfocus: (e) => e.target.select() });
+  return [h('div', { class: 'card' },
+    h('div', { class: 'row' }, h('button', { class: 'btn small', onclick: () => go(`/cards?tab=calendar&m=${shift(-1)}`) }, 'Previous'), h('h2', { class: 'grow center' }, new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString('en-CA', { month: 'long', year: 'numeric', timeZone: 'UTC' })), h('button', { class: 'btn small', onclick: () => go(`/cards?tab=calendar&m=${today().slice(0, 7)}`) }, 'Today'), h('button', { class: 'btn small', onclick: () => go(`/cards?tab=calendar&m=${shift(1)}`) }, 'Next')),
+    h('div', { class: 'calgrid' }, ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => h('div', { class: 'dow' }, d)), cells),
+    h('div', { class: 'legend small muted' }, Object.entries(kinds).map(([k, l]) => h('span', {}, h('i', { class: KIND_CLASS[k] || '' }), ` ${l}`)))),
+  h('div', { class: 'card' }, h('h2', {}, fmtDate(sel)), chosen.length ? h('ul', { class: 'list' }, chosen.map((e) => h('li', {}, h('div', { class: 'item static' }, h('i', { class: 'kdot ' + (KIND_CLASS[e.kind] || '') }), h('div', { class: 'grow' }, h('div', { class: 'title' }, e.title), e.detail ? h('div', { class: 'muted small' }, e.detail) : null))))) : emptyState('Nothing on this day', 'Dates come from your cards, bonuses, accounts and recurring payments.')),
+  h('div', { class: 'card' }, h('h2', {}, 'Google Calendar'),
+    h('p', { class: 'muted' }, 'In Google Calendar choose Other calendars > From URL and paste this address. It is a private address: anyone with it can see the event names (no amounts). Google refreshes subscribed calendars every few hours, so a new event can take a while to show up.'),
+    h('div', { class: 'field' }, h('label', { for: 'feedurl' }, 'Calendar feed address'), urlInput),
+    h('p', { class: 'muted small' }, 'Your Cloudflare Access rule must let Google reach the /cal/ path without signing in, or Google cannot read the feed.'),
+    h('div', { class: 'row' }, h('button', { class: 'btn', onclick: async () => { try { await navigator.clipboard.writeText(urlInput.value); } catch { urlInput.select(); } } }, 'Copy address'),
+      h('button', { class: 'btn danger', onclick: async () => { if (confirm('Make a new address? Google will stop updating from the old one.')) { const r = await post('/api/calendar/feed/rotate'); urlInput.value = r.url; } } }, 'Make a new address')))];
+}
+
+// ---------- reminders ----------
+const b64ToBytes = (b64) => { const p = '='.repeat((4 - (b64.length % 4)) % 4); const raw = atob((b64 + p).replaceAll('-', '+').replaceAll('_', '/')); return Uint8Array.from(raw, (c) => c.charCodeAt(0)); };
+async function remindersTab(reload) {
+  const [{ items, unread }, st] = await Promise.all([get('/api/notifications'), get('/api/notifications/settings')]);
+  const msg = h('p', { class: 'form-error', role: 'alert' });
+  const email = h('input', { id: 'nemail', type: 'email', value: st.email, placeholder: 'you@example.com' });
+  const rows = st.prefs.map((p) => {
+    const en = h('input', { type: 'checkbox', checked: p.enabled, 'aria-label': `${p.label} on` }), lead = h('input', { type: 'number', min: 0, max: 365, value: p.lead_days, 'aria-label': `${p.label} lead days`, class: 'narrow' });
+    const em = h('input', { type: 'checkbox', checked: p.email, 'aria-label': `${p.label} e-mail` }), pu = h('input', { type: 'checkbox', checked: p.push, 'aria-label': `${p.label} push` });
+    return { p, en, lead, em, pu, tr: h('tr', {}, h('td', {}, p.label), h('td', {}, en), h('td', {}, lead), h('td', {}, em), h('td', {}, pu)) };
+  });
+  const save = async () => {
+    msg.textContent = '';
+    try { await put('/api/notifications/settings', { email: email.value, prefs: rows.map((r) => ({ kind: r.p.kind, enabled: r.en.checked, lead_days: Number(r.lead.value), email: r.em.checked, push: r.pu.checked })) }); msg.textContent = 'Saved'; msg.className = 'muted'; } catch (e) { msg.className = 'form-error'; msg.textContent = e.message; }
+  };
+  const enablePush = async () => {
+    msg.className = 'form-error'; msg.textContent = '';
+    try {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) throw new Error('This browser cannot receive push notifications. On iPhone, add the app to the Home Screen first.');
+      if ((await Notification.requestPermission()) !== 'granted') throw new Error('Notifications were not allowed on this device');
+      const { key } = await get('/api/push/key'); const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(key) });
+      await post('/api/push/subscribe', sub.toJSON()); msg.className = 'muted'; msg.textContent = 'Push is on for this device';
+    } catch (e) { msg.textContent = e.message; }
+  };
+  return [h('div', { class: 'card' }, h('div', { class: 'row' }, h('h2', { class: 'grow' }, `Inbox${unread ? ` (${unread} new)` : ''}`),
+    h('button', { class: 'btn small', onclick: async () => { await post('/api/notifications/run'); reload(); } }, 'Check now'), unread ? h('button', { class: 'btn small', onclick: async () => { await post('/api/notifications/read-all'); reload(); } }, 'Mark all read') : null),
+    items.length ? h('ul', { class: 'list' }, items.map((n) => h('li', {}, h('button', { class: 'item', onclick: async () => { await post(`/api/notifications/${n.id}/read`); reload(); } },
+      h('div', { class: 'grow' }, h('div', { class: 'title' }, n.title), h('div', { class: 'muted small' }, `${fmtDate(n.event_date)}${n.body ? ` · ${n.body}` : ''}`)), n.read_at ? null : h('span', { class: 'pill warn' }, 'New'))))) : emptyState('No reminders yet', 'They appear here when a date comes within its lead time.')),
+  h('div', { class: 'card' }, h('h2', {}, 'What to remind me about'),
+    h('div', { class: 'table-wrap' }, h('table', {}, h('thead', {}, h('tr', {}, h('th', {}, 'Event'), h('th', {}, 'On'), h('th', {}, 'Days before'), h('th', {}, 'E-mail'), h('th', {}, 'Push'))), h('tbody', {}, rows.map((r) => r.tr)))),
+    h('div', { class: 'field' }, h('label', { for: 'nemail' }, 'Send e-mail reminders to'), email),
+    st.smtp_configured ? null : h('p', { class: 'muted small' }, 'E-mail is not set up on the server yet (SMTP settings), so e-mail reminders are held back.'),
+    h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: save }, 'Save'), h('button', { class: 'btn', onclick: async () => { msg.className = 'form-error'; try { await save(); await post('/api/notifications/test-email'); msg.className = 'muted'; msg.textContent = 'Test e-mail sent'; } catch (e) { msg.textContent = e.message; } } }, 'Send a test e-mail'), h('button', { class: 'btn', onclick: enablePush }, `Turn on push on this device${st.push_subscriptions ? ` (${st.push_subscriptions} on)` : ''}`)), msg)];
+}
+
+// ---------- statements ----------
+async function statementsTab(reload) {
+  const { items } = await get('/api/offers/cards');
+  const cardsOpen = items.filter((c) => ['open', 'frozen', 'pending'].includes(c.status));
+  const out = h('div', {}); const err = h('p', { class: 'form-error', role: 'alert' });
+  const pick = h('select', { id: 'stc' }, cardsOpen.map((c) => h('option', { value: c.id }, `${c.label} ${c.issuer} ${c.product}`)));
+  const file = h('input', { type: 'file', id: 'stf', accept: '.csv,text/csv' });
+  const sign = h('select', { id: 'sts' }, h('option', { value: 'auto' }, 'Work it out'), h('option', { value: 'positive' }, 'Charges are positive'), h('option', { value: 'negative' }, 'Charges are negative'));
+  const order = h('select', { id: 'std' }, h('option', { value: 'YMD' }, 'Year-month-day'), h('option', { value: 'MDY' }, 'Month/day/year'), h('option', { value: 'DMY' }, 'Day/month/year'));
+  let text = '';
+  const analyse = async () => {
+    err.textContent = ''; out.replaceChildren(); if (!text) return;
+    try {
+      const r = await post(`/api/offers/cards/${pick.value}/statement/analyze`, { csv: text, charges: sign.value, date_order: order.value });
+      const add = h('input', { type: 'checkbox', id: 'stadd', checked: !r.already_counted.length }), award = r.bonus.length ? h('input', { type: 'checkbox', id: 'staw', checked: true }) : null;
+      const recs = r.recurring.map((x) => ({ x, cb: h('input', { type: 'checkbox', checked: true, 'aria-label': `Add ${x.name}` }) }));
+      const force = h('input', { type: 'checkbox', id: 'stforce' });
+      out.replaceChildren(h('div', { class: 'stat-row' }, h('div', {}, h('span', {}, 'Eligible spend'), h('strong', {}, money(r.spend_cents))), h('div', {}, h('span', {}, 'Refunds netted'), h('strong', {}, money(r.refunds_cents))), h('div', {}, h('span', {}, 'Fees and interest left out'), h('strong', {}, money(r.excluded_cents)))),
+        h('p', { class: 'muted' }, `${r.lines} lines from ${r.period ? `${r.period.from} to ${r.period.to}` : 'no dates'}, counted since approval. Progress on the card is ${money(r.current_progress_cents)}. This is an estimate: card terms decide what counts.`),
+        r.warnings.length ? h('div', { class: 'notice warn' }, r.warnings.slice(0, 5).join(' · ')) : null,
+        r.already_counted.length ? h('div', { class: 'notice warn' }, h('span', {}, `Part of this period was already counted (${r.already_counted.map((a) => `${a.period_from} to ${a.period_to}`).join(', ')}).`), h('label', {}, force, ' Count it anyway')) : null,
+        h('label', { class: 'check' }, add, ` Add ${money(r.spend_cents)} to the spend progress`),
+        r.bonus.length ? h('div', {}, h('h3', {}, 'Bonus lines found'), h('ul', {}, r.bonus.map((b) => h('li', {}, `${b.date}: ${b.description}${b.points ? ` (${b.points} points)` : ''}`))), h('label', { class: 'check' }, award, ' Mark the first in-progress bonus as earned on that date')) : null,
+        recs.length ? h('div', {}, h('h3', {}, 'Charges that repeat'), recs.map(({ x, cb }) => h('label', { class: 'check' }, cb, ` ${x.name}: ${money(x.amount_cents)} monthly (${x.count} times)`))) : null,
+        h('button', { class: 'btn primary', onclick: async (e) => {
+          e.target.disabled = true; err.textContent = '';
+          try {
+            const res = await post(`/api/offers/cards/${pick.value}/statement/apply`, { spend_cents: r.spend_cents, period_from: r.period.from, period_to: r.period.to, lines: r.lines, add_spend: add.checked, force: force.checked,
+              award_date: award?.checked ? r.bonus[0].date : null, recurring: recs.filter((z) => z.cb.checked).map((z) => z.x) });
+            out.replaceChildren(h('div', { class: 'notice' }, `Saved. ${res.spend_added ? 'Spend progress updated. ' : ''}${res.awarded ? 'Bonus marked earned. ' : ''}${res.recurring_added ? `${res.recurring_added} recurring payment(s) added (check them). ` : ''}`), h('button', { class: 'btn', onclick: reload }, 'Done'));
+          } catch (x) { err.textContent = x.message; e.target.disabled = false; }
+        } }, 'Save these'));
+    } catch (x) { err.textContent = x.message; }
+  };
+  file.addEventListener('change', async () => { text = file.files[0] ? await file.files[0].text() : ''; analyse(); });
+  for (const el of [pick, sign, order]) el.addEventListener('change', analyse);
+  return h('div', { class: 'card' }, h('h2', {}, 'Read a card statement'),
+    h('p', { class: 'muted' }, 'Choose a card and its statement as a CSV from online banking. Nothing is kept except the covered dates and the amount added, so the same statement is not counted twice. You see the result before anything is saved.'),
+    cardsOpen.length ? h('div', { class: 'formgrid' }, h('div', { class: 'field' }, h('label', { for: 'stc' }, 'Card'), pick), h('div', { class: 'field' }, h('label', { for: 'stf' }, 'Statement (CSV)'), file), h('div', { class: 'field' }, h('label', { for: 'sts' }, 'Which amounts are charges?'), sign), h('div', { class: 'field' }, h('label', { for: 'std' }, 'Date format'), order)) : emptyState('No open cards', 'Add a card first.'), err, out);
+}
+
 export async function viewOffers() {
   const tab = params().get('tab') || 'cards';
   const sc = await schema();
@@ -212,6 +326,9 @@ export async function viewOffers() {
   else if (tab === 'bank' || tab === 'invest') body = await acctTab(tab, sc, reload);
   else if (tab === 'recurring') body = await recurringTab(sc, reload);
   else if (tab === 'rules') body = await rulesTab(sc, reload);
+  else if (tab === 'calendar') body = await calendarTab();
+  else if (tab === 'reminders') body = await remindersTab(reload);
+  else if (tab === 'statements') body = await statementsTab(reload);
   else body = importTab(reload);
   return shell('Cards and bonuses', [bar, body]);
 }

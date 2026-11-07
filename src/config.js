@@ -29,6 +29,7 @@ export function loadConfig(env = process.env) {
     idleMinutes: Number(env.SESSION_IDLE_MINUTES || 30),
     logLevel: env.LOG_LEVEL || 'info',
     tz: env.TZ || 'America/Toronto',
+    smtp: { host: env.SMTP_HOST || '', port: Number(env.SMTP_PORT || 587), secure: (env.SMTP_SECURE || 'false') === 'true', user: env.SMTP_USER || '', pass: env.SMTP_PASS || '', from: env.SMTP_FROM || '' },
   };
 }
 

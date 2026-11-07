@@ -2,6 +2,10 @@
 
 Newest first. One entry per released version; entries are never rewritten.
 
+## v0.3.0 - 2026-11-07
+**Short:** Add statements, reminders and calendar
+**Long:** Read card statement CSVs for spend progress, bonus awards and repeating charges. Reminders in the inbox, by e-mail and web push. Calendar with a private feed for Google Calendar. Covers P-6, P-7 and P-8.
+
 ## v0.2.0 - 2026-11-05
 **Short:** Track card, bank and investment bonuses
 **Long:** Cards (open, frozen, closed), bank and investment accounts with bonuses, re-apply rules with eligible-again dates, recurring payments, and workbook import. Red-text cells stay marked to check. Covers P-2 to P-5.

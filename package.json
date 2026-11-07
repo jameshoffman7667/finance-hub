@@ -1,6 +1,6 @@
 {
   "name": "finance-hub",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Personal finance manager for the home server",
   "private": true,
   "type": "module",
@@ -17,6 +17,8 @@
     "better-sqlite3": "^11.5.0",
     "exceljs": "^4.4.0",
     "express": "^4.21.2",
-    "jose": "^5.9.6"
+    "jose": "^5.9.6",
+    "nodemailer": "^6.9.16",
+    "web-push": "^3.6.7"
   }
 }

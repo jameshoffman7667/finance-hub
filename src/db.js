@@ -164,6 +164,26 @@ CREATE INDEX idx_card_bonus_card ON card_bonuses(card_id);
 CREATE INDEX idx_acct_bonus_acct ON acct_bonuses(acct_id);
 `,
   },
+  {
+    version: 3,
+    destructive: false,
+    sql: `
+CREATE TABLE notify_prefs (
+  kind TEXT PRIMARY KEY, enabled INTEGER NOT NULL DEFAULT 1, lead_days INTEGER NOT NULL, email INTEGER NOT NULL DEFAULT 0, push INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE notifications (
+  id INTEGER PRIMARY KEY, key TEXT NOT NULL UNIQUE, kind TEXT NOT NULL, title TEXT NOT NULL, body TEXT, event_date TEXT NOT NULL,
+  created_at TEXT NOT NULL, read_at TEXT, emailed INTEGER NOT NULL DEFAULT 0, pushed INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE push_subs (
+  id INTEGER PRIMARY KEY, endpoint TEXT NOT NULL UNIQUE, p256dh TEXT NOT NULL, auth TEXT NOT NULL, created_at TEXT NOT NULL
+);
+CREATE TABLE statement_runs (
+  id INTEGER PRIMARY KEY, card_id INTEGER NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
+  period_from TEXT NOT NULL, period_to TEXT NOT NULL, spend_cents INTEGER NOT NULL, lines INTEGER NOT NULL, applied_at TEXT NOT NULL
+);
+`,
+  },
 ];
 
 export const LATEST_SCHEMA = MIGRATIONS[MIGRATIONS.length - 1].version;

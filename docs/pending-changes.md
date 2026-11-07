@@ -19,23 +19,6 @@ Notes / questions:
 - Finance Hub is reachable through Cloudflare Access but the Paperless API is LAN-only: the container must reach 192.168.4.11:8073 directly (compose network or host route). Needs a check on the server.
 - Currency handling for foreign receipts: match on the card-posted amount, or the receipt currency?
 
-### P-6 - Statement upload: spend progress, bonus awards, recurring charges
-Requested: 2026-11-02 (James: "When I upload statements look for the spend progress, bonus point awards or consumption, recurring spends")
-Type: minor (new feature, per-issuer parsing)        Status: Pending
-Plan: CSV first, then PDF parsers per issuer. Spend progress = eligible purchases since approval (net of refunds; excluding cash advances, fees and interest, as in typical terms), shown as an estimate with manual override. Bonus point lines on a statement mark an award; rewards-program redemptions are usually not on statements, so "consumed" may stay manual.
-Notes / questions: which statement formats do you have (PDF, CSV from online banking)? How should manual edits and automatic values be reconciled?
-
-### P-7 - Notifications
-Requested: 2026-11-02 (James: "provision for notifications of recurring payments, credit card payment dates, bonus award dates, reapplication dates")
-Type: minor (new feature, new settings)        Status: Pending
-Plan: events from P-2 to P-6 (recurring charge due, card payment due, bonus qualify-by and award dates, clawback window ending, eligible-again dates, next application allowed). Channels: in-app, web push (the app is a PWA; iPhone needs it installed on the home screen), email through the existing SMTP2GO settings. Per-event lead days.
-
-### P-8 - Calendar in the app, with Google Calendar
-Requested: 2026-11-02 (James: "put this all on a calendar within the app with ability to link to a google calendar (or use a google calendar in the app?)")
-Type: minor (new feature)        Status: Pending
-Options: (a) in-app calendar as the source of truth plus a private subscribe-by-URL calendar feed (iCal) that Google Calendar can subscribe to: simple, read-only, but Google refreshes subscribed feeds slowly (hours); (b) two-way or push sync with the Google Calendar API: events appear quickly, needs a Google Cloud OAuth setup and stored tokens, adds a secret to protect. Recommended order: (a) first, (b) later if the delay is a problem.
-Notes / questions: which Google calendar (the existing reminders go to the personal calendar)?
-
 ### P-9 - Offer watchlist: compare sign-up bonuses and cashback from comparison sites, and RedFlagDeals
 Requested: 2026-11-02 (James: "compare sign up cash back bonuses per card from sites like Finly Wealth, Great Canadian Rebates, Frugal Flyer, Borrowell ... track posts about credit card offers on RedFlagDeals")
 Type: minor (new feature, outside data)        Status: Pending
@@ -165,3 +148,26 @@ Type: minor (new feature)        Status: Built in v0.2.0
 Plan: name, price, frequency, a known charge date, card or bank account, auto-pay, status; next charge, monthly and yearly cost calculated. Detected recurring charges from statements (P-6) are proposed here, not added silently.
 
 Built: add and edit by hand or import; next charge, monthly and yearly cost, payment method (card, account or other); reminders are listed on the Cards page summary. Proposals from statements wait for P-6, notifications for P-7.
+
+### P-6 - Statement upload: spend progress, bonus awards, recurring charges
+Requested: 2026-11-02 (James: "When I upload statements look for the spend progress, bonus point awards or consumption, recurring spends")
+Type: minor (new feature, per-issuer parsing)        Status: Built in v0.3.0
+Plan: CSV first, then PDF parsers per issuer. Spend progress = eligible purchases since approval (net of refunds; excluding cash advances, fees and interest, as in typical terms), shown as an estimate with manual override. Bonus point lines on a statement mark an award; rewards-program redemptions are usually not on statements, so "consumed" may stay manual.
+Notes / questions: which statement formats do you have (PDF, CSV from online banking)? How should manual edits and automatic values be reconciled?
+
+Built: Statements tab. Upload a card statement CSV (date, description and amount or debit/credit columns); the app proposes eligible spend since approval (refunds netted, fees, interest and cash advances left out), bonus point lines and monthly repeating charges. You choose what to save. The covered dates are remembered so a statement is not counted twice. Not built: PDF statements, per-issuer parsing, redemptions (consumed stays manual).
+
+### P-7 - Notifications
+Requested: 2026-11-02 (James: "provision for notifications of recurring payments, credit card payment dates, bonus award dates, reapplication dates")
+Type: minor (new feature, new settings)        Status: Built in v0.3.0
+Plan: events from P-2 to P-6 (recurring charge due, card payment due, bonus qualify-by and award dates, clawback window ending, eligible-again dates, next application allowed). Channels: in-app, web push (the app is a PWA; iPhone needs it installed on the home screen), email through the existing SMTP2GO settings. Per-event lead days.
+
+Built: Reminders tab. Events: recurring charge due, card payment due, bonus qualify-by, clawback end, eligible-again, next application allowed. Per-event on/off and lead days. Inbox always; e-mail through the server's SMTP settings; web push to devices you turn it on for. Checked every hour. Not built: reminders for statements not yet uploaded.
+
+### P-8 - Calendar in the app, with Google Calendar
+Requested: 2026-11-02 (James: "put this all on a calendar within the app with ability to link to a google calendar (or use a google calendar in the app?)")
+Type: minor (new feature)        Status: Built in v0.3.0
+Options: (a) in-app calendar as the source of truth plus a private subscribe-by-URL calendar feed (iCal) that Google Calendar can subscribe to: simple, read-only, but Google refreshes subscribed feeds slowly (hours); (b) two-way or push sync with the Google Calendar API: events appear quickly, needs a Google Cloud OAuth setup and stored tokens, adds a secret to protect. Recommended order: (a) first, (b) later if the delay is a problem.
+Notes / questions: which Google calendar (the existing reminders go to the personal calendar)?
+
+Built: in-app Calendar tab (month grid, day list) and a private .ics feed address for Google Calendar (option a). Needs a Cloudflare Access bypass for /cal/*. Not built: two-way Google Calendar API sync (option b).

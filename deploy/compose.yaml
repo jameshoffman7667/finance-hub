@@ -1,6 +1,6 @@
 services:
   finance-hub:
-    image: mybadreligon/finance-hub:0.2.0
+    image: mybadreligon/finance-hub:0.3.0
     container_name: finance-hub
     restart: unless-stopped
     user: "1000:100"
@@ -17,6 +17,12 @@ services:
       - SESSION_IDLE_MINUTES=${SESSION_IDLE_MINUTES:-30}
       - MAX_UPLOAD_MB=${MAX_UPLOAD_MB:-50}
       - LOG_LEVEL=${LOG_LEVEL:-info}
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_SECURE=${SMTP_SECURE:-false}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
+      - SMTP_FROM=${SMTP_FROM:-}
     ports:
       - "${PORT_HOST}:${PORT_HOST}"
     volumes:

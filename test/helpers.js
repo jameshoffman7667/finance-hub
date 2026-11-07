@@ -34,7 +34,7 @@ export function client(base) {
     return { status: res.status, json, text, headers: res.headers };
   };
   return {
-    get: (u) => call('GET', u), post: (u, b = {}) => call('POST', u, b), patch: (u, b) => call('PATCH', u, b), del: (u) => call('DELETE', u),
+    get: (u) => call('GET', u), post: (u, b = {}) => call('POST', u, b), patch: (u, b) => call('PATCH', u, b), put: (u, b) => call('PUT', u, b), del: (u) => call('DELETE', u),
     refreshCsrf: async () => { csrf = (await call('GET', '/api/state')).json.csrf || ''; },
     raw: call,
   };

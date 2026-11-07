@@ -217,4 +217,5 @@ export function mountOffers({ api, db, requireAuth, route, bad, HttpError, today
     audit(req, req.session.user_id, 'workbook.import', JSON.stringify({ mode, ...result.added }));
     res.json(result);
   }));
+  return { view };
 }

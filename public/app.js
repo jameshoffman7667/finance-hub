@@ -40,7 +40,7 @@ async function api(method, url, body) {
   if (!res.ok) { const e = new Error(data?.error || `Request failed (${res.status})`); e.status = res.status; e.data = data; throw e; }
   return data;
 }
-const get = (u) => api('GET', u), post = (u, b = {}) => api('POST', u, b), patch = (u, b) => api('PATCH', u, b), del = (u) => api('DELETE', u);
+const get = (u) => api('GET', u), post = (u, b = {}) => api('POST', u, b), put = (u, b) => api('PUT', u, b), patch = (u, b) => api('PATCH', u, b), del = (u) => api('DELETE', u);
 async function loadState() { state.info = await get('/api/state'); }
 
 // ---------- icons ----------
@@ -557,4 +557,4 @@ if ('serviceWorker' in navigator) {
 }
 render();
 
-export { h, get, post, patch, del, money, fmtDate, shell, go, params, dialog, emptyState, today, render };
+export { h, get, post, put, patch, del, money, fmtDate, shell, go, params, dialog, emptyState, today, render };

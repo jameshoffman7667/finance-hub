@@ -9,6 +9,8 @@ import { parseStatement, loadRules, categorize } from './importer.js';
 import { parseCents, parseDate } from './money.js';
 import { toCsv } from './csv.js';
 import { mountOffers } from './offers.js';
+import { mountReminders } from './reminders.js';
+import { createNotifier } from './notify.js';
 
 const ACCOUNT_TYPES = {
   chequing: 'asset', savings: 'asset', investment: 'asset', registered: 'asset', property: 'asset', other_asset: 'asset',
@@ -107,7 +109,7 @@ export function createApp({ db, config, log }) {
   const api = express.Router();
   api.use(requireAccess);
   const smallJson = express.json({ limit: '1mb' });
-  api.use((req, res, next) => (req.method === 'POST' && (req.path.startsWith('/imports') || req.path.startsWith('/workbook')) ? next() : smallJson(req, res, next)));
+  api.use((req, res, next) => (req.method === 'POST' && (req.path.startsWith('/imports') || req.path.startsWith('/workbook') || req.path.includes('/statement/analyze')) ? next() : smallJson(req, res, next)));
   api.use((req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
   // Mutating requests must come from our own origin.
   api.use((req, res, next) => {
@@ -569,7 +571,14 @@ export function createApp({ db, config, log }) {
     res.json({ entries: db.prepare('SELECT at, action, detail, ip FROM audit_log ORDER BY id DESC LIMIT 200').all() });
   }));
 
-  mountOffers({ api, db, requireAuth, route, bad, HttpError, today: () => todayLocal(config.tz), bigBody, audit, nowIso });
+  const todayFn = () => todayLocal(config.tz);
+  const { view } = mountOffers({ api, db, requireAuth, route, bad, HttpError, today: todayFn, bigBody, audit, nowIso });
+  const notifier = createNotifier({ db, config, log, view, today: todayFn, nowIso });
+  mountReminders({ bigBody, app, api, db, config, requireAuth, route, bad, HttpError, today: todayFn, audit, nowIso, notifier, view });
+  // Check for due reminders shortly after start and then every hour.
+  const remindTimer = setInterval(() => notifier.run().catch((e) => log.warn('reminder check failed', { err: e.message })), 3600e3);
+  remindTimer.unref();
+  setTimeout(() => notifier.run().catch((e) => log.warn('reminder check failed', { err: e.message })), 30e3).unref();
 
   api.use((req, res) => res.status(404).json({ error: 'Not found' }));
   app.use('/api', api);
