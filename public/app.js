@@ -3,6 +3,7 @@ import { viewOffers } from './offers.js';
 import { viewInvest } from './smith.js';
 import { viewTax } from './tax.js';
 import { viewWealth } from './wealth.js';
+import { receiptsTab } from './receipts.js';
 const state = { info: null, route: '/', cache: {}, installEvent: null, swWaiting: null };
 const root = document.getElementById('app');
 
@@ -249,12 +250,13 @@ function params() { return new URLSearchParams(location.search); }
 
 async function viewBudget() {
   const tab = params().get('tab') || 'spending';
-  const tabs = [['spending', 'Spending'], ['transactions', 'Transactions'], ['rules', 'Categories and rules'], ['forecast', 'Forecast']];
+  const tabs = [['spending', 'Spending'], ['transactions', 'Transactions'], ['rules', 'Categories and rules'], ['receipts', 'Receipts'], ['forecast', 'Forecast']];
   const bar = h('div', { class: 'tabs', role: 'tablist' }, tabs.map(([k, l]) =>
     h('button', { role: 'tab', 'aria-selected': k === tab ? 'true' : 'false', onclick: () => go(`/budget?tab=${k}`) }, l)));
   let body;
   if (tab === 'transactions') body = await budgetTransactions();
   else if (tab === 'rules') body = await budgetRules();
+  else if (tab === 'receipts') body = await receiptsTab();
   else if (tab === 'forecast') body = h('div', { class: 'card' }, emptyState('Forecast is coming', 'Run rate, planned major expenses, expected income and a wealth projection arrive in a later release. Importing statements now builds the history it will use.'));
   else body = await budgetSpending();
   return shell('Budget and forecast', [bar, body]);
@@ -298,7 +300,7 @@ async function budgetTransactions() {
     h('div', { class: 'check' }, h('input', { type: 'checkbox', id: 'uc', checked: uncat, onchange: (e) => go(`/budget?tab=transactions${e.target.checked ? '&uncat=1' : ''}`) }), h('label', { for: 'uc' }, 'Uncategorised only')));
   const items = r.transactions.length ? h('ul', { class: 'list' }, r.transactions.map((t) => h('li', {},
     h('button', { class: 'item', onclick: () => categoriseDialog(t, categories) },
-      h('div', { class: 'grow' }, h('div', { class: 'title' }, t.description), h('div', { class: 'muted small' }, `${fmtDate(t.posted_on)} · ${t.account}`)),
+      h('div', { class: 'grow' }, h('div', { class: 'title' }, t.description), h('div', { class: 'muted small' }, `${fmtDate(t.posted_on)} · ${t.account}${t.receipt_doc ? ' · receipt filed' : ''}`)),
       h('div', { class: 'right' }, h('div', { class: 'num ' + (t.amount_cents < 0 ? '' : 'pos') }, money(t.amount_cents)), t.category ? h('span', { class: 'pill' }, t.category) : h('span', { class: 'pill warn' }, 'Uncategorised')))))) :
     emptyState('No transactions', uncat ? 'Everything is categorised.' : 'Import a statement from Accounts and imports.');
   const pager = r.total > 100 ? h('div', { class: 'row' },

@@ -191,3 +191,4 @@ fieldset.bonus legend { font-weight: 600; padding: 0 .4rem; }
 fieldset { border: 1px solid var(--line, #ccd); border-radius: 8px; margin: 8px 0; }
 
 .chart .line2 { stroke: var(--muted, #889); stroke-dasharray: 5 4; stroke-width: 2; }
+.amt-min{width:6rem;flex:none}

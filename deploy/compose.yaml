@@ -1,6 +1,6 @@
 services:
   finance-hub:
-    image: mybadreligon/finance-hub:0.6.0
+    image: mybadreligon/finance-hub:0.7.0
     container_name: finance-hub
     restart: unless-stopped
     user: "1000:100"
@@ -23,6 +23,10 @@ services:
       - SMTP_USER=${SMTP_USER:-}
       - SMTP_PASS=${SMTP_PASS:-}
       - SMTP_FROM=${SMTP_FROM:-}
+      - PAPERLESS_URL=${PAPERLESS_URL:-}
+      - PAPERLESS_TOKEN=${PAPERLESS_TOKEN:-}
+      - PAPERLESS_PUBLIC_URL=${PAPERLESS_PUBLIC_URL:-}
+      - PAPERLESS_TOTAL_FIELD=${PAPERLESS_TOTAL_FIELD:-Total}
     ports:
       - "${PORT_HOST}:${PORT_HOST}"
     volumes:

@@ -29,6 +29,8 @@ export function loadConfig(env = process.env) {
     idleMinutes: Number(env.SESSION_IDLE_MINUTES || 30),
     logLevel: env.LOG_LEVEL || 'info',
     tz: env.TZ || 'America/Toronto',
+    paperless: { url: (env.PAPERLESS_URL || '').replace(/\/+$/, ''), token: env.PAPERLESS_TOKEN || '', publicUrl: (env.PAPERLESS_PUBLIC_URL || env.PAPERLESS_URL || '').replace(/\/+$/, ''), totalField: env.PAPERLESS_TOTAL_FIELD || 'Total' },
+    allowPrivateFetch: (env.ALLOW_PRIVATE_FETCH || 'false') === 'true',
     smtp: { host: env.SMTP_HOST || '', port: Number(env.SMTP_PORT || 587), secure: (env.SMTP_SECURE || 'false') === 'true', user: env.SMTP_USER || '', pass: env.SMTP_PASS || '', from: env.SMTP_FROM || '' },
   };
 }

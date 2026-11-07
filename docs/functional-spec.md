@@ -114,6 +114,12 @@ A Wealth page (also under More on phones) with five tabs.
 - **Data:** schema 6 adds plan_items and categories.flow_group. Settings key: wealth.
 - **Not built yet:** seeding yearly items from notes, automatic ties between the projection and offer plans beyond ledger payouts, goals.
 
+## Receipts and offer watchlist (v0.7.0)
+
+- Receipts (Budget > Receipts): optional link to paperless-ngx (`PAPERLESS_URL`, `PAPERLESS_TOKEN`, `PAPERLESS_PUBLIC_URL`, `PAPERLESS_TOTAL_FIELD`). Sync reads documents (title, correspondent, date, notes, total from the custom field or the OCR text); text is not stored. Each credit-card charge is matched to at most one receipt with the same amount dated within 5 days; a similar merchant name (PayPal: title and notes) makes it linked, otherwise it goes to a review list (Yes/No). Your decisions are never overwritten by later syncs. Lists: charges with no receipt (minimum amount filter), receipts with no charge, manual link. Transactions show "receipt filed" and the API filter `no_receipt=1`.
+- Watchlist (Cards and bonuses > Watchlist): offers you spot, with source, whether seen on the issuer's own site, date seen, end date, bonus, points and program, rebate, fee. Check page reads one address on request (https only, never private addresses, robots.txt respected, size and time limits) and shows amounts, points, dates and fees found; nothing is saved from it. Check a feed reads an RSS address and shows items naming something watched. Compared view groups by issuer and product, values points with the Planner settings, marks unverified figures and ended offers.
+- API: `/api/receipts/{status,sync,review,linked,unmatched,link}`, `/api/receipts/links/:id[/accept|/reject]`; `/api/watch/{compare,feed}`, `/api/watch/:id/{fetch,pages}`; list/add/edit under `/api/offers/watch`.
+
 ## Settings
 
 Install app (Chrome/Edge button; iOS instructions), change password, export everything as JSON or transactions as CSV (password re-entry), security log, version, sign out.
@@ -138,12 +144,12 @@ Light and dark follow the device setting (`prefers-color-scheme`) with matching 
 
 ## Environment variables
 
-See `deploy/.env.example`. Required: `APP_SECRET_KEY` (32+ characters; the app refuses to start without it). `PORT` (listening port; default 8070, set by compose from `PORT_HOST`). Others: `APP_URL`, `COOKIE_SECURE`, `CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD`, `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, `SESSION_IDLE_MINUTES`, `MAX_UPLOAD_MB`, `TRUST_PROXY`, `LOG_LEVEL`, `TZ`.
+See `deploy/.env.example`. Optional paperless: `PAPERLESS_URL`, `PAPERLESS_TOKEN`, `PAPERLESS_PUBLIC_URL`, `PAPERLESS_TOTAL_FIELD`. Required: `APP_SECRET_KEY` (32+ characters; the app refuses to start without it). `PORT` (listening port; default 8070, set by compose from `PORT_HOST`). Others: `APP_URL`, `COOKIE_SECURE`, `CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD`, `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, `SESSION_IDLE_MINUTES`, `MAX_UPLOAD_MB`, `TRUST_PROXY`, `LOG_LEVEL`, `TZ`.
 
 ## Data and storage
 
 - `/data/finance-hub.db` (SQLite, WAL: copy `.db`, `-wal` and `-shm` together, or stop the container first). `/data/backups/` receives a copy before any data-changing migration. `/files` is reserved for statements (not used yet).
-- Schema version 6 (v0.6.0 adds plan_items and categories.flow_group; v0.5.0 adds loan_events, income_events, tax_years, tax_receipts, acb_trades, tax_slips, registered_room, carryforwards, tax_checklist; v0.4.0 adds offer_terms, holdings, debts, ledger_entries, plans, plan_steps, effort_logs; v0.3.0 adds notify_prefs, notifications, push_subs, statement_runs; v0.2.0 adds cards, card_bonuses, inst_accounts, acct_bonuses, recurring, issuer_rules; no data is changed, so no pre-migration copy is made). Migrations are forward-only and run at start-up inside a transaction.
+- Schema version 7 (v0.7.0 adds paperless_docs, receipt_links, watch_offers, watch_pages; v0.6.0 adds plan_items and categories.flow_group; v0.5.0 adds loan_events, income_events, tax_years, tax_receipts, acb_trades, tax_slips, registered_room, carryforwards, tax_checklist; v0.4.0 adds offer_terms, holdings, debts, ledger_entries, plans, plan_steps, effort_logs; v0.3.0 adds notify_prefs, notifications, push_subs, statement_runs; v0.2.0 adds cards, card_bonuses, inst_accounts, acct_bonuses, recurring, issuer_rules; no data is changed, so no pre-migration copy is made). Migrations are forward-only and run at start-up inside a transaction.
 - Time stored in UTC; dates are plain calendar dates; display uses America/Toronto.
 
 ## API (JSON, all under /api, signed-in unless noted)
@@ -164,7 +170,7 @@ Logs go to stdout, one line per event. SIGTERM stops accepting requests, closes 
 
 ## Not yet built (planned)
 
-Offer watchlist, Questrade import and ACB tracking, further institutions, forecast and wealth projection, tax tools, weekly offer research, live data connections.
+Questrade import and ACB tracking, further institutions, forecast and wealth projection, tax tools, weekly offer research, live data connections.
 
 ## Releases
 A release is a push to `main` that changes the version in `package.json` (CHANGELOG entry required: Short up to 50 characters, Long up to 250). The `release` GitHub Actions workflow reads the version X.Y.Z, stops if the tag vX.Y.Z or a GitHub release for it already exists or the CHANGELOG entry is missing or invalid, builds and pushes the image tags X.Y.Z, X.Y and latest, then runs `gh release create vX.Y.Z --target $GITHUB_SHA`, which also creates the tag. A push to `main` that does not change the version does nothing. A manually pushed `vX.Y.Z` tag runs the same workflow as a fallback; both triggers share a concurrency group per version, so only one of them can release a version.

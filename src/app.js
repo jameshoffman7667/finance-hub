@@ -13,6 +13,8 @@ import { mountReminders } from './reminders.js';
 import { mountPlanner } from './planner-routes.js';
 import { mountTax } from './tax-routes.js';
 import { mountWealth } from './wealth-routes.js';
+import { mountReceipts } from './receipts-routes.js';
+import { mountWatch } from './watch-routes.js';
 import { createNotifier } from './notify.js';
 
 const ACCOUNT_TYPES = {
@@ -460,11 +462,12 @@ export function createApp({ db, config, log }) {
     if (q.account) { where.push('t.account_id = ?'); args.push(+q.account); }
     if (q.category) { where.push('t.category_id = ?'); args.push(+q.category); }
     if (q.uncategorised === '1') where.push('t.category_id IS NULL');
+    if (q.no_receipt === '1') { where.push("t.amount_cents < 0 AND t.account_id IN (SELECT id FROM accounts WHERE type = 'credit_card') AND NOT EXISTS (SELECT 1 FROM receipt_links l WHERE l.transaction_id = t.id AND l.status IN ('linked','manual','accepted'))"); }
     if (q.q) { where.push("t.description LIKE ? ESCAPE '\\'"); args.push('%' + String(q.q).replace(/[%_\\]/g, '\\$&') + '%'); }
     const w = where.length ? 'WHERE ' + where.join(' AND ') : '';
     const limit = Math.min(Math.max(+q.limit || 100, 1), 500), offset = Math.max(+q.offset || 0, 0);
     const total = db.prepare(`SELECT COUNT(*) c FROM transactions t ${w}`).get(...args).c;
-    const rows = db.prepare(`SELECT t.*, a.name AS account, c.name AS category FROM transactions t JOIN accounts a ON a.id = t.account_id LEFT JOIN categories c ON c.id = t.category_id ${w} ORDER BY t.posted_on DESC, t.id DESC LIMIT ? OFFSET ?`).all(...args, limit, offset);
+    const rows = db.prepare(`SELECT t.*, a.name AS account, c.name AS category, (SELECT l.doc_id FROM receipt_links l WHERE l.transaction_id = t.id AND l.status IN ('linked','manual','accepted') LIMIT 1) AS receipt_doc FROM transactions t JOIN accounts a ON a.id = t.account_id LEFT JOIN categories c ON c.id = t.category_id ${w} ORDER BY t.posted_on DESC, t.id DESC LIMIT ? OFFSET ?`).all(...args, limit, offset);
     res.json({ total, transactions: rows });
   }));
 
@@ -580,6 +583,8 @@ export function createApp({ db, config, log }) {
   mountPlanner({ api, db, requireAuth, route, bad, HttpError, today: todayFn, audit, nowIso, notifier });
   mountWealth({ api, db, requireAuth, route, bad, HttpError, today: todayFn, notifier, view });
   mountTax({ api, db, requireAuth, route, bad, HttpError, today: todayFn, audit, nowIso });
+  mountReceipts({ api, db, config, requireAuth, route, bad, HttpError, today: todayFn, audit, nowIso, notifier });
+  mountWatch({ api, db, config, requireAuth, route, bad, HttpError, today: todayFn, audit, nowIso, notifier });
   mountReminders({ bigBody, app, api, db, config, requireAuth, route, bad, HttpError, today: todayFn, audit, nowIso, notifier, view });
   // Check for due reminders shortly after start and then every hour.
   const remindTimer = setInterval(() => notifier.run().catch((e) => log.warn('reminder check failed', { err: e.message })), 3600e3);

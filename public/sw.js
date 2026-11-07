@@ -1,7 +1,7 @@
 // Finance Hub service worker. Caches the app shell only; never API responses or signed-in pages.
-const VERSION = '0.6.0';
+const VERSION = '0.7.0';
 const CACHE = `finance-hub-v${VERSION}`;
-const SHELL = ['/', '/offline.html', '/app.css', '/app.js', '/offers.js', '/planner.js', '/smith.js', '/tax.js', '/wealth.js', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/apple-touch-icon.png'];
+const SHELL = ['/', '/offline.html', '/app.css', '/app.js', '/offers.js', '/planner.js', '/smith.js', '/tax.js', '/wealth.js', '/watch.js', '/receipts.js', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/apple-touch-icon.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));

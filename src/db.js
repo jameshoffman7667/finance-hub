@@ -288,6 +288,24 @@ CREATE TABLE plan_items (
 );
 `,
   },
+  {
+    version: 7,
+    destructive: false,
+    sql: `
+CREATE TABLE paperless_docs (id INTEGER PRIMARY KEY, title TEXT, correspondent TEXT, doc_date TEXT, total_cents INTEGER, notes TEXT, fetched_at TEXT NOT NULL);
+CREATE TABLE receipt_links (
+  id INTEGER PRIMARY KEY, transaction_id INTEGER NOT NULL REFERENCES transactions(id) ON DELETE CASCADE, doc_id INTEGER NOT NULL,
+  status TEXT NOT NULL, score REAL, decided_at TEXT, UNIQUE (transaction_id, doc_id)
+);
+CREATE INDEX idx_receipt_doc ON receipt_links(doc_id);
+CREATE TABLE watch_offers (
+  id INTEGER PRIMARY KEY, issuer TEXT NOT NULL, product TEXT NOT NULL, source_name TEXT NOT NULL, source_url TEXT, own_site INTEGER, seen_on TEXT, expires_on TEXT,
+  bonus_text TEXT, bonus_cents INTEGER, points INTEGER, program TEXT, rebate_cents INTEGER, rebate_note TEXT, annual_fee_cents INTEGER, min_spend_cents INTEGER,
+  status TEXT NOT NULL, notes TEXT, unconfirmed TEXT NOT NULL DEFAULT '[]'
+);
+CREATE TABLE watch_pages (id INTEGER PRIMARY KEY, offer_id INTEGER NOT NULL REFERENCES watch_offers(id) ON DELETE CASCADE, url TEXT NOT NULL, fetched_at TEXT NOT NULL, excerpt TEXT, candidates TEXT);
+`,
+  },
 ];
 
 export const LATEST_SCHEMA = MIGRATIONS[MIGRATIONS.length - 1].version;

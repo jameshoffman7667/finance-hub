@@ -4,9 +4,11 @@ Requests are logged here, not built. Nothing is built until James sends a build 
 
 ## Pending
 
+## Done
+
 ### P-1 - Link receipts from paperless-ngx to card transactions
 Requested: 2026-10-31 (James: "is there a way to connect finance hub to paperless-ngx and cross reference credit card statement items with receipts to get a fuller picture of spending?")
-Type: minor (new feature, new settings)        Status: Pending
+Type: minor (new feature, new settings)        Status: Built in v0.7.0 (matches use the amount the card posted; receipts need a readable total; set PAPERLESS_* on the server and confirm the container can reach paperless)
 Plan (first version):
 - Settings `PAPERLESS_URL` (LAN, http://192.168.4.11:8073) and `PAPERLESS_TOKEN` (read-only API token, never in the repo or the browser). The server calls Paperless; receipt text is never sent to the browser, only matches and a link.
 - Read documents from `/api/documents/`: date, correspondent, title, notes, and the total.
@@ -21,11 +23,9 @@ Notes / questions:
 
 ### P-9 - Offer watchlist: compare sign-up bonuses and cashback from comparison sites, and RedFlagDeals
 Requested: 2026-11-02 (James: "compare sign up cash back bonuses per card from sites like Finly Wealth, Great Canadian Rebates, Frugal Flyer, Borrowell ... track posts about credit card offers on RedFlagDeals")
-Type: minor (new feature, outside data)        Status: Pending
+Type: minor (new feature, outside data)        Status: Built in v0.7.0 (pages and feeds fetched only when you press a button; nothing scheduled; nothing saved automatically from a fetched page)
 Plan: a watchlist of cards you hold or want, with offer value, rebate, expiry, source link and date seen. Pages are fetched only on request or on a slow schedule, cached, and only facts are stored with a link back. Compare against the issuer's own terms and your eligibility from P-3. RedFlagDeals: use whatever feed or email alert the forum offers and filter by card names.
 Notes / questions: the pages read so far have no structured data or API (offer text is prose), so extraction needs review before saving. Terms of use of each site and robots rules must be checked before any scheduled fetch. Rebate-site cashback is separate from the issuer bonus and usually has its own conditions (new cardholder, income, credit score).
-
-## Done
 
 ### P-2 - Import card, bank and investment history from the workbook
 Requested: 2026-11-02 (James: "All these items should be trackable in the app", with the filled workbook finance-hub-card-bank-investment-history.xlsx)

@@ -2,6 +2,10 @@
 
 Newest first. One entry per released version; entries are never rewritten.
 
+## v0.7.0 - 2026-11-07
+**Short:** Add paperless receipts and offer watchlist
+**Long:** Match card charges to paperless-ngx receipts (review, link, find charges with none). Watchlist for offers you spot: fetch a page or feed only when asked, compare by source. Nodemailer upgraded. Covers P-1 and P-9.
+
 ## v0.6.0 - 2026-11-07
 **Short:** Add wealth overview and projection
 **Long:** Balance sheet, cash flow from your categories, and a month-by-month projection of wealth with growth, a HELOC rate test and spends you are considering. Planned yearly and large spends. Covers P-15.

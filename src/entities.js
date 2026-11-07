@@ -25,6 +25,7 @@ export const ENUMS = {
   withdrawal_scope: E('pooled', 'per_account', 'unknown'),
   holding_type: E('rrsp', 'tfsa', 'resp', 'fhsa', 'nonreg', 'chequing', 'savings'),
   ledger_kind: E('card', 'bank', 'investment'),
+  watch_status: E('watching', 'applied', 'ignored'),
   plan_kind: E('annual_special', 'extraordinary', 'potential'),
   plan_recurrence: E('once', 'monthly', 'yearly'),
   plan_status: E('considering', 'approved', 'dropped'),
@@ -168,6 +169,12 @@ export const SPECS = {
     table: 'plan_items', order: 'start_date, name',
     fields: [f('name', 'text'), f('amount_cents', 'money'), f('kind', 'enum', { enum: 'plan_kind' }), f('recurrence', 'enum', { enum: 'plan_recurrence' }), f('start_date', 'date'), f('end_date', 'date', { optional: true }), f('status', 'enum', { enum: 'plan_status' }),
       f('category_id', 'int', { optional: true, ref: 'categories' }), f('card_id', 'int', { optional: true, ref: 'cards' }), f('note', 'text', { optional: true, max: 300 })],
+  },
+  watch: {
+    table: 'watch_offers', order: "CASE status WHEN 'watching' THEN 0 WHEN 'applied' THEN 1 ELSE 2 END, issuer, product, source_name",
+    fields: [f('issuer', 'text'), f('product', 'text'), f('source_name', 'text'), f('source_url', 'text', { optional: true, max: 500 }), f('own_site', 'bool', { optional: true }), f('seen_on', 'date', { optional: true }), f('expires_on', 'date', { optional: true }),
+      f('bonus_text', 'longtext', { optional: true, max: 2000 }), f('bonus_cents', 'money', { optional: true }), f('points', 'int', { optional: true, max: 100000000 }), f('program', 'text', { optional: true }), f('rebate_cents', 'money', { optional: true }), f('rebate_note', 'text', { optional: true, max: 300 }),
+      f('annual_fee_cents', 'money', { optional: true }), f('min_spend_cents', 'money', { optional: true }), f('status', 'enum', { enum: 'watch_status' }), f('notes', 'longtext', { optional: true })],
   },
   recurring: {
     table: 'recurring', order: "CASE status WHEN 'active' THEN 0 ELSE 1 END, name",

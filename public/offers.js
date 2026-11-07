@@ -1,9 +1,10 @@
 // Cards, bank and investment accounts, bonuses, recurring payments and re-application rules.
 // Loaded by app.js. Everything is built with h(), so text from the database is never parsed as markup.
 import { offersTab, holdingsTab, compareTab, plansTab, ledgerTab, plannerSettingsTab } from './planner.js';
+import { watchTab } from './watch.js';
 import { h, get, post, put, patch, del, money, fmtDate, shell, go, params, dialog, emptyState, today, render } from './app.js';
 
-const TABS = [['cards', 'Credit cards'], ['bank', 'Bank accounts'], ['invest', 'Investment accounts'], ['recurring', 'Recurring payments'], ['rules', 'Re-apply rules'], ['calendar', 'Calendar'], ['reminders', 'Reminders'], ['statements', 'Statements'], ['offers', 'Offers'], ['holdings', 'Holdings and debts'], ['compare', 'Compare'], ['plans', 'Plans'], ['ledger', 'Bonus ledger'], ['psettings', 'Planner settings'], ['import', 'Import workbook']];
+const TABS = [['cards', 'Credit cards'], ['bank', 'Bank accounts'], ['invest', 'Investment accounts'], ['recurring', 'Recurring payments'], ['rules', 'Re-apply rules'], ['calendar', 'Calendar'], ['reminders', 'Reminders'], ['statements', 'Statements'], ['offers', 'Offers'], ['holdings', 'Holdings and debts'], ['compare', 'Compare'], ['watch', 'Watchlist'], ['plans', 'Plans'], ['ledger', 'Bonus ledger'], ['psettings', 'Planner settings'], ['import', 'Import workbook']];
 const ENTITY_OF = { cards: 'cards', bank: 'accounts', invest: 'accounts', recurring: 'recurring', rules: 'rules' };
 const LABELS = {
   card_status: { open: 'Open', frozen: 'Frozen (zero balance, locked)', closed: 'Closed', downgraded: 'Downgraded / product-changed', pending: 'Pending', declined: 'Declined' },
@@ -23,6 +24,7 @@ const LABELS = {
   ledger_kind: { card: 'Credit card', bank: 'Bank account', investment: 'Investment transfer' },
   plan_kind: { annual_special: 'Annual special (insurance, fuel, business)', extraordinary: 'Extraordinary (vacation, large purchase)', potential: 'Potential spend' },
   plan_recurrence: { once: 'Once', monthly: 'Every month', yearly: 'Every year' },
+  watch_status: { watching: 'Watching', applied: 'Applied', ignored: 'Ignored' },
   plan_status: { considering: 'Considering', approved: 'Approved', dropped: 'Dropped' },
   loan_type: { mortgage: 'Mortgage', heloc: 'Home equity line (HELOC)', loan: 'Loan', other: 'Other' },
   loan_event_kind: { advance_invest: 'Advance used to invest', advance_other: 'Advance used for something else', capitalized_interest: 'Interest capitalized (added to the loan)', interest_paid: 'Interest paid', principal_paid: 'Principal paid' },
@@ -36,6 +38,7 @@ const LABELS = {
   ledger_status: { pending: 'Pending', partly_paid: 'Partly paid', paid: 'Paid', clawed_back: 'Clawed back', forfeited: 'Forfeited' },
 };
 const FIELD = {
+  source_name: 'Where you saw it', source_url: 'Page address', own_site: 'Seen on the issuer’s own site?', seen_on: 'Date seen', expires_on: 'Offer ends', bonus_text: 'Bonus as worded', bonus_cents: 'Cash bonus ($)', points: 'Points', program: 'Points program', rebate_cents: 'Rebate or credit ($)', rebate_note: 'Rebate note', min_spend_cents: 'Minimum spend ($)',
   label: 'ID', owner: 'Owner', issuer: 'Issuer', product: 'Card product', family: 'Card family (for same-product rules)', holder: 'Personal or business', last4: 'Last 4 digits only',
   locked: 'Card locked?', applied_on: 'Application date', approved_on: 'Approval date', date_confidence: 'Date confidence', credit_limit_cents: 'Credit limit ($)', annual_fee_cents: 'Annual fee ($)',
   fee_waived_first_year: 'First-year fee waived?', hard_check: 'Hard credit check?', referral_used: 'Referral used?', rewards_program: 'Rewards program', cpp_cash: 'Point value: cash (cents per point)',
@@ -111,7 +114,7 @@ async function editor(entity, kindTab, record, onDone) {
   const holdList = ['loan_events', 'income_events', 'trades'].includes(entity) ? await get('/api/offers/holdings') : null;
   const debtList = entity === 'loan_events' ? await get('/api/offers/debts') : null;
   const un = rec.unconfirmed || [];
-  dialog(`${isNew ? 'Add' : 'Edit'} ${{ cards: 'credit card', recurring: 'recurring payment', rules: 'rule', offers: 'offer', holdings: 'holding', debts: 'debt', ledger: 'bonus record', loan_events: 'loan record', income_events: 'income record', tax_years: 'tax year', receipts: 'receipt', plan_items: 'planned or potential spend', trades: 'trade', slips: 'slip', room: 'registered room', carry: 'carry-forward' }[entity] || (rec.kind === 'invest' ? 'investment account' : 'bank account')}`, (close) => {
+  dialog(`${isNew ? 'Add' : 'Edit'} ${{ cards: 'credit card', recurring: 'recurring payment', rules: 'rule', offers: 'offer', holdings: 'holding', debts: 'debt', ledger: 'bonus record', loan_events: 'loan record', income_events: 'income record', tax_years: 'tax year', receipts: 'receipt', watch: 'watched offer', plan_items: 'planned or potential spend', trades: 'trade', slips: 'slip', room: 'registered room', carry: 'carry-forward' }[entity] || (rec.kind === 'invest' ? 'investment account' : 'bank account')}`, (close) => {
     const err = h('p', { class: 'form-error', role: 'alert' });
     const ws = spec.fields.filter((fd) => !skip.has(fd.key)).map((fd) => {
       const opts = { unconfirmed: un, prefix: 'e' };
@@ -375,6 +378,7 @@ export async function viewOffers() {
   else if (tab === 'offers') body = await offersTab();
   else if (tab === 'holdings') body = await holdingsTab();
   else if (tab === 'compare') body = await compareTab();
+  else if (tab === 'watch') body = await watchTab();
   else if (tab === 'plans') body = await plansTab();
   else if (tab === 'ledger') body = await ledgerTab();
   else if (tab === 'psettings') body = await plannerSettingsTab();
