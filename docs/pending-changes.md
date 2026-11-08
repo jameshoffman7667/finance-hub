@@ -4,6 +4,20 @@ Requests are logged here, not built. Nothing is built until James sends a build 
 
 ## Pending
 
+### P-16 - Gift card tracker with "you are near a store" alert
+Requested: 2026-11-08 (James: "add a gift card tracker. The user can enter gift card stores and totals to track. If they grant location to the app it would notify them that there is an unused gift card available when they are near that store.")
+Type: minor (new feature, new screen, new table, new permission)        Status: Pending
+Plan (first version):
+- Gift cards screen: add a card with store, balance, optional last 4 digits or a short label, expiry date, notes, and a status (unused, partly used, used up). Record spending to reduce the balance, with a history. Show total unused value and cards expiring soon. Card numbers and PINs are not stored.
+- Optional location alert: if you allow location in the browser, the app compares your position with the store locations you saved for each card and shows a notice when you are within a set distance (default 300 m) of a store where you hold a balance.
+- Each card can hold one or more store locations: pick on a map or type an address, or use "this is where I am now". Chains with many branches need a decision (see questions).
+Notes / questions:
+- Browsers do not let a web app watch your location in the background. A normal installed web app can only check while it is open, so "notify when near" would work only while the app is open (or on a button press). True background alerts need a native app or a geofencing service, which is a bigger change. Which do you want: open-app alerts only, or look at a native wrapper later?
+- Store locations: finding branches of a chain needs a places lookup service (an outside request, and an API key for some). Alternative: you save the stores you actually visit. Which is better?
+- Location is never sent to the server by default: the check runs in the browser against the saved store coordinates. Confirm that is what you want.
+- Gift card balances are not verified with the store; you enter and update them.
+- Expiry reminders can reuse the existing reminder settings (e-mail, push, calendar).
+
 ## Done
 
 ### P-1 - Link receipts from paperless-ngx to card transactions
