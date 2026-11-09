@@ -44,11 +44,11 @@ Notes / questions: none.
 
 ### P-21 - Fill an account's balance automatically from statement imports
 Requested: 2026-11-08 (James: "auto populate the balance for an account from the statement imports.")
-Type: minor (import change, uses existing balance history)        Status: Pending
+Type: minor (import change, uses existing balance history)        Status: Pending (confirmed 2026-11-08)
 Plan (first version): today balances are entered by hand as dated values per account and imports do not touch them. On import, the app finds a balance in the statement and saves it as that account's balance on the statement date (source "import"), so Wealth, the balance sheet and the debt views stay current. Two ways, in this order: (1) a balance column in the file (running balance after each line; the last line gives the closing balance), mapped on the import screen like the P-20 fields; (2) if there is no balance column, ask for the closing balance on the import screen and show the app's suggestion (the previous balance plus the imported lines) to confirm. Never overwrite a balance you typed by hand for the same date without asking.
 Notes / questions:
 - Credit cards and loans: statements show the amount owed; it is saved as a positive balance on a liability account, as the app already does.
-- Should the balance be saved automatically with no confirmation when the file has a balance column, or always shown for a quick OK first? Recommended: show it with one OK.
+- Decision (James, 2026-11-08): the balance is always shown with a quick OK before it is saved, including when the file has a balance column.
 - Overlaps with P-20 (column mapping), so building them together is natural.
 
 ## Done
