@@ -61,8 +61,9 @@ Notes / questions: none. Shares its institution and owner values with P-17 and P
 ### P-23 - Type in a new value beside any drop-down, manage the lists in Settings, add shipped categories
 Requested: 2026-11-08 (James: "Add the ability to enter categorizations manually in addition to the drop down. These are then added to the drop down after. Manage these through settings to remove if required.")
 Type: minor (UI change, new settings screen, new categories)        Status: Pending (confirmed 2026-11-08)
-Decisions (James): applies to the free-choice drop-downs (transaction and rule categories, institution, owner and the like). Account type is excluded (2026-11-08): it stays a fixed list because the app's behavior depends on it. Removing a value that is still in use asks each time (move it to another value, or leave it empty). A new category asks whether it is income or expense. Shipped categories are removable too, with the same ask.
-Plan: wherever you choose from a list you can also type a new value; it is saved and appears in the list from then on. Settings gets a "Lists" screen: each list with its values, usage counts, rename and remove.
+CHANGED 2026-11-08 (James: "change so that the user cannot add categories but can add sub categories"): categories can no longer be added by the user; only sub-categories can (P-25). In this entry, "type a new value" now covers institution, owner and sub-categories, not categories. The shipped category list still grows only through releases.
+Decisions (James): applies to the free-choice drop-downs (transaction and rule categories, institution, owner and the like). Account type is excluded (2026-11-08): it stays a fixed list because the app's behavior depends on it. Removing a value that is still in use asks each time (move it to another value, or leave it empty). Shipped categories are removable too, with the same ask.
+Plan: wherever you choose from a list (except the category list itself) you can also type a new value; it is saved and appears in the list from then on. Settings gets a "Lists" screen: each list with its values, usage counts, rename and remove.
 Add to the shipped category list: Credit card payment, Loan payment. (The four "Bill - ..." categories were dropped 2026-11-08: Utilities and Housing already cover them; sub-categories may come later.)
 Notes / questions:
 - Credit card payment and loan payment are transfers of money you already spent (card payment) or debt payments (loan). I'd mark Credit card payment as a transfer so it is not counted as spending twice, and Loan payment as debt service (principal and interest, as the Wealth cash flow already groups it). Confirmed 2026-11-08.
@@ -78,6 +79,7 @@ Notes / questions: none.
 ### P-25 - Optional sub-categories
 Requested: 2026-11-08 (James: "Lets add sub categories. Make suggestions for all the categories we already have. They should be optional in the app.")
 Type: minor (new feature, new column, new Settings screen)        Status: Pending (confirmed 2026-11-08)
+CHANGED 2026-11-08 (James: "change so that the user cannot add categories but can add sub categories"): you cannot add top-level categories; you can add (and rename, remove) sub-categories under any category. The category list is the shipped list, extended only by releases.
 Plan (first version): a category can have sub-categories, one level deep (a sub-category belongs to one category). Choosing a sub-category is optional everywhere: a transaction can stay on the category alone and nothing breaks. Reports and the Budget screen roll sub-categories up into their category by default, with a way to expand a category to see its parts. Category rules can pick a sub-category. The P-23 "type a new value" and "Lists" Settings screen cover sub-categories too (including the ask-before-removal rule). Sub-categories are off until you add one: with none defined the app looks and works exactly as it does now. Existing transactions stay on their category.
 Suggested shipped sub-categories (all optional, all removable, none applied to existing transactions):
 - Groceries: Supermarket, Bulk and warehouse, Specialty and bakery, Household supplies
@@ -96,7 +98,9 @@ Suggested shipped sub-categories (all optional, all removable, none applied to e
 - Other income: Interest and dividends, Refunds and rebates, Gifts received, Side income, Cash deposit
 - Transfer: Between my accounts (Credit card payment and Loan payment stay top-level categories, James 2026-11-08)
 Decisions (James, 2026-11-08): the suggested lists are right (with Improvement added to Housing and Other added to Shopping); Credit card payment and Loan payment stay top-level only; a sub-category always inherits its category's income, expense or transfer kind; the Wealth cash-flow group (run-rate, annual, extra, debt service) can be set per sub-category and falls back to the category's group.
-Notes / questions: none.
+Notes / questions:
+- Can you still rename, remove or hide shipped categories (P-23 said removable with an ask)? Assumed yes, and categories you created before this change stay editable. Or lock the shipped list entirely? Recommended: keep removable with the ask, since some may never apply to you.
+- The existing "add category" button goes away. Any transaction currently needing a new category would use a sub-category under the closest one; if a top-level category is missing, you ask me and it ships in a release. Fine?
 
 ### P-26 - Shipped category: Children and Pets, with sub-categories
 Requested: 2026-11-08 (James: "Add a category for Children and Pets, and suggest sub categories including child care")
