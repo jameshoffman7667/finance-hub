@@ -75,6 +75,33 @@ Decision (James): option (c). Three shipped categories: Cash withdrawal (expense
 Plan: added on upgrade as for the P-23 categories (an existing category with the same name is kept as it is). Budget and Wealth cash flow net "Cash returned to account" against spending in the same month.
 Notes / questions: none.
 
+### P-25 - Optional sub-categories
+Requested: 2026-11-08 (James: "Lets add sub categories. Make suggestions for all the categories we already have. They should be optional in the app.")
+Type: minor (new feature, new column, new Settings screen)        Status: Pending
+Plan (first version): a category can have sub-categories, one level deep (a sub-category belongs to one category). Choosing a sub-category is optional everywhere: a transaction can stay on the category alone and nothing breaks. Reports and the Budget screen roll sub-categories up into their category by default, with a way to expand a category to see its parts. Category rules can pick a sub-category. The P-23 "type a new value" and "Lists" Settings screen cover sub-categories too (including the ask-before-removal rule). Sub-categories are off until you add one: with none defined the app looks and works exactly as it does now. Existing transactions stay on their category.
+Suggested shipped sub-categories (all optional, all removable, none applied to existing transactions):
+- Groceries: Supermarket, Bulk and warehouse, Specialty and bakery, Household supplies
+- Dining: Restaurants, Fast food, Coffee and snacks, Takeout and delivery, Alcohol and bars
+- Transport: Fuel, Parking and tolls, Public transit, Taxi and rideshare, Car maintenance and repairs, Car insurance, Licence and registration
+- Housing: Mortgage or rent, Property tax, Home insurance, Maintenance and repairs, Furnishings, Condo or strata fees
+- Utilities: Electricity, Heating fuel and gas, Water and sewer, Internet, Phone and mobile, Waste and recycling
+- Subscriptions: Streaming and media, Software and apps, Memberships, News and magazines
+- Health: Pharmacy, Doctor and dental, Vision, Therapy and wellness, Health insurance
+- Shopping: Clothing, Electronics, Home and garden, Gifts, Personal care, Kids
+- Entertainment: Events and tickets, Hobbies, Games, Books and music
+- Travel: Flights, Lodging, Car rental, Activities, Travel insurance
+- Fees and interest: Account fees, Card annual fees, Interest charges, Foreign exchange fees
+- Other: Donations, Government and licences, Pets, Miscellaneous
+- Salary: Base pay, Bonus, Overtime and commission
+- Other income: Interest and dividends, Refunds and rebates, Gifts received, Side income, Cash deposit
+- Transfer: Between my accounts, Credit card payment, Loan payment
+- (P-24) Cash withdrawal: none; Cash deposit and Cash returned to account are shown under Other income and Other as suggestions only
+Notes / questions:
+- Are the suggested lists about right? Tell me what to add, rename or drop; one level deep only?
+- Should P-24's Credit card payment and Loan payment stay as top-level categories (as decided) or become sub-categories of Transfer as suggested above? They are in both places in this list for now; recommended: keep them top-level because reports treat them specially (transfer and debt service).
+- Should a sub-category keep its own income, expense or transfer kind, or always inherit its category's? Recommended: inherit.
+- Should the Wealth cash-flow groups (run-rate, annual, extra, debt service) be settable per sub-category (for example Property Tax annual, Electricity run-rate)? Recommended: yes, optional, falling back to the category's group.
+
 ## Done
 
 ### P-1 - Link receipts from paperless-ngx to card transactions
