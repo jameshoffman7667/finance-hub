@@ -38,12 +38,9 @@ Notes / questions: none.
 
 ### P-20 - Description, Comment and Reference fields on imported statements
 Requested: 2026-11-08 (James: "when importing statements add a description level 1, description level 2 and description level 3"; changed the same day to "description, comment and reference")
-Type: minor (new fields, import change)        Status: Blocked (needs an answer)
-Notes / questions:
-- Which statement columns feed Description, Comment and Reference? My guess: Description is the main text of each line (what the transaction list shows today), Comment is the extra memo or detail column some banks provide, Reference is a reference or confirmation number. Banks differ, so the import screen would let you map columns (saved per account or format). Is that right?
-- Should the three fields be editable on a transaction afterwards, searchable, and exported?
-- Should rules (for categories) be able to match on Comment and Reference as well as Description?
-- Existing transactions have only one description; they would keep it as Description and leave the others empty unless re-imported. Is that fine?
+Type: minor (new fields, import change)        Status: Pending (answers received 2026-11-08)
+Decisions (James): Description is the main text of each line, Comment the extra memo column, Reference a reference or confirmation number. The import screen lets you map statement columns to the three fields, saved per account or format, because banks differ. The fields are not editable on a transaction afterwards, but they are searchable and exported. Category rules can match on Comment and Reference as well as Description. Existing transactions keep their one text as Description and leave Comment and Reference empty unless re-imported.
+Notes / questions: none.
 
 ## Done
 
