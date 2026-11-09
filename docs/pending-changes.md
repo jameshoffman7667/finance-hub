@@ -77,7 +77,7 @@ Notes / questions: none.
 
 ### P-25 - Optional sub-categories
 Requested: 2026-11-08 (James: "Lets add sub categories. Make suggestions for all the categories we already have. They should be optional in the app.")
-Type: minor (new feature, new column, new Settings screen)        Status: Pending
+Type: minor (new feature, new column, new Settings screen)        Status: Pending (confirmed 2026-11-08)
 Plan (first version): a category can have sub-categories, one level deep (a sub-category belongs to one category). Choosing a sub-category is optional everywhere: a transaction can stay on the category alone and nothing breaks. Reports and the Budget screen roll sub-categories up into their category by default, with a way to expand a category to see its parts. Category rules can pick a sub-category. The P-23 "type a new value" and "Lists" Settings screen cover sub-categories too (including the ask-before-removal rule). Sub-categories are off until you add one: with none defined the app looks and works exactly as it does now. Existing transactions stay on their category.
 Suggested shipped sub-categories (all optional, all removable, none applied to existing transactions):
 - Groceries: Supermarket, Bulk and warehouse, Specialty and bakery, Household supplies
@@ -94,13 +94,9 @@ Suggested shipped sub-categories (all optional, all removable, none applied to e
 - Other: Donations, Government and licences, Pets, Miscellaneous
 - Salary: Base pay, Bonus, Overtime and commission
 - Other income: Interest and dividends, Refunds and rebates, Gifts received, Side income, Cash deposit
-- Transfer: Between my accounts, Credit card payment (James, 2026-11-08: Transfer should have Credit card payment)
-- (P-24) Cash withdrawal: none; Cash deposit and Cash returned to account are shown under Other income and Other as suggestions only
-Notes / questions:
-- Are the suggested lists about right? Tell me what to add, rename or drop; one level deep only?
-- Credit card payment is a sub-category of Transfer (James). P-23 also adds Credit card payment as a top-level category: drop the top-level one and add only the Transfer sub-category? Recommended: yes, so it is not in two places. Loan payment stays top-level (debt service) unless you say otherwise.
-- Should a sub-category keep its own income, expense or transfer kind, or always inherit its category's? Recommended: inherit.
-- Should the Wealth cash-flow groups (run-rate, annual, extra, debt service) be settable per sub-category (for example Property Tax annual, Electricity run-rate)? Recommended: yes, optional, falling back to the category's group.
+- Transfer: Between my accounts (Credit card payment and Loan payment stay top-level categories, James 2026-11-08)
+Decisions (James, 2026-11-08): the suggested lists are right (with Improvement added to Housing and Other added to Shopping); Credit card payment and Loan payment stay top-level only; a sub-category always inherits its category's income, expense or transfer kind; the Wealth cash-flow group (run-rate, annual, extra, debt service) can be set per sub-category and falls back to the category's group.
+Notes / questions: none.
 
 ## Done
 
