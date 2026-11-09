@@ -53,12 +53,10 @@ Notes / questions:
 
 ### P-22 - Group accounts by institution, then by owner
 Requested: 2026-11-08 (James: "group accounts by institution, then by owner")
-Type: minor (UI change)        Status: Pending
-Plan (first version): the Accounts list shows accounts under a heading per institution, and inside each institution under a heading per owner (accounts with no owner under "No owner"), sorted by name, with a total per group. Groups can be collapsed. Closed accounts sit at the bottom of their group.
-Notes / questions:
-- Only the Accounts and imports screen, or also the account pickers (P-19 labels) and the Wealth balance sheet? Recommended: the Accounts screen and the pickers (pickers as grouped option lists); the balance sheet stays as it is unless you say otherwise.
-- Should group totals show balances (assets minus liabilities) or just the number of accounts? Recommended: balance, with liabilities subtracted.
-- Related to P-17 and P-19 (same institution and owner values), so building them together is natural.
+Type: minor (UI change)        Status: Pending (confirmed 2026-11-08)
+Decisions (James): the Accounts screen only for now (not the account pickers or the Wealth balance sheet). Group totals show balances, with liabilities subtracted.
+Plan: the Accounts list shows a heading per institution, and inside each a heading per owner (accounts with no owner under "No owner"), sorted by name, with a balance total on each group. Groups can be collapsed. Closed accounts sit at the bottom of their group.
+Notes / questions: none. Shares its institution and owner values with P-17 and P-19, so building together is natural.
 
 ## Done
 
