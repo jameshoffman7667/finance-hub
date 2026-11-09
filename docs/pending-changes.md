@@ -51,6 +51,15 @@ Notes / questions:
 - Decision (James, 2026-11-08): the balance is always shown with a quick OK before it is saved, including when the file has a balance column.
 - Overlaps with P-20 (column mapping), so building them together is natural.
 
+### P-22 - Group accounts by institution, then by owner
+Requested: 2026-11-08 (James: "group accounts by institution, then by owner")
+Type: minor (UI change)        Status: Pending
+Plan (first version): the Accounts list shows accounts under a heading per institution, and inside each institution under a heading per owner (accounts with no owner under "No owner"), sorted by name, with a total per group. Groups can be collapsed. Closed accounts sit at the bottom of their group.
+Notes / questions:
+- Only the Accounts and imports screen, or also the account pickers (P-19 labels) and the Wealth balance sheet? Recommended: the Accounts screen and the pickers (pickers as grouped option lists); the balance sheet stays as it is unless you say otherwise.
+- Should group totals show balances (assets minus liabilities) or just the number of accounts? Recommended: balance, with liabilities subtracted.
+- Related to P-17 and P-19 (same institution and owner values), so building them together is natural.
+
 ## Done
 
 ### P-1 - Link receipts from paperless-ngx to card transactions
