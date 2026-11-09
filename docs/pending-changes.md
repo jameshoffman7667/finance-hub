@@ -117,6 +117,14 @@ Suggested sub-categories:
 Decisions (James, 2026-11-08): one combined category, Children and Pets. Pets is removed from Other's suggested sub-categories and Kids from Shopping's (P-25); both live only here.
 Notes / questions: none. (Child care may later feed the Tax screen's child care expense deduction; not part of this entry, log it if wanted.)
 
+### P-27 - Tick "Always use this category" by default when categorising a transaction
+Requested: 2026-11-08 (James: "default the \"Always use this category when the description contains\" to checked")
+Type: patch (small UI default change)        Status: Pending
+Plan: on the transaction category dialog, the checkbox "Always use this category when the description contains:" starts ticked, with the description text filled in as the pattern as it is now, so choosing a category also saves a rule. You can untick it for a one-off. The rule is only saved when a category is chosen (as today).
+Notes / questions:
+- A rule made from a whole bank description can be too narrow (store numbers, dates) or too wide (a short word). Should the pattern be tidied automatically (for example drop trailing store numbers and dates) or left as the text of the line? Recommended: tidy it, and show it so you can edit.
+- Should saving a rule also re-categorise other uncategorised transactions that match? Today's behavior is kept unless you say so; say if you want that.
+
 ## Done
 
 ### P-1 - Link receipts from paperless-ngx to card transactions
