@@ -38,7 +38,7 @@ Notes / questions: none.
 
 ### P-20 - Description, Comment and Reference fields on imported statements
 Requested: 2026-11-08 (James: "when importing statements add a description level 1, description level 2 and description level 3"; changed the same day to "description, comment and reference")
-Type: minor (new fields, import change)        Status: Pending (answers received 2026-11-08)
+Type: minor (new fields, import change)        Status: Pending (confirmed 2026-11-08)
 Decisions (James): Description is the main text of each line, Comment the extra memo column, Reference a reference or confirmation number. The import screen lets you map statement columns to the three fields, saved per account or format, because banks differ. The fields are not editable on a transaction afterwards, but they are searchable and exported. Category rules can match on Comment and Reference as well as Description. Existing transactions keep their one text as Description and leave Comment and Reference empty unless re-imported.
 Notes / questions: none.
 
@@ -61,12 +61,11 @@ Notes / questions: none. Shares its institution and owner values with P-17 and P
 ### P-23 - Type in a new value beside any drop-down, manage the lists in Settings, add shipped categories
 Requested: 2026-11-08 (James: "Add the ability to enter categorizations manually in addition to the drop down. These are then added to the drop down after. Manage these through settings to remove if required.")
 Type: minor (UI change, new settings screen, new categories)        Status: Pending (answers received 2026-11-08)
-Decisions (James): applies to all free-choice drop-downs (transaction and rule categories, institution, owner, account type and the like). Removing a value that is still in use asks each time (move it to another value, or leave it empty). A new category asks whether it is income or expense. Shipped categories are removable too, with the same ask.
+Decisions (James): applies to the free-choice drop-downs (transaction and rule categories, institution, owner and the like). Account type is excluded (2026-11-08): it stays a fixed list because the app's behavior depends on it. Removing a value that is still in use asks each time (move it to another value, or leave it empty). A new category asks whether it is income or expense. Shipped categories are removable too, with the same ask.
 Plan: wherever you choose from a list you can also type a new value; it is saved and appears in the list from then on. Settings gets a "Lists" screen: each list with its values, usage counts, rename and remove.
 Add to the shipped category list: Credit card payment, Loan payment. (The four "Bill - ..." categories were dropped 2026-11-08: Utilities and Housing already cover them; sub-categories may come later.)
 Notes / questions:
-- Account type is different from the others: the app's behavior depends on it (cards, mortgages, investments). A typed-in type would be a label only, with no special behavior, and the built-in types could not be removed while accounts use them. Fine?
-- Credit card payment and loan payment are transfers of money you already spent (card payment) or debt payments (loan). I'd mark Credit card payment as a transfer so it is not counted as spending twice, and Loan payment as debt service (principal and interest, as the Wealth cash flow already groups it). Correct?
+- Credit card payment and loan payment are transfers of money you already spent (card payment) or debt payments (loan). I'd mark Credit card payment as a transfer so it is not counted as spending twice, and Loan payment as debt service (principal and interest, as the Wealth cash flow already groups it). Confirmed 2026-11-08.
 - Existing databases get the new shipped categories added on upgrade; any you already created with the same name are kept as they are.
 
 ## Done
