@@ -58,15 +58,16 @@ Decisions (James): the Accounts screen only for now (not the account pickers or 
 Plan: the Accounts list shows a heading per institution, and inside each a heading per owner (accounts with no owner under "No owner"), sorted by name, with a balance total on each group. Groups can be collapsed. Closed accounts sit at the bottom of their group.
 Notes / questions: none. Shares its institution and owner values with P-17 and P-19, so building together is natural.
 
-### P-23 - Type in a new category beside the drop-down, and manage categories in Settings
+### P-23 - Type in a new value beside any drop-down, manage the lists in Settings, add shipped categories
 Requested: 2026-11-08 (James: "Add the ability to enter categorizations manually in addition to the drop down. These are then added to the drop down after. Manage these through settings to remove if required.")
-Type: minor (UI change, new settings screen)        Status: Pending
-Plan (first version): wherever a transaction's category is chosen from a drop-down, you can also type a new category. It is saved and appears in the drop-down from then on. Settings gets a list of categories you added by hand, where each can be renamed or removed.
+Type: minor (UI change, new settings screen, new categories)        Status: Pending (answers received 2026-11-08)
+Decisions (James): applies to all free-choice drop-downs (transaction and rule categories, institution, owner, account type and the like). Removing a value that is still in use asks each time (move it to another value, or leave it empty). A new category asks whether it is income or expense. Shipped categories are removable too, with the same ask.
+Plan: wherever you choose from a list you can also type a new value; it is saved and appears in the list from then on. Settings gets a "Lists" screen: each list with its values, usage counts, rename and remove.
+Add to the shipped category list: Credit card payment, Loan payment, Bill - Electric, Bill - Property Tax, Bill - Heating Fuel, Bill - Other.
 Notes / questions:
-- Is this about the category on a transaction (and on rules)? Assumed yes. Should the other free-choice lists work the same way (account type, owner, institution under P-17)? Assumed no for now.
-- Removing a category that transactions or rules still use: ask what to do each time (move them to another category, or make them uncategorised), as with P-18? Recommended: yes.
-- When you type a new category, should it also ask whether it is income or expense (the app's categories have a kind)? Recommended: yes, defaulting to expense.
-- Should the categories that ship with the app also be removable here, or only the ones you added? Recommended: you can manage all of them; built-ins used by rules or reports ask before removal.
+- Account type is different from the others: the app's behavior depends on it (cards, mortgages, investments). A typed-in type would be a label only, with no special behavior, and the built-in types could not be removed while accounts use them. Fine?
+- Credit card payment and loan payment are transfers of money you already spent (card payment) or debt payments (loan). I'd mark Credit card payment as a transfer so it is not counted as spending twice, and Loan payment as debt service (principal and interest, as the Wealth cash flow already groups it). The four Bill categories are expenses, in the annual or run-rate group (Property Tax and Heating Fuel annual or seasonal). Correct?
+- Existing databases get the new shipped categories added on upgrade; any you already created with the same name are kept as they are.
 
 ## Done
 
