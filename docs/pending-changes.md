@@ -18,6 +18,32 @@ Notes / questions:
 - Matching "all branches" needs a places service on the device side (outside requests, possibly an API key). Decide that when the native app is built.
 - Gift card balances are not verified with the store; you enter and update them.
 
+### P-17 - Institution and owner drop-downs when adding an account
+Requested: 2026-11-08 (James: "When adding accounts make the institution and owner drop downs populated by previous entires in those fields.")
+Type: minor (small UI change)        Status: Pending
+Plan: both fields become a choice list built from values already used on existing accounts (distinct, sorted), with a way to type a new value. No new table.
+Notes / questions: also apply the same lists on the edit screen (P-18).
+
+### P-18 - Edit and delete accounts
+Requested: 2026-11-08 (James: "Allow editing accounts including delete")
+Type: minor (new screen action, new endpoint)        Status: Pending
+Plan: each account opens an edit form (name, institution, owner, type, opening details, closed or open). Delete removes the account.
+Notes / questions: what should happen to an account's transactions, valuations, statements, balances and receipt links when it is deleted? Options: (a) refuse to delete while it has data and offer Close instead, (b) delete everything attached after a clear confirmation showing the counts, (c) either, your choice per delete. Recommended: (c). Deleted data cannot be recovered except from a backup.
+
+### P-19 - Show institution, type and owner with the account name on the statement import screen
+Requested: 2026-11-08 (James: "in the import statement screen refer to accounts by not just their name but their institution, type and owner as well.")
+Type: minor (small UI change)        Status: Pending
+Plan: the account picker and any account label on the import screens read like "Name, Institution, Type, Owner" so similar accounts can be told apart. Could be reused wherever accounts are picked (Budget, transactions, valuations).
+Notes / questions: apply it only on the import screen, or everywhere an account is picked? Recommended: everywhere.
+
+### P-20 - Description levels 1, 2 and 3 on imported statements
+Requested: 2026-11-08 (James: "when importing statements add a description level 1, description level 2 and description level 3")
+Type: minor (new fields, import change, new screen options)        Status: Blocked (needs an answer)
+Notes / questions:
+- What are the levels? My guess: three fields on each transaction that break the bank's description into a hierarchy, for example level 1 = merchant group (Groceries chain), level 2 = merchant (Loblaws), level 3 = detail (store or location), filled by you or by rules. Another reading: three description columns copied from the statement file. Which do you mean, and give one real example.
+- Should they be filled automatically by rules (like categories today), by hand, or both? Should existing transactions be re-run?
+- Should the levels be usable for reports and filters, and be exported?
+
 ## Done
 
 ### P-1 - Link receipts from paperless-ngx to card transactions
