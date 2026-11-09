@@ -60,7 +60,7 @@ Notes / questions: none. Shares its institution and owner values with P-17 and P
 
 ### P-23 - Type in a new value beside any drop-down, manage the lists in Settings, add shipped categories
 Requested: 2026-11-08 (James: "Add the ability to enter categorizations manually in addition to the drop down. These are then added to the drop down after. Manage these through settings to remove if required.")
-Type: minor (UI change, new settings screen, new categories)        Status: Pending (answers received 2026-11-08)
+Type: minor (UI change, new settings screen, new categories)        Status: Pending (confirmed 2026-11-08)
 Decisions (James): applies to the free-choice drop-downs (transaction and rule categories, institution, owner and the like). Account type is excluded (2026-11-08): it stays a fixed list because the app's behavior depends on it. Removing a value that is still in use asks each time (move it to another value, or leave it empty). A new category asks whether it is income or expense. Shipped categories are removable too, with the same ask.
 Plan: wherever you choose from a list you can also type a new value; it is saved and appears in the list from then on. Settings gets a "Lists" screen: each list with its values, usage counts, rename and remove.
 Add to the shipped category list: Credit card payment, Loan payment. (The four "Bill - ..." categories were dropped 2026-11-08: Utilities and Housing already cover them; sub-categories may come later.)
