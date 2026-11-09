@@ -98,6 +98,27 @@ Suggested shipped sub-categories (all optional, all removable, none applied to e
 Decisions (James, 2026-11-08): the suggested lists are right (with Improvement added to Housing and Other added to Shopping); Credit card payment and Loan payment stay top-level only; a sub-category always inherits its category's income, expense or transfer kind; the Wealth cash-flow group (run-rate, annual, extra, debt service) can be set per sub-category and falls back to the category's group.
 Notes / questions: none.
 
+### P-26 - Shipped category: Children and Pets, with sub-categories
+Requested: 2026-11-08 (James: "Add a category for Children and Pets, and suggest sub categories including child care")
+Type: minor (new shipped category; builds with P-23 and P-25)        Status: Pending
+Plan: add an expense category "Children and Pets" on upgrade (an existing category with the same name is kept as it is), with optional sub-categories from P-25.
+Suggested sub-categories:
+- Child care (daycare, nanny, babysitting, before and after school care)
+- Education and activities (tuition, school fees and supplies, lessons, camps, sports)
+- Children's clothing and gear
+- Children's health (doctor, dental, vision, prescriptions)
+- Toys and entertainment
+- Allowance and gifts
+- Pet food and supplies
+- Veterinary and pet health
+- Pet insurance
+- Grooming, boarding and walking
+- Pet licences and other
+Notes / questions:
+- P-25 currently lists Pets under Other and Kids under Shopping. Move them: remove Pets from Other and Kids from Shopping, and keep them only under Children and Pets? Recommended: yes.
+- One category for both, as asked, or two separate categories (Children, Pets)? One category keeps the list short and sub-categories split them; two would give separate totals at the top level. Recommended: one, as asked.
+- Child care is often a tax-relevant expense (child care expense deduction). Should the Tax screen later pick up Child care by category? Not part of this entry; say if you want it logged.
+
 ## Done
 
 ### P-1 - Link receipts from paperless-ngx to card transactions
