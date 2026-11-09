@@ -63,10 +63,10 @@ Requested: 2026-11-08 (James: "Add the ability to enter categorizations manually
 Type: minor (UI change, new settings screen, new categories)        Status: Pending (answers received 2026-11-08)
 Decisions (James): applies to all free-choice drop-downs (transaction and rule categories, institution, owner, account type and the like). Removing a value that is still in use asks each time (move it to another value, or leave it empty). A new category asks whether it is income or expense. Shipped categories are removable too, with the same ask.
 Plan: wherever you choose from a list you can also type a new value; it is saved and appears in the list from then on. Settings gets a "Lists" screen: each list with its values, usage counts, rename and remove.
-Add to the shipped category list: Credit card payment, Loan payment, Bill - Electric, Bill - Property Tax, Bill - Heating Fuel, Bill - Other.
+Add to the shipped category list: Credit card payment, Loan payment. (The four "Bill - ..." categories were dropped 2026-11-08: Utilities and Housing already cover them; sub-categories may come later.)
 Notes / questions:
 - Account type is different from the others: the app's behavior depends on it (cards, mortgages, investments). A typed-in type would be a label only, with no special behavior, and the built-in types could not be removed while accounts use them. Fine?
-- Credit card payment and loan payment are transfers of money you already spent (card payment) or debt payments (loan). I'd mark Credit card payment as a transfer so it is not counted as spending twice, and Loan payment as debt service (principal and interest, as the Wealth cash flow already groups it). The four Bill categories are expenses, in the annual or run-rate group (Property Tax and Heating Fuel annual or seasonal). Correct?
+- Credit card payment and loan payment are transfers of money you already spent (card payment) or debt payments (loan). I'd mark Credit card payment as a transfer so it is not counted as spending twice, and Loan payment as debt service (principal and interest, as the Wealth cash flow already groups it). Correct?
 - Existing databases get the new shipped categories added on upgrade; any you already created with the same name are kept as they are.
 
 ## Done
