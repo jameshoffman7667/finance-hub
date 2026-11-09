@@ -68,14 +68,12 @@ Notes / questions:
 - Credit card payment and loan payment are transfers of money you already spent (card payment) or debt payments (loan). I'd mark Credit card payment as a transfer so it is not counted as spending twice, and Loan payment as debt service (principal and interest, as the Wealth cash flow already groups it). Confirmed 2026-11-08.
 - Existing databases get the new shipped categories added on upgrade; any you already created with the same name are kept as they are.
 
-### P-24 - Shipped categories: Cash withdrawal and Cash deposit
+### P-24 - Shipped categories: Cash withdrawal, Cash deposit and Cash returned to account
 Requested: 2026-11-08 (James: "Add cash withdrawl as a category. Not sure whether to call it a transfer or expense as the actual spending will likely never make it back on a transaction. Thining expense and Cash deposit would be income")
-Type: minor (new shipped categories; builds with P-23)        Status: Pending
-Plan: add Cash withdrawal (expense) and Cash deposit (income) to the shipped category list, added on upgrade as for the P-23 categories (an existing category with the same name is kept as it is).
-Notes / questions:
-- Withdrawal as an expense is sensible: the cash you spend never appears as a transaction, so counting the withdrawal is the only way it shows up in spending.
-- Deposit as income has a side effect: if you deposit unspent cash that you earlier withdrew, spending is right (withdrawn 100 minus 40 deposited back = 60) but income reports and the savings rate are overstated by the 40. Options: (a) Cash deposit is income, as you suggest, and you accept the small overstatement; (b) Cash deposit is a refund-type entry that reduces spending instead of adding income (Wealth and Budget then net the cash out); (c) split by use: Cash deposit (income) for earned cash such as tips or sales, and a separate "Cash returned to account" that reduces spending. Recommended: (c) if you ever deposit leftover cash, otherwise (a).
-- Which is it for you: do you mostly deposit cash you earned, or put leftover cash back?
+Type: minor (new shipped categories; builds with P-23)        Status: Pending (confirmed 2026-11-08)
+Decision (James): option (c). Three shipped categories: Cash withdrawal (expense: the cash you spend never appears as a transaction, so the withdrawal is what counts as spending), Cash deposit (income: cash you earned, such as tips or sales), and Cash returned to account (reduces spending: leftover cash put back, so a withdrawal of 100 and 40 returned counts as 60 spent and does not inflate income or the savings rate).
+Plan: added on upgrade as for the P-23 categories (an existing category with the same name is kept as it is). Budget and Wealth cash flow net "Cash returned to account" against spending in the same month.
+Notes / questions: none.
 
 ## Done
 
