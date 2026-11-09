@@ -58,6 +58,16 @@ Decisions (James): the Accounts screen only for now (not the account pickers or 
 Plan: the Accounts list shows a heading per institution, and inside each a heading per owner (accounts with no owner under "No owner"), sorted by name, with a balance total on each group. Groups can be collapsed. Closed accounts sit at the bottom of their group.
 Notes / questions: none. Shares its institution and owner values with P-17 and P-19, so building together is natural.
 
+### P-23 - Type in a new category beside the drop-down, and manage categories in Settings
+Requested: 2026-11-08 (James: "Add the ability to enter categorizations manually in addition to the drop down. These are then added to the drop down after. Manage these through settings to remove if required.")
+Type: minor (UI change, new settings screen)        Status: Pending
+Plan (first version): wherever a transaction's category is chosen from a drop-down, you can also type a new category. It is saved and appears in the drop-down from then on. Settings gets a list of categories you added by hand, where each can be renamed or removed.
+Notes / questions:
+- Is this about the category on a transaction (and on rules)? Assumed yes. Should the other free-choice lists work the same way (account type, owner, institution under P-17)? Assumed no for now.
+- Removing a category that transactions or rules still use: ask what to do each time (move them to another category, or make them uncategorised), as with P-18? Recommended: yes.
+- When you type a new category, should it also ask whether it is income or expense (the app's categories have a kind)? Recommended: yes, defaulting to expense.
+- Should the categories that ship with the app also be removable here, or only the ones you added? Recommended: you can manage all of them; built-ins used by rules or reports ask before removal.
+
 ## Done
 
 ### P-1 - Link receipts from paperless-ngx to card transactions
