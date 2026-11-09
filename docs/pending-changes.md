@@ -98,9 +98,8 @@ Suggested shipped sub-categories (all optional, all removable, none applied to e
 - Other income: Interest and dividends, Refunds and rebates, Gifts received, Side income, Cash deposit
 - Transfer: Between my accounts (Credit card payment and Loan payment stay top-level categories, James 2026-11-08)
 Decisions (James, 2026-11-08): the suggested lists are right (with Improvement added to Housing and Other added to Shopping); Credit card payment and Loan payment stay top-level only; a sub-category always inherits its category's income, expense or transfer kind; the Wealth cash-flow group (run-rate, annual, extra, debt service) can be set per sub-category and falls back to the category's group.
-Notes / questions:
-- Can you still rename, remove or hide shipped categories (P-23 said removable with an ask)? Assumed yes, and categories you created before this change stay editable. Or lock the shipped list entirely? Recommended: keep removable with the ask, since some may never apply to you.
-- The existing "add category" button goes away. Any transaction currently needing a new category would use a sub-category under the closest one; if a top-level category is missing, you ask me and it ships in a release. Fine?
+Decisions (James, 2026-11-08): shipped categories stay renamable and removable with the ask-before-removal rule, and categories created before this change stay editable. The "add category" button goes away; a missing top-level category is added by a release, and until then you use a sub-category under the closest one.
+Notes / questions: none.
 
 ### P-26 - Shipped category: Children and Pets, with sub-categories
 Requested: 2026-11-08 (James: "Add a category for Children and Pets, and suggest sub categories including child care")
