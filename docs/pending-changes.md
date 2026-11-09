@@ -20,29 +20,30 @@ Notes / questions:
 
 ### P-17 - Institution and owner drop-downs when adding an account
 Requested: 2026-11-08 (James: "When adding accounts make the institution and owner drop downs populated by previous entires in those fields.")
-Type: minor (small UI change)        Status: Pending
-Plan: both fields become a choice list built from values already used on existing accounts (distinct, sorted), with a way to type a new value. No new table.
-Notes / questions: also apply the same lists on the edit screen (P-18).
+Type: minor (small UI change)        Status: Pending (confirmed 2026-11-08)
+Plan: both fields become a choice list built from values already used on existing accounts (distinct, sorted), with a way to type a new value. No new table. The same lists are used on the edit screen (P-18).
+Notes / questions: none.
 
 ### P-18 - Edit and delete accounts
 Requested: 2026-11-08 (James: "Allow editing accounts including delete")
 Type: minor (new screen action, new endpoint)        Status: Pending
-Plan: each account opens an edit form (name, institution, owner, type, opening details, closed or open). Delete removes the account.
-Notes / questions: what should happen to an account's transactions, valuations, statements, balances and receipt links when it is deleted? Options: (a) refuse to delete while it has data and offer Close instead, (b) delete everything attached after a clear confirmation showing the counts, (c) either, your choice per delete. Recommended: (c). Deleted data cannot be recovered except from a backup.
+Decision (2026-11-08, James): ask each time. Plan: each account opens an edit form (name, institution, owner, type, closed or open). Delete on an account with data asks which: close it instead, or delete it and everything attached (transactions, valuations, statements, balances, receipt links) after a confirmation that shows the counts. Deleted data cannot be recovered except from a backup. An account with no data is deleted after a simple confirmation.
+Notes / questions: none.
 
-### P-19 - Show institution, type and owner with the account name on the statement import screen
+### P-19 - Show institution, type and owner with the account name everywhere accounts are picked
 Requested: 2026-11-08 (James: "in the import statement screen refer to accounts by not just their name but their institution, type and owner as well.")
 Type: minor (small UI change)        Status: Pending
-Plan: the account picker and any account label on the import screens read like "Name, Institution, Type, Owner" so similar accounts can be told apart. Could be reused wherever accounts are picked (Budget, transactions, valuations).
-Notes / questions: apply it only on the import screen, or everywhere an account is picked? Recommended: everywhere.
+Decision (2026-11-08, James): everywhere. Plan: one shared account label "Name, Institution, Type, Owner" (empty parts left out) on the statement import screen and every other account picker or list (Budget, transactions, valuations, receipts, reports).
+Notes / questions: none.
 
-### P-20 - Description levels 1, 2 and 3 on imported statements
-Requested: 2026-11-08 (James: "when importing statements add a description level 1, description level 2 and description level 3")
-Type: minor (new fields, import change, new screen options)        Status: Blocked (needs an answer)
+### P-20 - Description, Comment and Reference fields on imported statements
+Requested: 2026-11-08 (James: "when importing statements add a description level 1, description level 2 and description level 3"; changed the same day to "description, comment and reference")
+Type: minor (new fields, import change)        Status: Blocked (needs an answer)
 Notes / questions:
-- What are the levels? My guess: three fields on each transaction that break the bank's description into a hierarchy, for example level 1 = merchant group (Groceries chain), level 2 = merchant (Loblaws), level 3 = detail (store or location), filled by you or by rules. Another reading: three description columns copied from the statement file. Which do you mean, and give one real example.
-- Should they be filled automatically by rules (like categories today), by hand, or both? Should existing transactions be re-run?
-- Should the levels be usable for reports and filters, and be exported?
+- Which statement columns feed Description, Comment and Reference? My guess: Description is the main text of each line (what the transaction list shows today), Comment is the extra memo or detail column some banks provide, Reference is a reference or confirmation number. Banks differ, so the import screen would let you map columns (saved per account or format). Is that right?
+- Should the three fields be editable on a transaction afterwards, searchable, and exported?
+- Should rules (for categories) be able to match on Comment and Reference as well as Description?
+- Existing transactions have only one description; they would keep it as Description and leave the others empty unless re-imported. Is that fine?
 
 ## Done
 
