@@ -83,22 +83,22 @@ Suggested shipped sub-categories (all optional, all removable, none applied to e
 - Groceries: Supermarket, Bulk and warehouse, Specialty and bakery, Household supplies
 - Dining: Restaurants, Fast food, Coffee and snacks, Takeout and delivery, Alcohol and bars
 - Transport: Fuel, Parking and tolls, Public transit, Taxi and rideshare, Car maintenance and repairs, Car insurance, Licence and registration
-- Housing: Mortgage or rent, Property tax, Home insurance, Maintenance and repairs, Furnishings, Condo or strata fees
+- Housing: Mortgage or rent, Property tax, Home insurance, Maintenance and repairs, Improvement, Furnishings, Condo or strata fees
 - Utilities: Electricity, Heating fuel and gas, Water and sewer, Internet, Phone and mobile, Waste and recycling
 - Subscriptions: Streaming and media, Software and apps, Memberships, News and magazines
 - Health: Pharmacy, Doctor and dental, Vision, Therapy and wellness, Health insurance
-- Shopping: Clothing, Electronics, Home and garden, Gifts, Personal care, Kids
+- Shopping: Clothing, Electronics, Home and garden, Gifts, Personal care, Kids, Other
 - Entertainment: Events and tickets, Hobbies, Games, Books and music
 - Travel: Flights, Lodging, Car rental, Activities, Travel insurance
 - Fees and interest: Account fees, Card annual fees, Interest charges, Foreign exchange fees
 - Other: Donations, Government and licences, Pets, Miscellaneous
 - Salary: Base pay, Bonus, Overtime and commission
 - Other income: Interest and dividends, Refunds and rebates, Gifts received, Side income, Cash deposit
-- Transfer: Between my accounts, Credit card payment, Loan payment
+- Transfer: Between my accounts, Credit card payment (James, 2026-11-08: Transfer should have Credit card payment)
 - (P-24) Cash withdrawal: none; Cash deposit and Cash returned to account are shown under Other income and Other as suggestions only
 Notes / questions:
 - Are the suggested lists about right? Tell me what to add, rename or drop; one level deep only?
-- Should P-24's Credit card payment and Loan payment stay as top-level categories (as decided) or become sub-categories of Transfer as suggested above? They are in both places in this list for now; recommended: keep them top-level because reports treat them specially (transfer and debt service).
+- Credit card payment is a sub-category of Transfer (James). P-23 also adds Credit card payment as a top-level category: drop the top-level one and add only the Transfer sub-category? Recommended: yes, so it is not in two places. Loan payment stays top-level (debt service) unless you say otherwise.
 - Should a sub-category keep its own income, expense or transfer kind, or always inherit its category's? Recommended: inherit.
 - Should the Wealth cash-flow groups (run-rate, annual, extra, debt service) be settable per sub-category (for example Property Tax annual, Electricity run-rate)? Recommended: yes, optional, falling back to the category's group.
 
