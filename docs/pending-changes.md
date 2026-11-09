@@ -128,6 +128,28 @@ Notes / questions:
 - A rule made from a whole bank description can be too narrow (store numbers, dates) or too wide (a short word). Should the pattern be tidied automatically (for example drop trailing store numbers and dates) or left as the text of the line? Recommended: tidy it, and show it so you can edit.
 - Should saving a rule also re-categorise other uncategorised transactions that match? Today's behavior is kept unless you say so; say if you want that.
 
+### P-28 - Import transactions from PDF statements (from Paperless, with upload as a fallback)
+Requested: 2026-11-08 (James: "Lets do 2 with the original pdf option, 1 as a fall back." after asking whether the app can take PDF statements, ideally several in a folder or zip, and import transactions from them; samples from CIBC, TD and Scotiabank supplied)
+Type: minor (new feature, new import path, new image dependency)        Status: Pending
+Decisions (James): main route is Paperless: the app lists statement PDFs in Paperless, downloads the original PDF through the Paperless API, and parses it. Fallback is uploading PDFs or a zip into the app, using the same parser. None of the three sample statements is in Paperless yet; he will add the ones that have no CSV.
+Findings from the three samples (all are text PDFs, none scanned, so no OCR is needed): CIBC (chequing, 2 pages), TD (Unlimited chequing, 1 page), Scotiabank (Preferred Package chequing, 2 pages). Each shows opening and closing balances and a transaction table, so each line can be checked against the statement totals (the CIBC sample adds up: 5,885.83 - 1,316.95 + 1,016.95 = 5,585.83). Differences a parser must handle: CIBC and Scotiabank put extra detail on a second line under the description (maps to P-20 Comment, and the e-transfer number to Reference); TD dates have no year ("MAY07", year taken from the statement period) and show the balance only on some lines; withdrawals and deposits are separate columns on all three, with a "service charge discount" credit on CIBC. Account numbers are blanked in the samples, so a statement cannot be matched to an account by number; matching comes from the Paperless tag or correspondent, or you pick the account.
+Plan: (1) a layout profile per bank and statement type, starting with these three (CIBC chequing, TD chequing, Scotiabank chequing); (2) the app reads each PDF's text with its columns kept (poppler's pdftotext in layout mode, added to the image) and applies the profile; (3) a preview of every transaction found, nothing saved until you confirm; (4) a check that opening balance plus deposits minus withdrawals equals the closing balance (and that the lines add up), flagging a statement that does not, instead of importing it quietly; (5) duplicates against transactions already imported are skipped, as in CSV import; (6) an unknown layout is flagged as unsupported, never guessed; (7) the closing balance feeds P-21; (8) the Description, Comment and Reference fields come from P-20. Credit card statements, other banks and more profiles can be added later from further samples.
+Notes / questions:
+- Test files use made-up data in the same layouts, not your real statements; your PDFs are not stored in the repository.
+- The image gains a small PDF tool (poppler-utils), which adds a few MB. OK?
+- Which Paperless marker should identify a bank statement and its account: a tag per account (for example "statement-cibc-chequing"), the correspondent, or the title? Recommended: one tag per account that you add in Paperless, plus the correspondent as a hint.
+- Upload fallback: PDFs or a zip up to a size limit (suggest 50 MB), each file shown with its result.
+
+### P-29 - Statements page: which statements are available or missing, and how old each CSV is
+Requested: 2026-11-08 (James: "Add a page to the app to keep track of which statements are available or missing for each account that uses PDF statements, or the age of the CSV file for ones that have it. Make them red if they are missing/more than a month old.")
+Type: minor (new screen, new account setting, new endpoint)        Status: Pending
+Plan: a Statements page lists each account with a statement source setting (PDF, CSV or none, set on the account). For PDF accounts it shows a month-by-month grid for the last 12 months: statement in Paperless and imported, in Paperless but not yet imported, or missing. For CSV accounts it shows the age of the latest CSV imported. Red means missing, or older than one month. Clicking a month opens the statement in Paperless; a not-yet-imported statement can be imported from there (P-28). It also feeds a reminder (existing reminder settings) when a statement goes red.
+Notes / questions:
+- Age of a CSV: counted from the date of the last import, or from the date of the newest transaction in that account? Recommended: show both, and go red from the newest transaction date (a stale file is one that does not reach recent days).
+- A PDF statement counts for the month its period ends in. Credit card cycles end mid-month, so "missing" would be a month with no statement ending in it once the usual cycle date has passed. OK?
+- "More than a month old" for PDF accounts: red when the most recent expected statement is missing 35 days or more after the previous one ended. OK?
+- Depends on P-28 for knowing which statements are in Paperless (tag per account) and on P-22 for grouping by institution and owner; it can be built before them with the Paperless tag lookup alone.
+
 ## Done
 
 ### P-1 - Link receipts from paperless-ngx to card transactions
