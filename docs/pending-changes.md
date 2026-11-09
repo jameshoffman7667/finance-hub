@@ -87,11 +87,11 @@ Suggested shipped sub-categories (all optional, all removable, none applied to e
 - Utilities: Electricity, Heating fuel and gas, Water and sewer, Internet, Phone and mobile, Waste and recycling
 - Subscriptions: Streaming and media, Software and apps, Memberships, News and magazines
 - Health: Pharmacy, Doctor and dental, Vision, Therapy and wellness, Health insurance
-- Shopping: Clothing, Electronics, Home and garden, Gifts, Personal care, Kids, Other
+- Shopping: Clothing, Electronics, Home and garden, Gifts, Personal care, Other
 - Entertainment: Events and tickets, Hobbies, Games, Books and music
 - Travel: Flights, Lodging, Car rental, Activities, Travel insurance
 - Fees and interest: Account fees, Card annual fees, Interest charges, Foreign exchange fees
-- Other: Donations, Government and licences, Pets, Miscellaneous
+- Other: Donations, Government and licences, Miscellaneous
 - Salary: Base pay, Bonus, Overtime and commission
 - Other income: Interest and dividends, Refunds and rebates, Gifts received, Side income, Cash deposit
 - Transfer: Between my accounts (Credit card payment and Loan payment stay top-level categories, James 2026-11-08)
@@ -100,7 +100,7 @@ Notes / questions: none.
 
 ### P-26 - Shipped category: Children and Pets, with sub-categories
 Requested: 2026-11-08 (James: "Add a category for Children and Pets, and suggest sub categories including child care")
-Type: minor (new shipped category; builds with P-23 and P-25)        Status: Pending
+Type: minor (new shipped category; builds with P-23 and P-25)        Status: Pending (confirmed 2026-11-08)
 Plan: add an expense category "Children and Pets" on upgrade (an existing category with the same name is kept as it is), with optional sub-categories from P-25.
 Suggested sub-categories:
 - Child care (daycare, nanny, babysitting, before and after school care)
@@ -114,10 +114,8 @@ Suggested sub-categories:
 - Pet insurance
 - Grooming, boarding and walking
 - Pet licences and other
-Notes / questions:
-- P-25 currently lists Pets under Other and Kids under Shopping. Move them: remove Pets from Other and Kids from Shopping, and keep them only under Children and Pets? Recommended: yes.
-- One category for both, as asked, or two separate categories (Children, Pets)? One category keeps the list short and sub-categories split them; two would give separate totals at the top level. Recommended: one, as asked.
-- Child care is often a tax-relevant expense (child care expense deduction). Should the Tax screen later pick up Child care by category? Not part of this entry; say if you want it logged.
+Decisions (James, 2026-11-08): one combined category, Children and Pets. Pets is removed from Other's suggested sub-categories and Kids from Shopping's (P-25); both live only here.
+Notes / questions: none. (Child care may later feed the Tax screen's child care expense deduction; not part of this entry, log it if wanted.)
 
 ## Done
 
