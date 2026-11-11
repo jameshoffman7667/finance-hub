@@ -147,37 +147,21 @@ Plan: a Statements page lists each account with a statement source setting (PDF,
 Active missing-statement notification: when an account that expects statements goes red, the app raises a notification that stays active (an Overview tile and the existing reminder channels: e-mail, push, calendar) until the missing statement shows up in Paperless (or the CSV is refreshed), then clears by itself. It repeats on a schedule you set in reminder settings rather than once, and can be snoozed per account.
 Frozen accounts: an account setting "Frozen", meaning no further statements are expected, but the account is not closed (still in balances, still editable, not the same as P-18's Close). A frozen account shows grey on the Statements page, is left out of red states and missing-statement notifications, and is marked in the account lists. Unfreeze at any time; if a new statement arrives for a frozen account the app shows it and offers to unfreeze rather than ignoring it.
 Decisions (James, 2026-11-10): CSV age is counted from the newest transaction date in the account (the import date is shown too); a PDF statement counts for the month its period ends in, and credit card cycles are learned from the documents (see P-31); red when the most recent expected statement is 35 days or more after the previous period end.
-Notes / questions:
+Notes:
 - Depends on P-28 for knowing which statements are in Paperless (account tag per account, P-30) and on P-22 for grouping by institution and owner; it can be built before them with the Paperless tag lookup alone. The Frozen setting appears on the edit account form (P-18) too.
-- Where the active notification shows and how often it repeats: Overview tile plus e-mail or push, repeating weekly until fixed? Recommended: yes, with the interval in reminder settings.
+Decision (James, 2026-11-10): the missing-statement notification shows as an Overview tile plus the e-mail or push channels, and repeats monthly until fixed (interval in reminder settings).
+Notes / questions: none.
 
 ### P-31 - Learn statement dates and payment due dates from the documents, and notify about them
 Requested: 2026-11-10 (James: "learn the statement dates and payment due dates from the documents to allow for notifications about those.")
-Type: minor (new reminder kinds, uses Paperless fields)        Status: Pending
+Type: minor (new reminder kinds, uses Paperless fields)        Status: Pending (confirmed 2026-11-10)
 Plan: from the statements in Paperless, the app learns each account's statement cycle (the Period End and Payment Due Date custom fields from P-30; the P-28 parser can fill them from the PDF when they are missing) and uses it for notifications:
 - Statement date: a reminder around the expected statement date ("RBC Avion statement should be ready, add it to Paperless") and, with P-29, it becomes the missing-statement alert when the statement is late.
 - Payment due date: the exact due date from the latest statement, with the minimum payment amount, reminded the number of days before that you set. Due dates move with weekends and holidays, so the exact date from the document replaces a fixed day of the month.
 - Predictions: next statement date and next due date are projected from the learned cycle until the next document arrives.
 Today the app has hand-typed statement day and due day on each card, with a payment-due reminder from them. Learned dates would take over from those when a statement exists; the typed days stay as the fallback for a card with no statement in Paperless yet. A difference between the typed day and the learned date is shown, not silently overwritten.
-Notes / questions:
-- Learned dates for bank and investment accounts: statement cycle only (they have no payment due date). OK?
-- Should the learned statement day also write back to the card's typed statement day and due day fields, or leave them as typed? Recommended: write back after one confirmation per card.
-- Uses the existing reminder channels and per-kind settings (a new kind for statement date; the payment due kind already exists).
-
-### P-30 - Paperless statement conventions: account tags, document types and custom fields
-Requested: 2026-11-10 (James: "yes please log the paperless account tag convention", after approving the plan to rename his statement folders and upload all statement PDFs to Paperless through the API with metadata filled in)
-Type: minor (convention the Paperless statement connector of P-28 and P-29 relies on; no app change on its own)        Status: Pending
-Decisions (James): statement PDFs are uploaded to Paperless by a script outside the app (Claude Code on the LAN PC), with this metadata. The app reads it; it never writes these fields.
-- Account tag, one per account: `acct-<institution>-<product-or-type>-<last4>`, lowercase, words joined by hyphens (e.g. `acct-rbc-avion-visa-infinite-4417`, `acct-td-chequing-1234`, `acct-questrade-tfsa-5678`). This is how the app matches a PDF to its account. Store the tag on the account in the app (a new account setting, set once).
-- Other tags: `statement` on every statement, `finance-hub` on every document from the upload, `needs-review` on documents with low-confidence values.
-- Correspondent: the short institution name (TD, CIBC, Scotiabank, RBC, Questrade, Wealthsimple, American Express...), the same text as the app's institution field. Brokerage arms use the parent name (TD Direct Investing and TD Easy Trade are TD; Scotia iTRADE is Scotiabank).
-- Document types: Credit Card Statement, Bank Statement, Investment Statement, Annual Summary, Tax Slip, Trade Confirmation, Account Notice.
-- Title: `<Institution> - <Product or Account Type> - <Document Kind> - <YYYY-MM> - <Last4>`, with YYYY-MM the month the statement period ends in (P-29). Created date: the period end date.
-- Custom fields (exact names): Account Last 4 (string), Account Kind (select: Credit Card, Bank, Investment, Loan), Account Type (select: Chequing, Savings, HISA, Credit Card, LOC, HELOC, Mortgage, Cash, Margin, RRSP, Spousal RRSP, TFSA, FHSA, RESP, LIRA, RRIF), Product (string), Owner (select), Period Start (date), Period End (date), Opening Balance, Closing Balance, Total Debits, Total Credits (monetary; P-28 balance check, closing balance feeds P-21), Payment Due Date (date), Minimum Payment, Credit Limit, Interest Charged, Fees Charged (monetary), Points Earned (integer), Market Value, Contributions (monetary), Transaction Source (select: PDF only, CSV available), Reconciled (boolean). Fields that do not apply are left off the document. The existing receipt field Total is not used for statements.
-Notes / questions:
-Decisions (James, 2026-11-10): local first. Statements, extracted transactions and Paperless content stay on the home network: nothing sensitive goes into the repository, CI, the app chat or any other cloud location. The parser is built from a layout guide with made-up fixtures that Claude Code writes on the LAN PC (privacy-scanned against his real data); test files are only those fixtures. "CSV available" means the PDF import (P-28) skips that statement unless asked. Paperless field values are a hint: the P-28 parser still reads the PDF and flags any difference from the Paperless totals.
-Notes / questions:
-- Select fields are read by option label (newer Paperless versions return option IDs, so the app looks up each field's options first).
+Decisions (James, 2026-11-10): learned dates for bank and investment accounts are the statement cycle only (no payment due date); learned statement and due days write back to each card's typed statement day and due day after one confirmation per card.
+Notes / questions: none. Uses the existing reminder channels and per-kind settings (a new kind for statement date; the payment due kind already exists).
 
 ## Done
 
