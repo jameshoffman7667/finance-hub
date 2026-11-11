@@ -161,9 +161,9 @@ Decisions (James): statement PDFs are uploaded to Paperless by a script outside 
 - Title: `<Institution> - <Product or Account Type> - <Document Kind> - <YYYY-MM> - <Last4>`, with YYYY-MM the month the statement period ends in (P-29). Created date: the period end date.
 - Custom fields (exact names): Account Last 4 (string), Account Kind (select: Credit Card, Bank, Investment, Loan), Account Type (select: Chequing, Savings, HISA, Credit Card, LOC, HELOC, Mortgage, Cash, Margin, RRSP, Spousal RRSP, TFSA, FHSA, RESP, LIRA, RRIF), Product (string), Owner (select), Period Start (date), Period End (date), Opening Balance, Closing Balance, Total Debits, Total Credits (monetary; P-28 balance check, closing balance feeds P-21), Payment Due Date (date), Minimum Payment, Credit Limit, Interest Charged, Fees Charged (monetary), Points Earned (integer), Market Value, Contributions (monetary), Transaction Source (select: PDF only, CSV available), Reconciled (boolean). Fields that do not apply are left off the document. The existing receipt field Total is not used for statements.
 Notes / questions:
+Decisions (James, 2026-11-10): local first. Statements, extracted transactions and Paperless content stay on the home network: nothing sensitive goes into the repository, CI, the app chat or any other cloud location. The parser is built from a layout guide with made-up fixtures that Claude Code writes on the LAN PC (privacy-scanned against his real data); test files are only those fixtures. "CSV available" means the PDF import (P-28) skips that statement unless asked. Paperless field values are a hint: the P-28 parser still reads the PDF and flags any difference from the Paperless totals.
+Notes / questions:
 - Select fields are read by option label (newer Paperless versions return option IDs, so the app looks up each field's options first).
-- Transaction Source "CSV available" means the period's transactions come from the CSV import, so the PDF import (P-28) skips that statement unless asked, to avoid importing it twice. OK?
-- Paperless field values are a hint, not the truth: the P-28 parser still reads the PDF, and a difference between its totals and the Paperless fields is flagged. OK?
 
 ## Done
 
