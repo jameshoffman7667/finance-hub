@@ -40,9 +40,9 @@ export function cashFlow(data, from, to, opts = {}) {
   const add = (group, label, cents) => { if (!cents) return; const g = lines.get(group) || lines.set(group, new Map()).get(group); g.set(label, (g.get(label) || 0) + cents); };
   const warnings = [];
   for (const t of data.transactions.filter((x) => x.posted_on >= from && x.posted_on <= to)) {
-    const c = cats.get(t.category_id); if (!c) { add(t.amount_cents < 0 ? 'spend_run' : 'income_employment', 'Uncategorised', Math.abs(t.amount_cents)); continue; }
+    let c = cats.get(t.category_id); if (c?.nets_into_id) c = cats.get(c.nets_into_id) || c; if (!c) { add(t.amount_cents < 0 ? 'spend_run' : 'income_employment', 'Uncategorised', Math.abs(t.amount_cents)); continue; }
     if (c.kind === 'transfer') continue;
-    const g = defaultGroup(c);
+    const g = t.sub_flow_group && GROUPS[t.sub_flow_group] ? t.sub_flow_group : defaultGroup(c);
     if (GROUPS[g].side === 'income') add(g, c.name, t.amount_cents); else add(g, c.name, -t.amount_cents);
   }
   for (const e of data.ledger.filter((x) => x.received_on && x.received_on >= from && x.received_on <= to && x.received_cents)) add('income_strategic', `${e.issuer} ${e.title}`, e.received_cents);

@@ -18,116 +18,6 @@ Notes / questions:
 - Matching "all branches" needs a places service on the device side (outside requests, possibly an API key). Decide that when the native app is built.
 - Gift card balances are not verified with the store; you enter and update them.
 
-### P-17 - Institution and owner drop-downs when adding an account
-Requested: 2026-11-08 (James: "When adding accounts make the institution and owner drop downs populated by previous entires in those fields.")
-Type: minor (small UI change)        Status: Pending (confirmed 2026-11-08)
-Plan: both fields become a choice list built from values already used on existing accounts (distinct, sorted), with a way to type a new value. No new table. The same lists are used on the edit screen (P-18).
-Notes / questions: none.
-
-### P-18 - Edit and delete accounts
-Requested: 2026-11-08 (James: "Allow editing accounts including delete")
-Type: minor (new screen action, new endpoint)        Status: Pending
-Decision (2026-11-08, James): ask each time. Plan: each account opens an edit form (name, institution, owner, type, closed or open). Delete on an account with data asks which: close it instead, or delete it and everything attached (transactions, valuations, statements, balances, receipt links) after a confirmation that shows the counts. Deleted data cannot be recovered except from a backup. An account with no data is deleted after a simple confirmation.
-Notes / questions: none.
-
-### P-19 - Show institution, type and owner with the account name everywhere accounts are picked
-Requested: 2026-11-08 (James: "in the import statement screen refer to accounts by not just their name but their institution, type and owner as well.")
-Type: minor (small UI change)        Status: Pending
-Decision (2026-11-08, James): everywhere. Plan: one shared account label "Name, Institution, Type, Owner" (empty parts left out) on the statement import screen and every other account picker or list (Budget, transactions, valuations, receipts, reports).
-Notes / questions: none.
-
-### P-20 - Description, Comment and Reference fields on imported statements
-Requested: 2026-11-08 (James: "when importing statements add a description level 1, description level 2 and description level 3"; changed the same day to "description, comment and reference")
-Type: minor (new fields, import change)        Status: Pending (confirmed 2026-11-08)
-Decisions (James): Description is the main text of each line, Comment the extra memo column, Reference a reference or confirmation number. The import screen lets you map statement columns to the three fields, saved per account or format, because banks differ. The fields are not editable on a transaction afterwards, but they are searchable and exported. Category rules can match on Comment and Reference as well as Description. Existing transactions keep their one text as Description and leave Comment and Reference empty unless re-imported.
-Notes / questions: none.
-
-### P-21 - Fill an account's balance automatically from statement imports
-Requested: 2026-11-08 (James: "auto populate the balance for an account from the statement imports.")
-Type: minor (import change, uses existing balance history)        Status: Pending (confirmed 2026-11-08)
-Plan (first version): today balances are entered by hand as dated values per account and imports do not touch them. On import, the app finds a balance in the statement and saves it as that account's balance on the statement date (source "import"), so Wealth, the balance sheet and the debt views stay current. Two ways, in this order: (1) a balance column in the file (running balance after each line; the last line gives the closing balance), mapped on the import screen like the P-20 fields; (2) if there is no balance column, ask for the closing balance on the import screen and show the app's suggestion (the previous balance plus the imported lines) to confirm. Never overwrite a balance you typed by hand for the same date without asking.
-Notes / questions:
-- Credit cards and loans: statements show the amount owed; it is saved as a positive balance on a liability account, as the app already does.
-- Decision (James, 2026-11-08): the balance is always shown with a quick OK before it is saved, including when the file has a balance column.
-- Overlaps with P-20 (column mapping), so building them together is natural.
-
-### P-22 - Group accounts by institution, then by owner
-Requested: 2026-11-08 (James: "group accounts by institution, then by owner")
-Type: minor (UI change)        Status: Pending (confirmed 2026-11-08)
-Decisions (James): the Accounts screen only for now (not the account pickers or the Wealth balance sheet). Group totals show balances, with liabilities subtracted.
-Plan: the Accounts list shows a heading per institution, and inside each a heading per owner (accounts with no owner under "No owner"), sorted by name, with a balance total on each group. Groups can be collapsed. Closed accounts sit at the bottom of their group.
-Notes / questions: none. Shares its institution and owner values with P-17 and P-19, so building together is natural.
-
-### P-23 - Type in a new value beside any drop-down, manage the lists in Settings, add shipped categories
-Requested: 2026-11-08 (James: "Add the ability to enter categorizations manually in addition to the drop down. These are then added to the drop down after. Manage these through settings to remove if required.")
-Type: minor (UI change, new settings screen, new categories)        Status: Pending (confirmed 2026-11-08)
-CHANGED 2026-11-08 (James: "change so that the user cannot add categories but can add sub categories"): categories can no longer be added by the user; only sub-categories can (P-25). In this entry, "type a new value" now covers institution, owner and sub-categories, not categories. The shipped category list still grows only through releases.
-Decisions (James): applies to the free-choice drop-downs (transaction and rule categories, institution, owner and the like). Account type is excluded (2026-11-08): it stays a fixed list because the app's behavior depends on it. Removing a value that is still in use asks each time (move it to another value, or leave it empty). Shipped categories are removable too, with the same ask.
-Plan: wherever you choose from a list (except the category list itself) you can also type a new value; it is saved and appears in the list from then on. Settings gets a "Lists" screen: each list with its values, usage counts, rename and remove.
-Add to the shipped category list: Credit card payment, Loan payment. (The four "Bill - ..." categories were dropped 2026-11-08: Utilities and Housing already cover them; sub-categories may come later.)
-Notes / questions:
-- Credit card payment and loan payment are transfers of money you already spent (card payment) or debt payments (loan). I'd mark Credit card payment as a transfer so it is not counted as spending twice, and Loan payment as debt service (principal and interest, as the Wealth cash flow already groups it). Confirmed 2026-11-08.
-- Existing databases get the new shipped categories added on upgrade; any you already created with the same name are kept as they are.
-
-### P-24 - Shipped categories: Cash withdrawal, Cash deposit and Cash returned to account
-Requested: 2026-11-08 (James: "Add cash withdrawl as a category. Not sure whether to call it a transfer or expense as the actual spending will likely never make it back on a transaction. Thining expense and Cash deposit would be income")
-Type: minor (new shipped categories; builds with P-23)        Status: Pending (confirmed 2026-11-08)
-Decision (James): option (c). Three shipped categories: Cash withdrawal (expense: the cash you spend never appears as a transaction, so the withdrawal is what counts as spending), Cash deposit (income: cash you earned, such as tips or sales), and Cash returned to account (reduces spending: leftover cash put back, so a withdrawal of 100 and 40 returned counts as 60 spent and does not inflate income or the savings rate).
-Plan: added on upgrade as for the P-23 categories (an existing category with the same name is kept as it is). Budget and Wealth cash flow net "Cash returned to account" against spending in the same month.
-Notes / questions: none.
-
-### P-25 - Optional sub-categories
-Requested: 2026-11-08 (James: "Lets add sub categories. Make suggestions for all the categories we already have. They should be optional in the app.")
-Type: minor (new feature, new column, new Settings screen)        Status: Pending (confirmed 2026-11-08)
-CHANGED 2026-11-08 (James: "change so that the user cannot add categories but can add sub categories"): you cannot add top-level categories; you can add (and rename, remove) sub-categories under any category. The category list is the shipped list, extended only by releases.
-Plan (first version): a category can have sub-categories, one level deep (a sub-category belongs to one category). Choosing a sub-category is optional everywhere: a transaction can stay on the category alone and nothing breaks. Reports and the Budget screen roll sub-categories up into their category by default, with a way to expand a category to see its parts. Category rules can pick a sub-category. The P-23 "type a new value" and "Lists" Settings screen cover sub-categories too (including the ask-before-removal rule). Sub-categories are off until you add one: with none defined the app looks and works exactly as it does now. Existing transactions stay on their category.
-Suggested shipped sub-categories (all optional, all removable, none applied to existing transactions):
-- Groceries: Supermarket, Bulk and warehouse, Specialty and bakery, Household supplies
-- Dining: Restaurants, Fast food, Coffee and snacks, Takeout and delivery, Alcohol and bars
-- Transport: Fuel, Parking and tolls, Public transit, Taxi and rideshare, Car maintenance and repairs, Car insurance, Licence and registration
-- Housing: Mortgage or rent, Property tax, Home insurance, Maintenance and repairs, Improvement, Furnishings, Condo or strata fees
-- Utilities: Electricity, Heating fuel and gas, Water and sewer, Internet, Phone and mobile, Waste and recycling
-- Subscriptions: Streaming and media, Software and apps, Memberships, News and magazines
-- Health: Pharmacy, Doctor and dental, Vision, Therapy and wellness, Health insurance
-- Shopping: Clothing, Electronics, Home and garden, Gifts, Personal care, Other
-- Entertainment: Events and tickets, Hobbies, Games, Books and music
-- Travel: Flights, Lodging, Car rental, Activities, Travel insurance
-- Fees and interest: Account fees, Card annual fees, Interest charges, Foreign exchange fees
-- Other: Donations, Government and licences, Miscellaneous
-- Salary: Base pay, Bonus, Overtime and commission
-- Other income: Interest and dividends, Refunds and rebates, Gifts received, Side income, Cash deposit
-- Transfer: Between my accounts (Credit card payment and Loan payment stay top-level categories, James 2026-11-08)
-Decisions (James, 2026-11-08): the suggested lists are right (with Improvement added to Housing and Other added to Shopping); Credit card payment and Loan payment stay top-level only; a sub-category always inherits its category's income, expense or transfer kind; the Wealth cash-flow group (run-rate, annual, extra, debt service) can be set per sub-category and falls back to the category's group.
-Decisions (James, 2026-11-08): shipped categories stay renamable and removable with the ask-before-removal rule, and categories created before this change stay editable. The "add category" button goes away; a missing top-level category is added by a release, and until then you use a sub-category under the closest one.
-Notes / questions: none.
-
-### P-26 - Shipped category: Children and Pets, with sub-categories
-Requested: 2026-11-08 (James: "Add a category for Children and Pets, and suggest sub categories including child care")
-Type: minor (new shipped category; builds with P-23 and P-25)        Status: Pending (confirmed 2026-11-08)
-Plan: add an expense category "Children and Pets" on upgrade (an existing category with the same name is kept as it is), with optional sub-categories from P-25.
-Suggested sub-categories:
-- Child care (daycare, nanny, babysitting, before and after school care)
-- Education and activities (tuition, school fees and supplies, lessons, camps, sports)
-- Children's clothing and gear
-- Children's health (doctor, dental, vision, prescriptions)
-- Toys and entertainment
-- Allowance and gifts
-- Pet food and supplies
-- Veterinary and pet health
-- Pet insurance
-- Grooming, boarding and walking
-- Pet licences and other
-Decisions (James, 2026-11-08): one combined category, Children and Pets. Pets is removed from Other's suggested sub-categories and Kids from Shopping's (P-25); both live only here.
-Notes / questions: none. (Child care may later feed the Tax screen's child care expense deduction; not part of this entry, log it if wanted.)
-
-### P-27 - Tick "Always use this category" by default when categorising a transaction
-Requested: 2026-11-08 (James: "default the \"Always use this category when the description contains\" to checked")
-Type: patch (small UI default change)        Status: Pending
-Plan: on the transaction category dialog, the checkbox "Always use this category when the description contains:" starts ticked, with the description text filled in as the pattern as it is now, so choosing a category also saves a rule. You can untick it for a one-off. The rule is only saved when a category is chosen (as today).
-Notes / questions:
-- A rule made from a whole bank description can be too narrow (store numbers, dates) or too wide (a short word). Should the pattern be tidied automatically (for example drop trailing store numbers and dates) or left as the text of the line? Recommended: tidy it, and show it so you can edit.
-- Should saving a rule also re-categorise other uncategorised transactions that match? Today's behavior is kept unless you say so; say if you want that.
-
 ### P-28 - Import transactions from PDF statements (from Paperless, with upload as a fallback)
 Requested: 2026-11-08 (James: "Lets do 2 with the original pdf option, 1 as a fall back." after asking whether the app can take PDF statements, ideally several in a folder or zip, and import transactions from them; samples from CIBC, TD and Scotiabank supplied)
 Type: minor (new feature, new import path, new image dependency)        Status: Pending
@@ -330,3 +220,114 @@ Plan (first version):
 - Phone and desktop layouts are separate designs; information only.
 Decisions (James, 2026-11-05): investment growth is a cash-flow line from actuals and the 7% assumption is only for projecting forward; defaults 12 months and 10 years; seed the planned items; add potential spends; track time per offer (see P-11).
 Notes / questions: none open.
+
+### P-17 - Institution and owner drop-downs when adding an account
+Requested: 2026-11-08 (James: "When adding accounts make the institution and owner drop downs populated by previous entires in those fields.")
+Type: minor (small UI change)        Status: Built in v0.8.0
+Plan: both fields become a choice list built from values already used on existing accounts (distinct, sorted), with a way to type a new value. No new table. The same lists are used on the edit screen (P-18).
+Notes / questions: none.
+
+### P-18 - Edit and delete accounts
+Requested: 2026-11-08 (James: "Allow editing accounts including delete")
+Type: minor (new screen action, new endpoint)        Status: Built in v0.8.0
+Decision (2026-11-08, James): ask each time. Plan: each account opens an edit form (name, institution, owner, type, closed or open). Delete on an account with data asks which: close it instead, or delete it and everything attached (transactions, valuations, statements, balances, receipt links) after a confirmation that shows the counts. Deleted data cannot be recovered except from a backup. An account with no data is deleted after a simple confirmation.
+Notes / questions: none.
+
+### P-19 - Show institution, type and owner with the account name everywhere accounts are picked
+Requested: 2026-11-08 (James: "in the import statement screen refer to accounts by not just their name but their institution, type and owner as well.")
+Type: minor (small UI change)        Status: Built in v0.8.0
+Decision (2026-11-08, James): everywhere. Plan: one shared account label "Name, Institution, Type, Owner" (empty parts left out) on the statement import screen and every other account picker or list (Budget, transactions, valuations, receipts, reports).
+Notes / questions: none.
+
+### P-20 - Description, Comment and Reference fields on imported statements
+Requested: 2026-11-08 (James: "when importing statements add a description level 1, description level 2 and description level 3"; changed the same day to "description, comment and reference")
+Type: minor (new fields, import change)        Status: Built in v0.8.0
+Decisions (James): Description is the main text of each line, Comment the extra memo column, Reference a reference or confirmation number. The import screen lets you map statement columns to the three fields, saved per account or format, because banks differ. The fields are not editable on a transaction afterwards, but they are searchable and exported. Category rules can match on Comment and Reference as well as Description. Existing transactions keep their one text as Description and leave Comment and Reference empty unless re-imported.
+Notes / questions: none.
+
+### P-21 - Fill an account's balance automatically from statement imports
+Requested: 2026-11-08 (James: "auto populate the balance for an account from the statement imports.")
+Type: minor (import change, uses existing balance history)        Status: Built in v0.8.0
+Plan (first version): today balances are entered by hand as dated values per account and imports do not touch them. On import, the app finds a balance in the statement and saves it as that account's balance on the statement date (source "import"), so Wealth, the balance sheet and the debt views stay current. Two ways, in this order: (1) a balance column in the file (running balance after each line; the last line gives the closing balance), mapped on the import screen like the P-20 fields; (2) if there is no balance column, ask for the closing balance on the import screen and show the app's suggestion (the previous balance plus the imported lines) to confirm. Never overwrite a balance you typed by hand for the same date without asking.
+Notes / questions:
+- Credit cards and loans: statements show the amount owed; it is saved as a positive balance on a liability account, as the app already does.
+- Decision (James, 2026-11-08): the balance is always shown with a quick OK before it is saved, including when the file has a balance column.
+- Overlaps with P-20 (column mapping), so building them together is natural.
+
+### P-22 - Group accounts by institution, then by owner
+Requested: 2026-11-08 (James: "group accounts by institution, then by owner")
+Type: minor (UI change)        Status: Built in v0.8.0
+Decisions (James): the Accounts screen only for now (not the account pickers or the Wealth balance sheet). Group totals show balances, with liabilities subtracted.
+Plan: the Accounts list shows a heading per institution, and inside each a heading per owner (accounts with no owner under "No owner"), sorted by name, with a balance total on each group. Groups can be collapsed. Closed accounts sit at the bottom of their group.
+Notes / questions: none. Shares its institution and owner values with P-17 and P-19, so building together is natural.
+
+### P-23 - Type in a new value beside any drop-down, manage the lists in Settings, add shipped categories
+Requested: 2026-11-08 (James: "Add the ability to enter categorizations manually in addition to the drop down. These are then added to the drop down after. Manage these through settings to remove if required.")
+Type: minor (UI change, new settings screen, new categories)        Status: Built in v0.8.0
+CHANGED 2026-11-08 (James: "change so that the user cannot add categories but can add sub categories"): categories can no longer be added by the user; only sub-categories can (P-25). In this entry, "type a new value" now covers institution, owner and sub-categories, not categories. The shipped category list still grows only through releases.
+Decisions (James): applies to the free-choice drop-downs (transaction and rule categories, institution, owner and the like). Account type is excluded (2026-11-08): it stays a fixed list because the app's behavior depends on it. Removing a value that is still in use asks each time (move it to another value, or leave it empty). Shipped categories are removable too, with the same ask.
+Plan: wherever you choose from a list (except the category list itself) you can also type a new value; it is saved and appears in the list from then on. Settings gets a "Lists" screen: each list with its values, usage counts, rename and remove.
+Add to the shipped category list: Credit card payment, Loan payment. (The four "Bill - ..." categories were dropped 2026-11-08: Utilities and Housing already cover them; sub-categories may come later.)
+Notes / questions:
+- Credit card payment and loan payment are transfers of money you already spent (card payment) or debt payments (loan). I'd mark Credit card payment as a transfer so it is not counted as spending twice, and Loan payment as debt service (principal and interest, as the Wealth cash flow already groups it). Confirmed 2026-11-08.
+- Existing databases get the new shipped categories added on upgrade; any you already created with the same name are kept as they are.
+
+### P-24 - Shipped categories: Cash withdrawal, Cash deposit and Cash returned to account
+Requested: 2026-11-08 (James: "Add cash withdrawl as a category. Not sure whether to call it a transfer or expense as the actual spending will likely never make it back on a transaction. Thining expense and Cash deposit would be income")
+Type: minor (new shipped categories; builds with P-23)        Status: Built in v0.8.0
+Decision (James): option (c). Three shipped categories: Cash withdrawal (expense: the cash you spend never appears as a transaction, so the withdrawal is what counts as spending), Cash deposit (income: cash you earned, such as tips or sales), and Cash returned to account (reduces spending: leftover cash put back, so a withdrawal of 100 and 40 returned counts as 60 spent and does not inflate income or the savings rate).
+Plan: added on upgrade as for the P-23 categories (an existing category with the same name is kept as it is). Budget and Wealth cash flow net "Cash returned to account" against spending in the same month.
+Notes / questions: none.
+
+### P-25 - Optional sub-categories
+Requested: 2026-11-08 (James: "Lets add sub categories. Make suggestions for all the categories we already have. They should be optional in the app.")
+Type: minor (new feature, new column, new Settings screen)        Status: Built in v0.8.0
+CHANGED 2026-11-08 (James: "change so that the user cannot add categories but can add sub categories"): you cannot add top-level categories; you can add (and rename, remove) sub-categories under any category. The category list is the shipped list, extended only by releases.
+Plan (first version): a category can have sub-categories, one level deep (a sub-category belongs to one category). Choosing a sub-category is optional everywhere: a transaction can stay on the category alone and nothing breaks. Reports and the Budget screen roll sub-categories up into their category by default, with a way to expand a category to see its parts. Category rules can pick a sub-category. The P-23 "type a new value" and "Lists" Settings screen cover sub-categories too (including the ask-before-removal rule). Sub-categories are off until you add one: with none defined the app looks and works exactly as it does now. Existing transactions stay on their category.
+Suggested shipped sub-categories (all optional, all removable, none applied to existing transactions):
+- Groceries: Supermarket, Bulk and warehouse, Specialty and bakery, Household supplies
+- Dining: Restaurants, Fast food, Coffee and snacks, Takeout and delivery, Alcohol and bars
+- Transport: Fuel, Parking and tolls, Public transit, Taxi and rideshare, Car maintenance and repairs, Car insurance, Licence and registration
+- Housing: Mortgage or rent, Property tax, Home insurance, Maintenance and repairs, Improvement, Furnishings, Condo or strata fees
+- Utilities: Electricity, Heating fuel and gas, Water and sewer, Internet, Phone and mobile, Waste and recycling
+- Subscriptions: Streaming and media, Software and apps, Memberships, News and magazines
+- Health: Pharmacy, Doctor and dental, Vision, Therapy and wellness, Health insurance
+- Shopping: Clothing, Electronics, Home and garden, Gifts, Personal care, Other
+- Entertainment: Events and tickets, Hobbies, Games, Books and music
+- Travel: Flights, Lodging, Car rental, Activities, Travel insurance
+- Fees and interest: Account fees, Card annual fees, Interest charges, Foreign exchange fees
+- Other: Donations, Government and licences, Miscellaneous
+- Salary: Base pay, Bonus, Overtime and commission
+- Other income: Interest and dividends, Refunds and rebates, Gifts received, Side income, Cash deposit
+- Transfer: Between my accounts (Credit card payment and Loan payment stay top-level categories, James 2026-11-08)
+Decisions (James, 2026-11-08): the suggested lists are right (with Improvement added to Housing and Other added to Shopping); Credit card payment and Loan payment stay top-level only; a sub-category always inherits its category's income, expense or transfer kind; the Wealth cash-flow group (run-rate, annual, extra, debt service) can be set per sub-category and falls back to the category's group.
+Decisions (James, 2026-11-08): shipped categories stay renamable and removable with the ask-before-removal rule, and categories created before this change stay editable. The "add category" button goes away; a missing top-level category is added by a release, and until then you use a sub-category under the closest one.
+Notes / questions: none.
+
+### P-26 - Shipped category: Children and Pets, with sub-categories
+Requested: 2026-11-08 (James: "Add a category for Children and Pets, and suggest sub categories including child care")
+Type: minor (new shipped category; builds with P-23 and P-25)        Status: Built in v0.8.0
+Plan: add an expense category "Children and Pets" on upgrade (an existing category with the same name is kept as it is), with optional sub-categories from P-25.
+Suggested sub-categories:
+- Child care (daycare, nanny, babysitting, before and after school care)
+- Education and activities (tuition, school fees and supplies, lessons, camps, sports)
+- Children's clothing and gear
+- Children's health (doctor, dental, vision, prescriptions)
+- Toys and entertainment
+- Allowance and gifts
+- Pet food and supplies
+- Veterinary and pet health
+- Pet insurance
+- Grooming, boarding and walking
+- Pet licences and other
+Decisions (James, 2026-11-08): one combined category, Children and Pets. Pets is removed from Other's suggested sub-categories and Kids from Shopping's (P-25); both live only here.
+Notes / questions: none. (Child care may later feed the Tax screen's child care expense deduction; not part of this entry, log it if wanted.)
+
+### P-27 - Tick "Always use this category" by default when categorising a transaction
+Requested: 2026-11-08 (James: "default the \"Always use this category when the description contains\" to checked")
+Type: patch (small UI default change)        Status: Built in v0.8.0
+Plan: on the transaction category dialog, the checkbox "Always use this category when the description contains:" starts ticked, with the description text filled in as the pattern as it is now, so choosing a category also saves a rule. You can untick it for a one-off. The rule is only saved when a category is chosen (as today).
+Notes / questions:
+- A rule made from a whole bank description can be too narrow (store numbers, dates) or too wide (a short word). Should the pattern be tidied automatically (for example drop trailing store numbers and dates) or left as the text of the line? Recommended: tidy it, and show it so you can edit.
+- Should saving a rule also re-categorise other uncategorised transactions that match? Today's behavior is kept unless you say so; say if you want that.
+Built note: pattern tidy and re-categorise questions were not answered, so today's behaviour is kept (tidy already splits at digits, #, *).

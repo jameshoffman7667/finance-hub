@@ -1,6 +1,6 @@
 {
   "name": "finance-hub",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Personal finance manager for the home server",
   "private": true,
   "type": "module",

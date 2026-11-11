@@ -5,7 +5,7 @@ import { hash as argonHash, verify as argonVerify } from '@node-rs/argon2';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { nowIso } from './db.js';
 import { encrypt, decrypt, sha256, randomToken, newTotpSecret, verifyTotp } from './crypto.js';
-import { parseStatement, loadRules, categorize } from './importer.js';
+import { parseStatement, loadRules, classify, RULE_FIELDS } from './importer.js';
 import { parseCents, parseDate } from './money.js';
 import { toCsv } from './csv.js';
 import { mountOffers } from './offers.js';
@@ -15,6 +15,7 @@ import { mountTax } from './tax-routes.js';
 import { mountWealth } from './wealth-routes.js';
 import { mountReceipts } from './receipts-routes.js';
 import { mountWatch } from './watch-routes.js';
+import { mountLists, accountLabel } from './lists-routes.js';
 import { createNotifier } from './notify.js';
 
 const ACCOUNT_TYPES = {
@@ -297,8 +298,9 @@ export function createApp({ db, config, log }) {
 
   api.get('/accounts', requireAuth, route((req, res) => {
     const rows = db.prepare('SELECT * FROM accounts ORDER BY active DESC, kind, name').all()
-      .map((a) => ({ ...a, latest: latestVal.get(a.id) ?? null }));
-    res.json({ accounts: rows, types: ACCOUNT_TYPES });
+      .map((a) => ({ ...a, label: accountLabel(a), latest: latestVal.get(a.id) ?? null }));
+    const distinct = (c) => db.prepare(`SELECT DISTINCT ${c} AS v FROM accounts WHERE ${c} != '' ORDER BY lower(${c})`).all().map((r) => r.v);
+    res.json({ accounts: rows, types: ACCOUNT_TYPES, institutions: distinct('institution'), owners: distinct('owner') });
   }));
 
   api.post('/accounts', requireAuth, route((req, res) => {
@@ -314,11 +316,13 @@ export function createApp({ db, config, log }) {
   api.patch('/accounts/:id', requireAuth, route((req, res) => {
     const a = accountRow(+req.params.id);
     const b = req.body || {};
-    db.prepare('UPDATE accounts SET name = ?, institution = ?, owner = ?, active = ? WHERE id = ?').run(
+    if (b.type !== undefined && !ACCOUNT_TYPES[b.type]) throw bad('Unknown account type');
+    db.prepare('UPDATE accounts SET name = ?, institution = ?, owner = ?, active = ?, type = ?, kind = ? WHERE id = ?').run(
       b.name !== undefined ? str(b.name, 80) : a.name,
       b.institution !== undefined ? String(b.institution).slice(0, 80) : a.institution,
       b.owner !== undefined ? String(b.owner).slice(0, 60) : a.owner,
       b.active !== undefined ? (b.active ? 1 : 0) : a.active,
+      b.type !== undefined ? b.type : a.type, b.type !== undefined ? ACCOUNT_TYPES[b.type] : a.kind,
       a.id);
     res.json({ ok: true });
   }));
@@ -350,28 +354,33 @@ export function createApp({ db, config, log }) {
   api.get('/categories', requireAuth, route((req, res) => {
     res.json({
       categories: db.prepare('SELECT * FROM categories ORDER BY archived, kind, name').all(),
-      rules: db.prepare('SELECT r.*, c.name AS category FROM rules r JOIN categories c ON c.id = r.category_id ORDER BY r.priority, r.id').all(),
+      subcategories: db.prepare('SELECT id, category_id, name, flow_group FROM subcategories ORDER BY name').all(),
+      rules: db.prepare('SELECT r.*, c.name AS category, s.name AS subcategory FROM rules r JOIN categories c ON c.id = r.category_id LEFT JOIN subcategories s ON s.id = r.subcategory_id ORDER BY r.priority, r.id').all(),
     });
   }));
-  api.post('/categories', requireAuth, route((req, res) => {
-    const kind = req.body?.kind;
-    if (!['expense', 'income', 'transfer'].includes(kind)) throw bad('Unknown category kind');
-    try {
-      const info = db.prepare('INSERT INTO categories (name, kind) VALUES (?,?)').run(str(req.body?.name, 60), kind);
-      res.status(201).json({ id: info.lastInsertRowid });
-    } catch (e) { if (/UNIQUE/.test(e.message)) throw new HttpError(409, 'That category already exists'); throw e; }
-  }));
+  // Categories are a shipped list: added by releases, not by hand. Sub-categories are yours to add (see lists-routes).
   api.patch('/categories/:id', requireAuth, route((req, res) => {
     const c = db.prepare('SELECT * FROM categories WHERE id = ?').get(+req.params.id);
     if (!c) throw new HttpError(404, 'Category not found');
-    db.prepare('UPDATE categories SET name = ?, archived = ? WHERE id = ?').run(
-      req.body?.name !== undefined ? str(req.body.name, 60) : c.name, req.body?.archived !== undefined ? (req.body.archived ? 1 : 0) : c.archived, c.id);
+    try {
+      db.prepare('UPDATE categories SET name = ?, archived = ? WHERE id = ?').run(
+        req.body?.name !== undefined ? str(req.body.name, 60) : c.name, req.body?.archived !== undefined ? (req.body.archived ? 1 : 0) : c.archived, c.id);
+    } catch (e) { if (/UNIQUE/.test(e.message)) throw new HttpError(409, 'That category already exists'); throw e; }
     res.json({ ok: true });
   }));
+  // A sub-category is optional and must belong to the chosen category.
+  const subFor = (categoryId, v) => {
+    if (v == null || v === '') return null;
+    const sub = db.prepare('SELECT id FROM subcategories WHERE id = ? AND category_id = ?').get(+v, categoryId);
+    if (!sub) throw bad('That sub-category does not belong to the chosen category');
+    return sub.id;
+  };
   api.post('/rules', requireAuth, route((req, res) => {
     const cat = db.prepare('SELECT id FROM categories WHERE id = ?').get(+req.body?.category_id);
     if (!cat) throw bad('Choose a category');
-    const info = db.prepare('INSERT INTO rules (pattern, category_id, priority) VALUES (?,?,?)').run(str(req.body?.pattern, 100), cat.id, Number.isInteger(req.body?.priority) ? req.body.priority : 100);
+    const field = req.body?.field ?? 'description'; if (!RULE_FIELDS.includes(field)) throw bad('Rules can match the description, comment, reference or any of them');
+    const sub = subFor(cat.id, req.body?.subcategory_id);
+    const info = db.prepare('INSERT INTO rules (pattern, category_id, subcategory_id, field, priority) VALUES (?,?,?,?,?)').run(str(req.body?.pattern, 100), cat.id, sub, field, Number.isInteger(req.body?.priority) ? req.body.priority : 100);
     res.status(201).json({ id: info.lastInsertRowid });
   }));
   api.delete('/rules/:id', requireAuth, route((req, res) => {
@@ -381,13 +390,13 @@ export function createApp({ db, config, log }) {
   // Re-run rules over transactions that were never categorised by hand.
   const applyRules = () => {
     const rules = loadRules(db);
-    const rows = db.prepare("SELECT id, description FROM transactions WHERE category_source != 'manual'").all();
-    const upd = db.prepare("UPDATE transactions SET category_id = ?, category_source = ? WHERE id = ?");
+    const rows = db.prepare("SELECT id, description, comment, reference FROM transactions WHERE category_source != 'manual'").all();
+    const upd = db.prepare("UPDATE transactions SET category_id = ?, subcategory_id = ?, category_source = ? WHERE id = ?");
     let changed = 0;
     db.transaction(() => {
       for (const r of rows) {
-        const c = categorize(rules, r.description);
-        upd.run(c, c ? 'rule' : 'none', r.id);
+        const c = classify(rules, r);
+        upd.run(c.category_id, c.subcategory_id, c.category_id ? 'rule' : 'none', r.id);
         changed++;
       }
     })();
@@ -397,28 +406,55 @@ export function createApp({ db, config, log }) {
 
   // ---------- imports ----------
   const bigBody = express.json({ limit: `${config.maxUploadMb}mb` });
+  const storedMapping = (a) => { try { return a.import_mapping ? JSON.parse(a.import_mapping) : undefined; } catch { return undefined; } };
   const prepareImport = (req) => {
     const account = accountRow(+req.body?.account_id);
     if (typeof req.body?.text !== 'string' || !req.body.text.trim()) throw bad('The file is empty');
-    const parsed = parseStatement(req.body.text, req.body.mapping);
+    const parsed = parseStatement(req.body.text, req.body.mapping ?? storedMapping(account));
     if (!parsed.rows.length && !parsed.errors.length) throw bad('No transactions found');
     const existing = db.prepare('SELECT 1 FROM transactions WHERE account_id = ? AND hash = ? AND seq = ?');
     const rules = loadRules(db);
     for (const t of parsed.rows) {
       t.duplicate = !!existing.get(account.id, t.hash, t.seq);
-      t.category_id = categorize(rules, t.description);
+      const c = classify(rules, t); t.category_id = c.category_id; t.subcategory_id = c.subcategory_id;
     }
     return { account, parsed };
   };
 
+  // Balance for the statement date: the file's own balance column if it has one, otherwise the last known balance moved by the new lines.
+  // Always shown for a quick OK; a balance typed by hand for the same date is only replaced when asked.
+  const balanceFor = (account, rows, fresh) => {
+    if (!rows.length) return null;
+    const liability = account.kind === 'liability';
+    const asOf = rows.reduce((m, r) => (r.posted_on > m ? r.posted_on : m), '');
+    let cents = null, source = null, note = null;
+    const withBal = rows.filter((r) => r.balance_cents != null);
+    if (withBal.length) {
+      const descending = rows[0].posted_on > rows[rows.length - 1].posted_on;
+      const latest = withBal.filter((r) => r.posted_on === asOf);
+      const pick = latest.length ? (descending ? latest[0] : latest[latest.length - 1]) : null;
+      if (pick) { cents = liability ? Math.abs(pick.balance_cents) : pick.balance_cents; source = 'file'; }
+    }
+    if (cents == null) {
+      const base = db.prepare('SELECT as_of, value_cents FROM valuations WHERE account_id = ? AND as_of <= ? ORDER BY as_of DESC LIMIT 1').get(account.id, asOf);
+      if (base) {
+        const moved = fresh.filter((r) => r.posted_on > base.as_of).reduce((x, r) => x + r.amount_cents, 0);
+        cents = base.value_cents + (liability ? -moved : moved); source = 'suggested';
+      }
+    }
+    if (cents != null && cents < 0) { note = 'The balance came out negative. Enter it as a positive number if you want to save it.'; cents = null; source = null; }
+    const manual = db.prepare("SELECT value_cents FROM valuations WHERE account_id = ? AND as_of = ? AND source = 'manual'").get(account.id, asOf);
+    return { as_of: asOf, value_cents: cents, source, note, existing_manual_cents: manual?.value_cents ?? null };
+  };
+
   api.post('/imports/preview', requireAuth, bigBody, route((req, res) => {
-    const { parsed } = prepareImport(req);
+    const { account, parsed } = prepareImport(req);
     const fresh = parsed.rows.filter((r) => !r.duplicate);
     res.json({
       mapping: parsed.mapping, headers: parsed.headers,
       total: parsed.rows.length, newCount: fresh.length, duplicateCount: parsed.rows.length - fresh.length,
       categorised: fresh.filter((r) => r.category_id).length, errors: parsed.errors.slice(0, 50), errorCount: parsed.errors.length,
-      sample: parsed.rows.slice(0, 25),
+      sample: parsed.rows.slice(0, 25), account_label: accountLabel(account), balance: balanceFor(account, parsed.rows, fresh),
     });
   }));
 
@@ -426,20 +462,33 @@ export function createApp({ db, config, log }) {
     const { account, parsed } = prepareImport(req);
     const fresh = parsed.rows.filter((r) => !r.duplicate);
     if (!fresh.length) throw bad('Nothing new to import');
+    const bal = req.body?.balance;
+    if (bal && (!isDate(bal.as_of) || !Number.isInteger(bal.value_cents) || bal.value_cents < 0)) throw bad('The balance to save is not valid');
+    let balance_saved = false, balance_kept_manual = false;
     const result = db.transaction(() => {
       const b = db.prepare('INSERT INTO import_batches (account_id, filename, created_at, row_count, skipped_count) VALUES (?,?,?,?,?)')
         .run(account.id, String(req.body.filename ?? '').slice(0, 200), nowIso(), fresh.length, parsed.rows.length - fresh.length + parsed.errors.length);
-      const ins = db.prepare('INSERT INTO transactions (account_id, batch_id, posted_on, description, amount_cents, category_id, category_source, hash, seq) VALUES (?,?,?,?,?,?,?,?,?)');
-      for (const t of fresh) ins.run(account.id, b.lastInsertRowid, t.posted_on, t.description, t.amount_cents, t.category_id, t.category_id ? 'rule' : 'none', t.hash, t.seq);
+      const ins = db.prepare('INSERT INTO transactions (account_id, batch_id, posted_on, description, comment, reference, amount_cents, category_id, subcategory_id, category_source, hash, seq) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)');
+      for (const t of fresh) ins.run(account.id, b.lastInsertRowid, t.posted_on, t.description, t.comment, t.reference, t.amount_cents, t.category_id, t.subcategory_id, t.category_id ? 'rule' : 'none', t.hash, t.seq);
+      if (parsed.mapping) db.prepare('UPDATE accounts SET import_mapping = ? WHERE id = ?').run(JSON.stringify(parsed.mapping), account.id);
+      if (bal) {
+        const manual = db.prepare("SELECT value_cents FROM valuations WHERE account_id = ? AND as_of = ? AND source = 'manual'").get(account.id, bal.as_of);
+        if (manual && manual.value_cents !== bal.value_cents && req.body.replace_balance !== true) balance_kept_manual = true;
+        else {
+          db.prepare(`INSERT INTO valuations (account_id, as_of, value_cents, source, note) VALUES (?,?,?,'import',?)
+            ON CONFLICT(account_id, as_of) DO UPDATE SET value_cents = excluded.value_cents, source = 'import', note = excluded.note`).run(account.id, bal.as_of, bal.value_cents, `From import ${String(req.body.filename ?? '').slice(0, 120)}`);
+          balance_saved = true;
+        }
+      }
       return b.lastInsertRowid;
     })();
-    audit(req, req.session.user_id, 'import', `batch ${result}: ${fresh.length} rows`);
+    audit(req, req.session.user_id, 'import', `batch ${result}: ${fresh.length} rows${balance_saved ? ', balance saved' : ''}`);
     log.info('statement imported', { batch: result, rows: fresh.length });
-    res.status(201).json({ batch_id: result, imported: fresh.length, skipped: parsed.rows.length - fresh.length, errors: parsed.errors.length });
+    res.status(201).json({ batch_id: result, imported: fresh.length, skipped: parsed.rows.length - fresh.length, errors: parsed.errors.length, balance_saved, balance_kept_manual });
   }));
 
   api.get('/imports', requireAuth, route((req, res) => {
-    res.json({ batches: db.prepare(`SELECT b.*, a.name AS account FROM import_batches b JOIN accounts a ON a.id = b.account_id ORDER BY b.id DESC LIMIT 200`).all() });
+    res.json({ batches: db.prepare(`SELECT b.*, a.name, a.institution, a.type, a.owner FROM import_batches b JOIN accounts a ON a.id = b.account_id ORDER BY b.id DESC LIMIT 200`).all().map((b) => ({ ...b, account: accountLabel(b) })) });
   }));
 
   // Rollback removes exactly the rows that batch created.
@@ -463,25 +512,31 @@ export function createApp({ db, config, log }) {
     if (q.category) { where.push('t.category_id = ?'); args.push(+q.category); }
     if (q.uncategorised === '1') where.push('t.category_id IS NULL');
     if (q.no_receipt === '1') { where.push("t.amount_cents < 0 AND t.account_id IN (SELECT id FROM accounts WHERE type = 'credit_card') AND NOT EXISTS (SELECT 1 FROM receipt_links l WHERE l.transaction_id = t.id AND l.status IN ('linked','manual','accepted'))"); }
-    if (q.q) { where.push("t.description LIKE ? ESCAPE '\\'"); args.push('%' + String(q.q).replace(/[%_\\]/g, '\\$&') + '%'); }
+    if (q.q) { const like = '%' + String(q.q).replace(/[%_\\]/g, '\\$&') + '%'; where.push("(t.description LIKE ? ESCAPE '\\' OR t.comment LIKE ? ESCAPE '\\' OR t.reference LIKE ? ESCAPE '\\')"); args.push(like, like, like); }
+    if (q.subcategory) { where.push('t.subcategory_id = ?'); args.push(+q.subcategory); }
     const w = where.length ? 'WHERE ' + where.join(' AND ') : '';
     const limit = Math.min(Math.max(+q.limit || 100, 1), 500), offset = Math.max(+q.offset || 0, 0);
     const total = db.prepare(`SELECT COUNT(*) c FROM transactions t ${w}`).get(...args).c;
-    const rows = db.prepare(`SELECT t.*, a.name AS account, c.name AS category, (SELECT l.doc_id FROM receipt_links l WHERE l.transaction_id = t.id AND l.status IN ('linked','manual','accepted') LIMIT 1) AS receipt_doc FROM transactions t JOIN accounts a ON a.id = t.account_id LEFT JOIN categories c ON c.id = t.category_id ${w} ORDER BY t.posted_on DESC, t.id DESC LIMIT ? OFFSET ?`).all(...args, limit, offset);
+    const rows = db.prepare(`SELECT t.*, a.name AS account, a.institution, a.type AS account_type, a.owner, c.name AS category, sc.name AS subcategory, (SELECT l.doc_id FROM receipt_links l WHERE l.transaction_id = t.id AND l.status IN ('linked','manual','accepted') LIMIT 1) AS receipt_doc FROM transactions t JOIN accounts a ON a.id = t.account_id LEFT JOIN categories c ON c.id = t.category_id LEFT JOIN subcategories sc ON sc.id = t.subcategory_id ${w} ORDER BY t.posted_on DESC, t.id DESC LIMIT ? OFFSET ?`).all(...args, limit, offset)
+      .map((t) => ({ ...t, account_label: accountLabel({ name: t.account, institution: t.institution, type: t.account_type, owner: t.owner }) }));
     res.json({ total, transactions: rows });
   }));
 
+  // Description, comment and reference come from the statement and are not editable; only the category is.
   api.patch('/transactions/:id', requireAuth, route((req, res) => {
     const t = db.prepare('SELECT * FROM transactions WHERE id = ?').get(+req.params.id);
     if (!t) throw new HttpError(404, 'Transaction not found');
     const catId = req.body?.category_id === null ? null : +req.body?.category_id;
     if (catId !== null && !db.prepare('SELECT 1 FROM categories WHERE id = ?').get(catId)) throw bad('Choose a category');
-    db.prepare("UPDATE transactions SET category_id = ?, category_source = ? WHERE id = ?").run(catId, catId === null ? 'none' : 'manual', t.id);
+    const subId = catId === null ? null : subFor(catId, req.body?.subcategory_id);
+    db.prepare("UPDATE transactions SET category_id = ?, subcategory_id = ?, category_source = ? WHERE id = ?").run(catId, subId, catId === null ? 'none' : 'manual', t.id);
     let updated = 1;
     if (req.body?.rule_pattern && catId !== null) {
       const pat = str(req.body.rule_pattern, 100);
-      db.prepare('INSERT INTO rules (pattern, category_id) VALUES (?,?)').run(pat, catId);
-      updated += db.prepare("UPDATE transactions SET category_id = ?, category_source = 'rule' WHERE category_source = 'none' AND instr(lower(description), lower(?)) > 0").run(catId, pat).changes;
+      const field = req.body.rule_field ?? 'description'; if (!RULE_FIELDS.includes(field)) throw bad('Unknown rule field');
+      db.prepare('INSERT INTO rules (pattern, category_id, subcategory_id, field) VALUES (?,?,?,?)').run(pat, catId, subId, field);
+      const cols = field === 'any' ? "(lower(description) || char(10) || lower(comment) || char(10) || lower(reference))" : `lower(${field})`;
+      updated += db.prepare(`UPDATE transactions SET category_id = ?, subcategory_id = ?, category_source = 'rule' WHERE category_source = 'none' AND instr(${cols}, lower(?)) > 0`).run(catId, subId, pat).changes;
     }
     res.json({ updated });
   }));
@@ -499,11 +554,17 @@ export function createApp({ db, config, log }) {
     const byCat = db.prepare(`
       SELECT c.id AS category_id, COALESCE(c.name, 'Uncategorised') AS name, COALESCE(c.kind, 'expense') AS kind,
              SUM(t.amount_cents) AS net_cents, COUNT(*) AS count
-      FROM transactions t LEFT JOIN categories c ON c.id = t.category_id
+      FROM transactions t LEFT JOIN categories c0 ON c0.id = t.category_id LEFT JOIN categories c ON c.id = COALESCE(c0.nets_into_id, c0.id)
       WHERE t.posted_on BETWEEN ? AND ? GROUP BY c.id ORDER BY net_cents`).all(from, to);
+    // Sub-categories roll up into their category; this lists them so a category can be opened.
+    const subsRaw = db.prepare(`
+      SELECT COALESCE(c0.nets_into_id, c0.id) AS category_id, COALESCE(sc.name, '(no sub-category)') AS name, sc.id AS sub_id, SUM(t.amount_cents) AS net_cents, COUNT(*) AS count
+      FROM transactions t JOIN categories c0 ON c0.id = t.category_id LEFT JOIN subcategories sc ON sc.id = t.subcategory_id
+      WHERE t.posted_on BETWEEN ? AND ? GROUP BY COALESCE(c0.nets_into_id, c0.id), sc.id`).all(from, to);
     // Spending = money out net of refunds in expense categories; transfers are ignored.
     const spend = byCat.filter((r) => r.kind === 'expense' && (r.net_cents < 0 || r.category_id === null))
-      .map((r) => ({ category_id: r.category_id, name: r.name, spent_cents: -r.net_cents, count: r.count }))
+      .map((r) => ({ category_id: r.category_id, name: r.name, spent_cents: -r.net_cents, count: r.count,
+        subs: subsRaw.filter((x) => x.category_id === r.category_id && subsRaw.some((y) => y.category_id === r.category_id && y.sub_id != null)).map((x) => ({ sub_id: x.sub_id, name: x.name, spent_cents: -x.net_cents, count: x.count })).sort((a, b) => b.spent_cents - a.spent_cents) }))
       .filter((r) => r.spent_cents > 0).sort((a, b) => b.spent_cents - a.spent_cents);
     const income = byCat.filter((r) => r.kind === 'income' || (r.kind === 'expense' && r.net_cents > 0 && r.category_id !== null))
       .reduce((s, r) => s + r.net_cents, 0);
@@ -511,7 +572,7 @@ export function createApp({ db, config, log }) {
       SELECT substr(t.posted_on,1,7) AS month,
              -SUM(CASE WHEN COALESCE(c.kind,'expense')='expense' THEN t.amount_cents ELSE 0 END) AS spent_cents,
              SUM(CASE WHEN c.kind='income' THEN t.amount_cents ELSE 0 END) AS income_cents
-      FROM transactions t LEFT JOIN categories c ON c.id = t.category_id
+      FROM transactions t LEFT JOIN categories c0 ON c0.id = t.category_id LEFT JOIN categories c ON c.id = COALESCE(c0.nets_into_id, c0.id)
       WHERE t.posted_on BETWEEN ? AND ? GROUP BY month ORDER BY month`).all(from, to);
     const uncategorised = db.prepare('SELECT COUNT(*) c FROM transactions WHERE category_id IS NULL').get().c;
     res.json({ from, to, total_spent_cents: spend.reduce((s, r) => s + r.spent_cents, 0), income_cents: income, categories: spend, months: byMonth, uncategorised });
@@ -563,13 +624,13 @@ export function createApp({ db, config, log }) {
   api.get('/export.json', requireAuth, requireStepUp, route((req, res) => {
     audit(req, req.session.user_id, 'export', 'json');
     const dump = {};
-    for (const t of ['accounts', 'valuations', 'categories', 'rules', 'import_batches', 'transactions', 'cards', 'card_bonuses', 'inst_accounts', 'acct_bonuses', 'recurring', 'issuer_rules', 'offer_terms', 'holdings', 'debts', 'ledger_entries', 'plans', 'plan_steps', 'effort_logs', 'loan_events', 'income_events', 'tax_years', 'tax_receipts', 'acb_trades', 'tax_slips', 'registered_room', 'carryforwards', 'tax_checklist', 'plan_items']) dump[t] = db.prepare(`SELECT * FROM ${t}`).all();
+    for (const t of ['accounts', 'valuations', 'categories', 'subcategories', 'rules', 'import_batches', 'transactions', 'cards', 'card_bonuses', 'inst_accounts', 'acct_bonuses', 'recurring', 'issuer_rules', 'offer_terms', 'holdings', 'debts', 'ledger_entries', 'plans', 'plan_steps', 'effort_logs', 'loan_events', 'income_events', 'tax_years', 'tax_receipts', 'acb_trades', 'tax_slips', 'registered_room', 'carryforwards', 'tax_checklist', 'plan_items']) dump[t] = db.prepare(`SELECT * FROM ${t}`).all();
     res.set('Content-Disposition', 'attachment; filename="finance-hub-export.json"').json({ app: 'finance-hub', version: config.version, exported_at: nowIso(), ...dump });
   }));
   api.get('/export/transactions.csv', requireAuth, requireStepUp, route((req, res) => {
     audit(req, req.session.user_id, 'export', 'transactions csv');
-    const rows = db.prepare('SELECT t.posted_on, a.name, t.description, t.amount_cents, COALESCE(c.name,\'\') FROM transactions t JOIN accounts a ON a.id=t.account_id LEFT JOIN categories c ON c.id=t.category_id ORDER BY t.posted_on, t.id').all();
-    const out = [['date', 'account', 'description', 'amount', 'category'], ...Object.values(rows).map((r) => { const v = Object.values(r); v[3] = (v[3] / 100).toFixed(2); return v; })];
+    const rows = db.prepare('SELECT t.posted_on, a.name, t.description, t.comment, t.reference, t.amount_cents, COALESCE(c.name,\'\'), COALESCE(sc.name,\'\') FROM transactions t JOIN accounts a ON a.id=t.account_id LEFT JOIN categories c ON c.id=t.category_id LEFT JOIN subcategories sc ON sc.id=t.subcategory_id ORDER BY t.posted_on, t.id').all();
+    const out = [['date', 'account', 'description', 'comment', 'reference', 'amount', 'category', 'subcategory'], ...Object.values(rows).map((r) => { const v = Object.values(r); v[5] = (v[5] / 100).toFixed(2); return v; })];
     res.type('text/csv').set('Content-Disposition', 'attachment; filename="transactions.csv"').send(toCsv(out));
   }));
 
@@ -584,6 +645,7 @@ export function createApp({ db, config, log }) {
   mountWealth({ api, db, requireAuth, route, bad, HttpError, today: todayFn, notifier, view });
   mountTax({ api, db, requireAuth, route, bad, HttpError, today: todayFn, audit, nowIso });
   mountReceipts({ api, db, config, requireAuth, route, bad, HttpError, today: todayFn, audit, nowIso, notifier });
+  mountLists({ api, db, requireAuth, route, bad, HttpError, audit, nowIso });
   mountWatch({ api, db, config, requireAuth, route, bad, HttpError, today: todayFn, audit, nowIso, notifier });
   mountReminders({ bigBody, app, api, db, config, requireAuth, route, bad, HttpError, today: todayFn, audit, nowIso, notifier, view });
   // Check for due reminders shortly after start and then every hour.

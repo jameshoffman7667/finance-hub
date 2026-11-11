@@ -192,3 +192,14 @@ fieldset { border: 1px solid var(--line, #ccd); border-radius: 8px; margin: 8px 
 
 .chart .line2 { stroke: var(--muted, #889); stroke-dasharray: 5 4; stroke-width: 2; }
 .amt-min{width:6rem;flex:none}
+
+.pick { display: flex; flex-direction: column; gap: .4rem; }
+.pick select, .pick input { width: 100%; }
+.group { margin-bottom: .5rem; }
+.group-head { display: flex; align-items: center; gap: .5rem; width: 100%; min-height: 44px; padding: 0 .6rem; border: 0; border-radius: 8px; background: var(--bg-alt, rgba(128,128,160,.12)); color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.group-head.level1 { font-weight: 700; }
+.group-head.level2 { margin-top: .35rem; font-weight: 600; background: none; border-bottom: 1px solid var(--line); border-radius: 0; }
+.group-head .mark { width: 1rem; color: var(--muted); }
+.group-body { padding-left: .5rem; }
+.card.inset { margin-top: 1rem; }
+.sub-row td { background: var(--bg-alt, rgba(128,128,160,.08)); }

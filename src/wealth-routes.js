@@ -41,7 +41,7 @@ export function mountWealth({ api, db, requireAuth, route, bad, HttpError, today
   const loadFlow = (from, to) => {
     const sales = acbReport(all('SELECT * FROM acb_trades')).sales;
     const loans = all('SELECT id FROM debts WHERE smith = 1').map((d) => d.id);
-    return cashFlow({ transactions: all('SELECT id, account_id, posted_on, amount_cents, category_id FROM transactions WHERE posted_on >= ? AND posted_on <= ?', addDays(from, -400), to), categories: all('SELECT * FROM categories'), ledger: all('SELECT * FROM ledger_entries'),
+    return cashFlow({ transactions: all('SELECT t.id, t.account_id, t.posted_on, t.amount_cents, t.category_id, s.flow_group AS sub_flow_group FROM transactions t LEFT JOIN subcategories s ON s.id = t.subcategory_id WHERE t.posted_on >= ? AND t.posted_on <= ?', addDays(from, -400), to), categories: all('SELECT * FROM categories'), ledger: all('SELECT * FROM ledger_entries'),
       loanEvents: all('SELECT * FROM loan_events'), smithLoanIds: loans, incomeEvents: all('SELECT * FROM income_events'), sales, valuations: all('SELECT * FROM valuations'), accounts: all('SELECT * FROM accounts'), taxYears: all('SELECT * FROM tax_years') }, from, to);
   };
   api.get('/wealth/cashflow', requireAuth, route((req, res) => {

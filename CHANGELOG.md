@@ -2,6 +2,10 @@
 
 Newest first. One entry per released version; entries are never rewritten.
 
+## v0.8.0 - 2026-11-10
+**Short:** Edit accounts, sub-categories, import balances
+**Long:** Edit, delete and group accounts with pick lists; comment and reference on imports; balance from imports; optional sub-categories, cash and loan categories, Settings Lists. P-17 to P-27.
+
 ## v0.7.0 - 2026-11-07
 **Short:** Add paperless receipts and offer watchlist
 **Long:** Match card charges to paperless-ngx receipts (review, link, find charges with none). Watchlist for offers you spot: fetch a page or feed only when asked, compare by source. Nodemailer upgraded. Covers P-1 and P-9.

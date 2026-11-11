@@ -306,6 +306,27 @@ CREATE TABLE watch_offers (
 CREATE TABLE watch_pages (id INTEGER PRIMARY KEY, offer_id INTEGER NOT NULL REFERENCES watch_offers(id) ON DELETE CASCADE, url TEXT NOT NULL, fetched_at TEXT NOT NULL, excerpt TEXT, candidates TEXT);
 `,
   },
+  {
+    version: 8,
+    destructive: false,
+    sql: `
+ALTER TABLE categories ADD COLUMN nets_into_id INTEGER REFERENCES categories(id) ON DELETE SET NULL;
+CREATE TABLE subcategories (
+  id INTEGER PRIMARY KEY, category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE, name TEXT NOT NULL, flow_group TEXT,
+  UNIQUE (category_id, name)
+);
+ALTER TABLE transactions ADD COLUMN comment TEXT NOT NULL DEFAULT '';
+ALTER TABLE transactions ADD COLUMN reference TEXT NOT NULL DEFAULT '';
+ALTER TABLE transactions ADD COLUMN subcategory_id INTEGER REFERENCES subcategories(id) ON DELETE SET NULL;
+ALTER TABLE rules ADD COLUMN field TEXT NOT NULL DEFAULT 'description';
+ALTER TABLE rules ADD COLUMN subcategory_id INTEGER REFERENCES subcategories(id) ON DELETE SET NULL;
+ALTER TABLE accounts ADD COLUMN import_mapping TEXT;
+INSERT OR IGNORE INTO categories (name, kind, flow_group) VALUES
+ ('Credit card payment','transfer',NULL),('Loan payment','expense','debt_service'),('Cash withdrawal','expense','spend_run'),
+ ('Cash deposit','income','income_employment'),('Cash returned to account','expense','spend_run'),('Children and Pets','expense',NULL);
+UPDATE categories SET nets_into_id = (SELECT id FROM categories WHERE name = 'Cash withdrawal') WHERE name = 'Cash returned to account';
+`,
+  },
 ];
 
 export const LATEST_SCHEMA = MIGRATIONS[MIGRATIONS.length - 1].version;

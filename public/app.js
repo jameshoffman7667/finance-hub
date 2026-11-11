@@ -4,6 +4,7 @@ import { viewInvest } from './smith.js';
 import { viewTax } from './tax.js';
 import { viewWealth } from './wealth.js';
 import { receiptsTab } from './receipts.js';
+import { listsView } from './lists.js';
 const state = { info: null, route: '/', cache: {}, installEvent: null, swWaiting: null };
 const root = document.getElementById('app');
 
@@ -44,7 +45,7 @@ async function api(method, url, body) {
   if (!res.ok) { const e = new Error(data?.error || `Request failed (${res.status})`); e.status = res.status; e.data = data; throw e; }
   return data;
 }
-const get = (u) => api('GET', u), post = (u, b = {}) => api('POST', u, b), put = (u, b) => api('PUT', u, b), patch = (u, b) => api('PATCH', u, b), del = (u) => api('DELETE', u);
+const get = (u) => api('GET', u), post = (u, b = {}) => api('POST', u, b), put = (u, b) => api('PUT', u, b), patch = (u, b) => api('PATCH', u, b), del = (u, b) => api('DELETE', u, b);
 async function loadState() { state.info = await get('/api/state'); }
 
 // ---------- icons ----------
@@ -248,6 +249,18 @@ async function viewOverview() {
 
 function params() { return new URLSearchParams(location.search); }
 
+// A drop-down of values already in use, with a way to type a new one (it becomes part of the list once saved).
+function listPick(id, values, current = '', opts = {}) {
+  const NEW = '__new__';
+  const all = current && !values.includes(current) ? [...values, current] : values;
+  const sel = h('select', { id, 'aria-label': opts.label }, h('option', { value: '' }, opts.none ?? '(none)'), all.map((v) => h('option', { value: v, selected: v === current }, v)), h('option', { value: NEW }, 'Add new…'));
+  const input = h('input', { id: `${id}-new`, placeholder: opts.placeholder || 'Type the new value', 'aria-label': `New ${opts.label || 'value'}`, maxlength: opts.max || 80 });
+  input.hidden = true;
+  sel.addEventListener('change', () => { input.hidden = sel.value !== NEW; if (!input.hidden) input.focus(); });
+  return { el: h('div', { class: 'pick' }, sel, input), value: () => (sel.value === NEW ? input.value.trim() : sel.value) };
+}
+const centsOf = (v) => { const n = parseFloat(String(v ?? '').replace(/[$,\s]/g, '')); return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) : null; };
+
 async function viewBudget() {
   const tab = params().get('tab') || 'spending';
   const tabs = [['spending', 'Spending'], ['transactions', 'Transactions'], ['rules', 'Categories and rules'], ['receipts', 'Receipts'], ['forecast', 'Forecast']];
@@ -280,28 +293,35 @@ async function budgetSpending() {
   const cats = h('section', { class: 'card' }, h('h2', {}, 'By category'),
     r.categories.length ? categoryBars(r.categories) : emptyState('Nothing here', 'No transactions in this month. Import a statement from Accounts and imports.'),
     r.uncategorised ? h('p', {}, link('/budget?tab=transactions&uncat=1', `${r.uncategorised} uncategorised`)) : null);
+  const detailRows = (c) => {
+    const subs = c.subs || [];
+    const rows = subs.map((x) => { const tr = h('tr', { class: 'sub-row' }, h('td', {}, h('span', { class: 'muted' }, '↳ '), x.name), h('td', { class: 'right num' }, x.count), h('td', { class: 'right num' }, money(x.spent_cents))); tr.hidden = true; return tr; });
+    const toggle = subs.length ? h('button', { class: 'btn small', 'aria-expanded': 'false', 'aria-label': `Show sub-categories of ${c.name}`, onclick: (e) => { const open = e.currentTarget.getAttribute('aria-expanded') !== 'true'; e.currentTarget.setAttribute('aria-expanded', String(open)); e.currentTarget.textContent = open ? '−' : '+'; rows.forEach((x) => { x.hidden = !open; }); } }, '+') : null;
+    return [h('tr', {}, h('td', {}, toggle, toggle ? ' ' : '', c.name), h('td', { class: 'right num' }, c.count), h('td', { class: 'right num' }, money(c.spent_cents))), ...rows];
+  };
   const list = r.categories.length ? h('section', { class: 'card' }, h('h2', {}, 'Details'), h('div', { class: 'table-wrap' }, h('table', {},
     h('thead', {}, h('tr', {}, h('th', {}, 'Category'), h('th', { class: 'right' }, 'Transactions'), h('th', { class: 'right' }, 'Spent'))),
-    h('tbody', {}, r.categories.map((c) => h('tr', {}, h('td', {}, c.name), h('td', { class: 'right num' }, c.count), h('td', { class: 'right num' }, money(c.spent_cents))))))) ) : null;
+    h('tbody', {}, r.categories.map(detailRows))))) : null;
   return h('div', {}, nav, sum, h('div', { class: 'grid two' }, cats, list));
 }
 
 let txState = { q: '', offset: 0 };
 async function budgetTransactions() {
   const uncat = params().get('uncat') === '1';
-  const { categories } = await get('/api/categories');
+  const { categories, subcategories } = await get('/api/categories');
   const q = new URLSearchParams({ limit: 100, offset: txState.offset });
   if (uncat) q.set('uncategorised', '1');
   if (txState.q) q.set('q', txState.q);
   const r = await get('/api/transactions?' + q);
-  const search = h('input', { type: 'search', placeholder: 'Search description', value: txState.q, 'aria-label': 'Search transactions',
+  const search = h('input', { type: 'search', placeholder: 'Search description, comment or reference', value: txState.q, 'aria-label': 'Search transactions',
     onkeydown: (e) => { if (e.key === 'Enter') { txState = { q: search.value, offset: 0 }; render(); } } });
   const filter = h('div', { class: 'row card' }, h('div', { class: 'grow' }, search),
     h('div', { class: 'check' }, h('input', { type: 'checkbox', id: 'uc', checked: uncat, onchange: (e) => go(`/budget?tab=transactions${e.target.checked ? '&uncat=1' : ''}`) }), h('label', { for: 'uc' }, 'Uncategorised only')));
   const items = r.transactions.length ? h('ul', { class: 'list' }, r.transactions.map((t) => h('li', {},
-    h('button', { class: 'item', onclick: () => categoriseDialog(t, categories) },
-      h('div', { class: 'grow' }, h('div', { class: 'title' }, t.description), h('div', { class: 'muted small' }, `${fmtDate(t.posted_on)} · ${t.account}${t.receipt_doc ? ' · receipt filed' : ''}`)),
-      h('div', { class: 'right' }, h('div', { class: 'num ' + (t.amount_cents < 0 ? '' : 'pos') }, money(t.amount_cents)), t.category ? h('span', { class: 'pill' }, t.category) : h('span', { class: 'pill warn' }, 'Uncategorised')))))) :
+    h('button', { class: 'item', onclick: () => categoriseDialog(t, categories, subcategories) },
+      h('div', { class: 'grow' }, h('div', { class: 'title' }, t.description), h('div', { class: 'muted small' }, `${fmtDate(t.posted_on)} · ${t.account_label}${t.receipt_doc ? ' · receipt filed' : ''}`),
+        t.comment || t.reference ? h('div', { class: 'muted small' }, [t.comment, t.reference ? `Ref ${t.reference}` : ''].filter(Boolean).join(' · ')) : null),
+      h('div', { class: 'right' }, h('div', { class: 'num ' + (t.amount_cents < 0 ? '' : 'pos') }, money(t.amount_cents)), t.category ? h('span', { class: 'pill' }, t.subcategory ? `${t.category} › ${t.subcategory}` : t.category) : h('span', { class: 'pill warn' }, 'Uncategorised')))))) :
     emptyState('No transactions', uncat ? 'Everything is categorised.' : 'Import a statement from Accounts and imports.');
   const pager = r.total > 100 ? h('div', { class: 'row' },
     h('button', { class: 'btn small', disabled: txState.offset === 0, onclick: () => { txState.offset = Math.max(0, txState.offset - 100); render(); } }, 'Newer'),
@@ -310,49 +330,74 @@ async function budgetTransactions() {
   return h('div', {}, filter, h('div', { class: 'card' }, items), pager);
 }
 
-function categoriseDialog(t, categories) {
+function categoriseDialog(t, categories, subcategories = []) {
   dialog('Categorise', (close) => {
+    const NEW = '__new__';
     const sel = h('select', { id: 'cat' }, h('option', { value: '' }, 'Uncategorised'), categories.filter((c) => !c.archived).map((c) => h('option', { value: c.id, selected: c.id === t.category_id }, `${c.name}`)));
-    const rule = h('input', { type: 'checkbox', id: 'mk' });
+    // Sub-categories are optional: the row only appears for a category that has some, or when you ask to add one.
+    const subWrap = h('div', { class: 'field' });
+    let wantNew = false, subSel = null, subNew = null;
+    const drawSub = () => {
+      const cid = Number(sel.value); const subs = subcategories.filter((x) => x.category_id === cid);
+      subWrap.replaceChildren(); subSel = null; subNew = null;
+      if (!cid) return;
+      if (!subs.length && !wantNew) { subWrap.append(h('button', { type: 'button', class: 'btn small', onclick: () => { wantNew = true; drawSub(); } }, 'Add a sub-category')); return; }
+      subSel = h('select', { id: 'sub' }, h('option', { value: '' }, '(none)'), subs.map((x) => h('option', { value: x.id, selected: x.id === t.subcategory_id && cid === t.category_id }, x.name)), h('option', { value: NEW }, 'Add new…'));
+      subNew = h('input', { id: 'sub-new', placeholder: 'New sub-category', 'aria-label': 'New sub-category', maxlength: 60 }); subNew.hidden = !wantNew;
+      if (wantNew) subSel.value = NEW;
+      subSel.addEventListener('change', () => { subNew.hidden = subSel.value !== NEW; if (!subNew.hidden) subNew.focus(); });
+      subWrap.append(h('label', { for: 'sub' }, 'Sub-category (optional)'), h('div', { class: 'pick' }, subSel, subNew));
+    };
+    sel.addEventListener('change', () => { wantNew = false; drawSub(); }); drawSub();
+    const rule = h('input', { type: 'checkbox', id: 'mk', checked: true });
     const pat = h('input', { id: 'pat', value: t.description.split(/[#\d*]/)[0].trim().slice(0, 30) || t.description.slice(0, 30), 'aria-label': 'Match text' });
+    const where = h('select', { id: 'rf', 'aria-label': 'Match in' }, [['description', 'the description'], ['comment', 'the comment'], ['reference', 'the reference'], ['any', 'the description, comment or reference']].map(([v, l]) => h('option', { value: v }, l)));
     const err = h('p', { class: 'form-error', role: 'alert' });
     return h('form', { onsubmit: async (e) => {
       e.preventDefault();
       try {
         const body = { category_id: sel.value === '' ? null : Number(sel.value) };
-        if (rule.checked && sel.value !== '') body.rule_pattern = pat.value;
+        if (body.category_id && subSel) {
+          if (subSel.value === NEW) { const name = subNew.value.trim(); if (name) body.subcategory_id = (await post('/api/subcategories', { category_id: body.category_id, name })).id; }
+          else if (subSel.value) body.subcategory_id = Number(subSel.value);
+        }
+        if (rule.checked && sel.value !== '') { body.rule_pattern = pat.value; body.rule_field = where.value; }
         await patch(`/api/transactions/${t.id}`, body);
         close(); render();
       } catch (x) { err.textContent = x.message; }
     } },
-    h('p', {}, h('strong', {}, t.description), h('br'), h('span', { class: 'muted' }, `${fmtDate(t.posted_on)} · ${money(t.amount_cents)}`)),
-    h('div', { class: 'field' }, h('label', { for: 'cat' }, 'Category'), sel),
-    h('div', { class: 'check field' }, rule, h('label', { for: 'mk' }, 'Always use this category when the description contains:')),
-    h('div', { class: 'field' }, pat), err,
+    h('p', {}, h('strong', {}, t.description), h('br'), t.comment ? [h('span', { class: 'muted' }, t.comment), h('br')] : null, t.reference ? [h('span', { class: 'muted small' }, `Reference ${t.reference}`), h('br')] : null, h('span', { class: 'muted' }, `${fmtDate(t.posted_on)} · ${money(t.amount_cents)}`)),
+    h('div', { class: 'field' }, h('label', { for: 'cat' }, 'Category'), sel), subWrap,
+    h('div', { class: 'check field' }, rule, h('label', { for: 'mk' }, 'Always use this category when')),
+    h('div', { class: 'row' }, h('div', { class: 'grow' }, h('label', { for: 'rf' }, 'Match in'), where), h('div', { class: 'grow' }, h('label', { for: 'pat' }, 'Contains'), pat)), err,
     h('div', { class: 'dialog-actions' }, h('button', { type: 'button', class: 'btn', onclick: close }, 'Cancel'), h('button', { class: 'btn primary' }, 'Save')));
   });
 }
 
 async function budgetRules() {
-  const { categories, rules } = await get('/api/categories');
-  const catSel = (id) => h('select', { id, 'aria-label': 'Category' }, categories.filter((c) => !c.archived).map((c) => h('option', { value: c.id }, `${c.name}`)));
-  const pat = h('input', { id: 'rp', placeholder: 'e.g. loblaws' }), cs = catSel('rc'), err = h('p', { class: 'form-error', role: 'alert' });
+  const { categories, subcategories, rules } = await get('/api/categories');
+  const live = categories.filter((c) => !c.archived);
+  const pat = h('input', { id: 'rp', placeholder: 'e.g. loblaws' }), cs = h('select', { id: 'rc', 'aria-label': 'Category' }, live.map((c) => h('option', { value: c.id }, c.name)));
+  const subSel = h('select', { id: 'rs', 'aria-label': 'Sub-category' }); const subRow = h('div', { class: 'grow' }, h('label', { for: 'rs' }, 'Sub-category (optional)'), subSel);
+  const drawSubs = () => { const subs = subcategories.filter((x) => x.category_id === Number(cs.value)); subSel.replaceChildren(h('option', { value: '' }, '(none)'), subs.map((x) => h('option', { value: x.id }, x.name))); subRow.hidden = !subs.length; };
+  cs.addEventListener('change', drawSubs); drawSubs();
+  const where = h('select', { id: 'rf', 'aria-label': 'Match in' }, [['description', 'Description'], ['comment', 'Comment'], ['reference', 'Reference'], ['any', 'Description, comment or reference']].map(([v, l]) => h('option', { value: v }, l)));
+  const err = h('p', { class: 'form-error', role: 'alert' });
   const addRule = h('form', { class: 'card', onsubmit: async (e) => {
     e.preventDefault();
-    try { await post('/api/rules', { pattern: pat.value, category_id: Number(cs.value) }); await post('/api/rules/apply'); render(); } catch (x) { err.textContent = x.message; }
-  } }, h('h2', {}, 'Add a rule'), h('p', { class: 'muted small' }, 'When a description contains the text, it gets the category. Rules never override categories you set by hand.'),
-  h('div', { class: 'row' }, h('div', { class: 'grow' }, h('label', { for: 'rp' }, 'Description contains'), pat), h('div', { class: 'grow' }, h('label', { for: 'rc' }, 'Category'), cs)), err,
+    try { await post('/api/rules', { pattern: pat.value, category_id: Number(cs.value), subcategory_id: subSel.value || null, field: where.value }); await post('/api/rules/apply'); render(); } catch (x) { err.textContent = x.message; }
+  } }, h('h2', {}, 'Add a rule'), h('p', { class: 'muted small' }, 'When the chosen text contains the words, the transaction gets the category. Rules never override categories you set by hand.'),
+  h('div', { class: 'row' }, h('div', { class: 'grow' }, h('label', { for: 'rf' }, 'Match in'), where), h('div', { class: 'grow' }, h('label', { for: 'rp' }, 'Contains'), pat)),
+  h('div', { class: 'row' }, h('div', { class: 'grow' }, h('label', { for: 'rc' }, 'Category'), cs), subRow), err,
   h('div', { class: 'dialog-actions' }, h('button', { class: 'btn primary' }, 'Add rule')));
+  const fieldWord = { description: '', comment: 'comment ', reference: 'reference ', any: 'anywhere ' };
   const ruleList = h('section', { class: 'card' }, h('h2', {}, `Rules (${rules.length})`), rules.length ? h('ul', { class: 'list' }, rules.map((r) => h('li', {},
-    h('div', { class: 'grow' }, h('div', { class: 'title' }, `"${r.pattern}"`), h('div', { class: 'muted small' }, r.category)),
+    h('div', { class: 'grow' }, h('div', { class: 'title' }, `${fieldWord[r.field] || ''}"${r.pattern}"`), h('div', { class: 'muted small' }, r.subcategory ? `${r.category} › ${r.subcategory}` : r.category)),
     h('button', { class: 'btn small danger', onclick: async () => { await del(`/api/rules/${r.id}`); render(); } }, 'Delete')))) : h('p', { class: 'muted' }, 'No rules yet. Categorising a transaction can create one for you.'));
-  const nm = h('input', { id: 'cn', placeholder: 'New category' }), kind = h('select', { id: 'ck', 'aria-label': 'Kind' }, ['expense', 'income', 'transfer'].map((k) => h('option', { value: k }, k)));
-  const cerr = h('p', { class: 'form-error', role: 'alert' });
   const cats = h('section', { class: 'card' }, h('h2', {}, 'Categories'),
+    h('p', { class: 'muted small' }, 'Categories come with the app. Add optional sub-categories, rename or remove things in ', link('/settings?tab=lists', 'Settings, Lists'), '.'),
     h('ul', { class: 'list' }, categories.map((c) => h('li', {}, h('div', { class: 'grow' }, h('span', { class: 'title' }, c.name), ' ', h('span', { class: 'pill' }, c.kind), c.archived ? h('span', { class: 'pill' }, 'archived') : null),
-      h('button', { class: 'btn small', onclick: async () => { await patch(`/api/categories/${c.id}`, { archived: !c.archived }); render(); } }, c.archived ? 'Restore' : 'Archive')))),
-    h('form', { class: 'row', onsubmit: async (e) => { e.preventDefault(); try { await post('/api/categories', { name: nm.value, kind: kind.value }); render(); } catch (x) { cerr.textContent = x.message; } } },
-      h('div', { class: 'grow' }, nm), kind, h('button', { class: 'btn primary' }, 'Add')), cerr);
+      h('button', { class: 'btn small', onclick: async () => { await patch(`/api/categories/${c.id}`, { archived: !c.archived }); render(); } }, c.archived ? 'Restore' : 'Archive')))));
   return h('div', { class: 'grid two' }, h('div', {}, addRule, ruleList), cats);
 }
 
@@ -362,41 +407,73 @@ async function viewAccounts() {
   const tab = params().get('tab') || 'accounts';
   const tabs = [['accounts', 'Accounts'], ['import', 'Import statement'], ['history', 'Import history']];
   const bar = h('div', { class: 'tabs', role: 'tablist' }, tabs.map(([k, l]) => h('button', { role: 'tab', 'aria-selected': k === tab ? 'true' : 'false', onclick: () => go(`/accounts?tab=${k}`) }, l)));
-  const { accounts } = await get('/api/accounts');
+  const { accounts, institutions, owners } = await get('/api/accounts');
+  const lists = { institutions, owners };
   let body;
   if (tab === 'import') body = importView(accounts);
   else if (tab === 'history') body = await historyView();
-  else body = accountsList(accounts);
+  else body = accountsList(accounts, lists);
   return shell('Accounts and imports', [bar, body]);
 }
 
-function accountsList(accounts) {
-  const list = accounts.length ? h('ul', { class: 'list' }, accounts.map((a) => h('li', {},
-    h('button', { class: 'item', onclick: () => accountDialog(a) },
-      h('div', { class: 'grow' }, h('div', { class: 'title' }, a.name, a.active ? '' : ' (closed)'), h('div', { class: 'muted small' }, [a.institution, TYPE_LABELS[a.type], a.owner].filter(Boolean).join(' · '))),
-      h('div', { class: 'right' }, a.latest ? [h('div', { class: 'num ' + (a.kind === 'liability' ? 'neg' : '') }, (a.kind === 'liability' ? '-' : '') + money(a.latest.value_cents)), h('div', { class: 'muted small' }, fmtDate(a.latest.as_of))] : h('span', { class: 'pill warn' }, 'No balance')))))) :
-    emptyState('No accounts yet', 'Add a bank, card, investment or property account. Balances you record here make up your net worth.');
-  return h('div', { class: 'card' }, h('div', { class: 'row' }, h('h2', { class: 'grow' }, 'Accounts'), h('button', { class: 'btn primary', onclick: () => addAccountDialog() }, 'Add account')), list);
+// Accounts grouped by institution, then owner, with balance totals (liabilities subtracted). Groups collapse; closed accounts sit last.
+const collapsed = new Set();
+function accountsList(accounts, lists) {
+  if (!accounts.length) return h('div', { class: 'card' }, h('div', { class: 'row' }, h('h2', { class: 'grow' }, 'Accounts'), h('button', { class: 'btn primary', onclick: () => addAccountDialog(lists) }, 'Add account')),
+    emptyState('No accounts yet', 'Add a bank, card, investment or property account. Balances you record here make up your net worth.'));
+  const signed = (a) => (a.latest ? (a.kind === 'liability' ? -a.latest.value_cents : a.latest.value_cents) : 0);
+  const sum = (list) => list.reduce((t, a) => t + (a.active ? signed(a) : 0), 0);
+  const sorted = (list) => [...list].sort((x, y) => (y.active - x.active) || x.name.localeCompare(y.name));
+  const byInst = new Map();
+  for (const a of accounts) { const k = a.institution || 'No institution'; if (!byInst.has(k)) byInst.set(k, []); byInst.get(k).push(a); }
+  const row = (a) => h('li', {}, h('button', { class: 'item', onclick: () => accountDialog(a, lists) },
+    h('div', { class: 'grow' }, h('div', { class: 'title' }, a.name, a.active ? '' : ' (closed)'), h('div', { class: 'muted small' }, TYPE_LABELS[a.type] || a.type)),
+    h('div', { class: 'right' }, a.latest ? [h('div', { class: 'num ' + (a.kind === 'liability' ? 'neg' : '') }, (a.kind === 'liability' ? '-' : '') + money(a.latest.value_cents)), h('div', { class: 'muted small' }, fmtDate(a.latest.as_of))] : h('span', { class: 'pill warn' }, 'No balance'))));
+  const group = (key, title, list) => {
+    const open = !collapsed.has(key);
+    const ul = h('ul', { class: 'list' }, sorted(list).map(row)); ul.hidden = !open;
+    const mark = h('span', { class: 'mark' }, open ? '▾' : '▸');
+    const btn = h('button', { class: 'group-head level2', 'aria-expanded': String(open), onclick: () => { const now = btn.getAttribute('aria-expanded') !== 'true'; btn.setAttribute('aria-expanded', String(now)); ul.hidden = !now; mark.textContent = now ? '▾' : '▸'; if (now) collapsed.delete(key); else collapsed.add(key); } },
+      mark, h('span', { class: 'grow title' }, title), h('span', { class: 'num' }, money(sum(list))));
+    return { btn, ul };
+  };
+  const out = [];
+  for (const [inst, list] of [...byInst.entries()].sort((x, y) => x[0].localeCompare(y[0]))) {
+    const instKey = 'i:' + inst, open = !collapsed.has(instKey);
+    const body = h('div', { class: 'group-body' }); body.hidden = !open;
+    const owners = new Map();
+    for (const a of list) { const k = a.owner || 'No owner'; if (!owners.has(k)) owners.set(k, []); owners.get(k).push(a); }
+    for (const [own, ol] of [...owners.entries()].sort((x, y) => x[0].localeCompare(y[0]))) {
+      const g = group(`o:${inst}:${own}`, own, ol);
+      body.append(g.btn, g.ul);
+    }
+    const mark = h('span', { class: 'mark' }, open ? '▾' : '▸');
+    const head = h('button', { class: 'group-head level1', 'aria-expanded': String(open), onclick: () => { const now = head.getAttribute('aria-expanded') !== 'true'; head.setAttribute('aria-expanded', String(now)); body.hidden = !now; mark.textContent = now ? '▾' : '▸'; if (now) collapsed.delete(instKey); else collapsed.add(instKey); } },
+      mark, h('span', { class: 'grow title' }, inst), h('span', { class: 'num' }, money(sum(list))));
+    out.push(h('div', { class: 'group' }, head, body));
+  }
+  return h('div', { class: 'card' }, h('div', { class: 'row' }, h('h2', { class: 'grow' }, 'Accounts'), h('div', { class: 'num' }, h('span', { class: 'muted small' }, 'Net '), money(sum(accounts))), h('button', { class: 'btn primary', onclick: () => addAccountDialog(lists) }, 'Add account')), out);
 }
 
-function addAccountDialog() {
+function addAccountDialog(lists) {
   dialog('Add account', (close) => {
-    const name = h('input', { id: 'an', required: true, placeholder: 'e.g. TD Everyday Chequing' }), inst = h('input', { id: 'ai', placeholder: 'e.g. TD' }), owner = h('input', { id: 'ao', placeholder: 'Who owns it (optional)' });
+    const name = h('input', { id: 'an', required: true, placeholder: 'e.g. TD Everyday Chequing' });
+    const inst = listPick('ai', lists.institutions, '', { label: 'institution', placeholder: 'e.g. TD' }), owner = listPick('ao', lists.owners, '', { label: 'owner', placeholder: 'Who owns it' });
     const type = h('select', { id: 'at' }, Object.entries(TYPE_LABELS).map(([k, l]) => h('option', { value: k }, l)));
     const err = h('p', { class: 'form-error', role: 'alert' });
     return h('form', { onsubmit: async (e) => {
       e.preventDefault();
-      try { await post('/api/accounts', { name: name.value, institution: inst.value, owner: owner.value, type: type.value }); close(); render(); } catch (x) { err.textContent = x.message; }
+      try { await post('/api/accounts', { name: name.value, institution: inst.value(), owner: owner.value(), type: type.value }); close(); render(); } catch (x) { err.textContent = x.message; }
     } },
-    h('div', { class: 'field' }, h('label', { for: 'an' }, 'Name'), name), h('div', { class: 'field' }, h('label', { for: 'ai' }, 'Institution'), inst),
-    h('div', { class: 'field' }, h('label', { for: 'at' }, 'Type'), type), h('div', { class: 'field' }, h('label', { for: 'ao' }, 'Owner'), owner), err,
+    h('div', { class: 'field' }, h('label', { for: 'an' }, 'Name'), name), h('div', { class: 'field' }, h('label', { for: 'ai' }, 'Institution'), inst.el),
+    h('div', { class: 'field' }, h('label', { for: 'at' }, 'Type'), type), h('div', { class: 'field' }, h('label', { for: 'ao' }, 'Owner'), owner.el), err,
     h('div', { class: 'dialog-actions' }, h('button', { type: 'button', class: 'btn', onclick: close }, 'Cancel'), h('button', { class: 'btn primary' }, 'Add')));
   });
 }
 
-async function accountDialog(a) {
+async function accountDialog(a, lists) {
   const { valuations } = await get(`/api/accounts/${a.id}/valuations`);
-  dialog(a.name, (close) => {
+  dialog(a.label || a.name, (close) => {
     const date = h('input', { id: 'vd', type: 'date', value: today(), required: true }), val = h('input', { id: 'vv', inputmode: 'decimal', placeholder: '0.00', required: true });
     const err = h('p', { class: 'form-error', role: 'alert' });
     return h('div', {},
@@ -410,8 +487,44 @@ async function accountDialog(a) {
       valuations.length ? h('div', {}, h('h3', {}, 'History'), h('ul', { class: 'list' }, valuations.slice(0, 12).map((v) => h('li', {}, h('span', { class: 'grow' }, fmtDate(v.as_of)), h('span', { class: 'num' }, money(v.value_cents)),
         h('button', { class: 'btn small danger', 'aria-label': `Delete balance from ${v.as_of}`, onclick: async () => { await del(`/api/valuations/${v.id}`); close(); render(); } }, 'Delete'))))) : null,
       h('div', { class: 'dialog-actions' },
+        h('button', { class: 'btn', onclick: () => { close(); editAccountDialog(a, lists); } }, 'Edit account'),
         h('button', { class: 'btn', onclick: async () => { await patch(`/api/accounts/${a.id}`, { active: !a.active }); close(); render(); } }, a.active ? 'Mark closed' : 'Reopen'),
         h('button', { class: 'btn', onclick: close }, 'Close')));
+  });
+}
+
+function editAccountDialog(a, lists) {
+  dialog('Edit account', (close) => {
+    const name = h('input', { id: 'en', required: true, value: a.name });
+    const inst = listPick('ei', lists.institutions, a.institution || '', { label: 'institution' }), owner = listPick('eo', lists.owners, a.owner || '', { label: 'owner' });
+    const type = h('select', { id: 'et' }, Object.entries(TYPE_LABELS).map(([k, l]) => h('option', { value: k, selected: k === a.type }, l)));
+    const closed = h('input', { type: 'checkbox', id: 'ec', checked: !a.active });
+    const err = h('p', { class: 'form-error', role: 'alert' });
+    const askDelete = async () => {
+      err.textContent = '';
+      try {
+        const u = await get(`/api/accounts/${a.id}/usage`);
+        const has = u.transactions || u.valuations || u.imports;
+        if (!has) { if (confirm(`Delete ${a.label || a.name}?`)) { await del(`/api/accounts/${a.id}`); close(); render(); } return; }
+        close();
+        dialog('Delete account', (close2) => h('div', {},
+          h('p', {}, `${a.label || a.name} has ${u.transactions} transaction${u.transactions === 1 ? '' : 's'}, ${u.valuations} balance${u.valuations === 1 ? '' : 's'} and ${u.imports} import${u.imports === 1 ? '' : 's'}.`),
+          h('p', { class: 'muted' }, 'Closing keeps everything and hides the account from active totals. Deleting removes the account and everything attached to it for good.'),
+          h('div', { class: 'dialog-actions' },
+            h('button', { class: 'btn', onclick: close2 }, 'Cancel'),
+            h('button', { class: 'btn', onclick: async () => { await patch(`/api/accounts/${a.id}`, { active: false }); close2(); render(); } }, 'Close it instead'),
+            h('button', { class: 'btn danger', onclick: async () => { if (confirm(`Permanently delete ${a.label || a.name} with ${u.transactions} transactions, ${u.valuations} balances and ${u.imports} imports?`)) { await del(`/api/accounts/${a.id}`, { delete_data: true }); close2(); render(); } } }, 'Delete everything'))));
+      } catch (x) { err.textContent = x.message; }
+    };
+    return h('form', { onsubmit: async (e) => {
+      e.preventDefault();
+      try { await patch(`/api/accounts/${a.id}`, { name: name.value, institution: inst.value(), owner: owner.value(), type: type.value, active: !closed.checked }); close(); render(); } catch (x) { err.textContent = x.message; }
+    } },
+    h('div', { class: 'field' }, h('label', { for: 'en' }, 'Name'), name), h('div', { class: 'field' }, h('label', { for: 'ei' }, 'Institution'), inst.el),
+    h('div', { class: 'field' }, h('label', { for: 'et' }, 'Type'), type), h('p', { class: 'muted small' }, 'Changing the type between an asset and a debt changes how its balance counts in net worth.'),
+    h('div', { class: 'field' }, h('label', { for: 'eo' }, 'Owner'), owner.el),
+    h('div', { class: 'check field' }, closed, h('label', { for: 'ec' }, 'Closed')), err,
+    h('div', { class: 'dialog-actions' }, h('button', { type: 'button', class: 'btn danger', onclick: askDelete }, 'Delete…'), h('button', { type: 'button', class: 'btn', onclick: close }, 'Cancel'), h('button', { class: 'btn primary' }, 'Save')));
   });
 }
 
@@ -420,7 +533,7 @@ function importView(accounts) {
   if (!accounts.length) return h('div', { class: 'card' }, emptyState('Add an account first', 'Statements are imported into an account.', h('button', { class: 'btn primary', onclick: () => go('/accounts') }, 'Add account')));
   const err = h('p', { class: 'form-error', role: 'alert' });
   const out = h('div', {});
-  const sel = h('select', { id: 'ia' }, accounts.filter((a) => a.active).map((a) => h('option', { value: a.id, selected: String(a.id) === String(importDraft.accountId) }, a.name)));
+  const sel = h('select', { id: 'ia' }, accounts.filter((a) => a.active).map((a) => h('option', { value: a.id, selected: String(a.id) === String(importDraft.accountId) }, a.label || a.name)));
   const file = h('input', { id: 'if', type: 'file', accept: '.csv,text/csv,text/plain' });
   const doPreview = async () => {
     err.textContent = ''; out.replaceChildren();
@@ -452,11 +565,22 @@ function previewCard(p, sel, redo, err) {
     [['YMD', 'Year-month-day'], ['MDY', 'Month/day/year'], ['DMY', 'Day/month/year']].map(([v, l]) => h('option', { value: v, selected: m.dateOrder === v }, l)));
   const flip = h('input', { type: 'checkbox', id: 'm-inv', checked: m.invert, onchange: () => { importDraft.mapping = { ...importDraft.mapping, invert: flip.checked }; redo(); } });
   const commit = h('button', { class: 'btn primary', disabled: p.newCount === 0 }, `Import ${p.newCount} transaction${p.newCount === 1 ? '' : 's'}`);
+  const b = p.balance;
+  const balIn = h('input', { id: 'bal', inputmode: 'decimal', 'aria-label': 'Balance', value: b && b.value_cents != null ? (b.value_cents / 100).toFixed(2) : '' });
+  const balOn = h('input', { type: 'checkbox', id: 'bal-on', checked: !!(b && b.value_cents != null) });
+  const balReplace = h('input', { type: 'checkbox', id: 'bal-rep' });
+  const balCard = b ? h('div', { class: 'card inset' }, h('h3', {}, 'Balance'),
+    h('p', { class: 'muted small' }, b.source === 'file' ? `The statement shows this balance on ${fmtDate(b.as_of)}.` : b.source === 'suggested' ? `Worked out from your last saved balance and the new lines, as of ${fmtDate(b.as_of)}. Check it against your statement.` : `Enter the balance as of ${fmtDate(b.as_of)} if you want to save one.`),
+    b.note ? h('p', { class: 'form-error' }, b.note) : null,
+    h('div', { class: 'row' }, h('div', { class: 'grow' }, h('label', { for: 'bal' }, 'Balance (liabilities as the amount owed)'), balIn), h('div', { class: 'check' }, balOn, h('label', { for: 'bal-on' }, 'Save this balance'))),
+    b.existing_manual_cents != null ? h('div', { class: 'check' }, balReplace, h('label', { for: 'bal-rep' }, `You already entered ${money(b.existing_manual_cents)} for this date. Replace it?`)) : null) : null;
   commit.addEventListener('click', busy(commit, async () => {
     try {
-      const r = await post('/api/imports', { account_id: Number(sel.value), text: importDraft.text, filename: importDraft.filename, mapping: importDraft.mapping });
+      const body = { account_id: Number(sel.value), text: importDraft.text, filename: importDraft.filename, mapping: importDraft.mapping };
+      if (b && balOn.checked) { const c = centsOf(balIn.value); if (c == null) { err.textContent = 'Enter the balance as a number, or untick Save this balance.'; return; } body.balance = { as_of: b.as_of, value_cents: c }; if (balReplace.checked) body.replace_balance = true; }
+      const r = await post('/api/imports', body);
       importDraft.text = ''; importDraft.mapping = null;
-      go(`/accounts?tab=history&done=${r.imported}`);
+      go(`/accounts?tab=history&done=${r.imported}${r.balance_saved ? '&bal=1' : ''}${r.balance_kept_manual ? '&kept=1' : ''}`);
     } catch (x) { err.textContent = x.message; }
   }));
   return h('section', { class: 'card' }, h('h2', {}, 'Preview'),
@@ -465,18 +589,20 @@ function previewCard(p, sel, redo, err) {
     h('h3', {}, 'Columns'),
     h('div', { class: 'row' }, colSel('date', 'Date', false), colSel('description', 'Description', false), colSel('amount', 'Amount', true)),
     h('div', { class: 'row' }, colSel('debit', 'Money out (if separate)', true), colSel('credit', 'Money in (if separate)', true), h('div', { class: 'grow' }, h('label', { for: 'm-order' }, 'Date format'), order)),
+    h('div', { class: 'row' }, colSel('comment', 'Comment', true), colSel('reference', 'Reference', true), colSel('balance', 'Balance', true)),
     m.dateOrder !== 'YMD' ? h('p', { class: 'muted small' }, 'Check the dates in the table below. A date like 03/10/2026 can mean March 10 or 3 October; change the date format if they look wrong.') : null,
     h('div', { class: 'check field' }, flip, h('label', { for: 'm-inv' }, 'Flip signs (this statement shows spending as positive)')),
-    h('div', { class: 'table-wrap' }, h('table', {}, h('thead', {}, h('tr', {}, h('th', {}, 'Date'), h('th', {}, 'Description'), h('th', { class: 'right' }, 'Amount'), h('th', {}, 'Status'))),
-      h('tbody', {}, p.sample.map((r) => h('tr', {}, h('td', { class: 'nowrap' }, r.posted_on), h('td', {}, r.description), h('td', { class: 'right num ' + (r.amount_cents < 0 ? '' : 'pos') }, money(r.amount_cents)), h('td', {}, r.duplicate ? 'Already imported' : 'New')))))),
+    h('div', { class: 'table-wrap' }, h('table', {}, h('thead', {}, h('tr', {}, h('th', {}, 'Date'), h('th', {}, 'Description'), h('th', {}, 'Comment'), h('th', {}, 'Reference'), h('th', { class: 'right' }, 'Amount'), h('th', {}, 'Status'))),
+      h('tbody', {}, p.sample.map((r) => h('tr', {}, h('td', { class: 'nowrap' }, r.posted_on), h('td', {}, r.description), h('td', {}, r.comment || ''), h('td', {}, r.reference || ''), h('td', { class: 'right num ' + (r.amount_cents < 0 ? '' : 'pos') }, money(r.amount_cents)), h('td', {}, r.duplicate ? 'Already imported' : 'New')))))),
     p.errorCount ? h('details', {}, h('summary', {}, `${p.errorCount} rows could not be read`), h('ul', {}, p.errors.slice(0, 10).map((e) => h('li', { class: 'small' }, `Line ${e.line}: ${e.reason}`)))) : null,
+    balCard,
     h('div', { class: 'dialog-actions' }, commit));
 }
 
 async function historyView() {
   const { batches } = await get('/api/imports');
   const done = params().get('done');
-  return h('div', {}, done ? h('div', { class: 'notice', role: 'status' }, `Imported ${done} transactions.`, link('/budget?tab=transactions&uncat=1', h('span', { class: 'btn small' }, 'Categorise'))) : null,
+  return h('div', {}, done ? h('div', { class: 'notice', role: 'status' }, `Imported ${done} transactions.${params().get('bal') ? ' Balance saved.' : ''}${params().get('kept') ? ' Your own balance for that date was kept.' : ''} `, link('/budget?tab=transactions&uncat=1', h('span', { class: 'btn small' }, 'Categorise'))) : null,
     h('div', { class: 'card' }, h('h2', {}, 'Import history'), batches.length ? h('ul', { class: 'list' }, batches.map((b) => h('li', {},
       h('div', { class: 'grow' }, h('div', { class: 'title' }, b.filename || `Import #${b.id}`), h('div', { class: 'muted small' }, `${b.account} · ${new Date(b.created_at).toLocaleString('en-CA')} · ${b.row_count} added, ${b.skipped_count} skipped`)),
       h('button', { class: 'btn small danger', onclick: async () => { if (confirm(`Remove the ${b.row_count} transactions from this import?`)) { await del(`/api/imports/${b.id}`); render(); } } }, 'Roll back')))) : h('p', { class: 'muted' }, 'No imports yet.')));
@@ -524,7 +650,10 @@ async function viewSettings() {
     h('tbody', {}, entries.slice(0, 15).map((e) => h('tr', {}, h('td', { class: 'nowrap small' }, new Date(e.at).toLocaleString('en-CA')), h('td', {}, e.action.replaceAll('_', ' ')), h('td', { class: 'small muted' }, e.detail || ''))))))));
   cards.push(h('section', { class: 'card' }, h('h2', {}, 'About'), h('p', {}, `Finance Hub v${state.info.version}`), h('p', { class: 'muted small' }, `You are signed out after ${state.info.idleMinutes} minutes without activity.`),
     h('button', { class: 'btn', onclick: async () => { await post('/api/logout'); await loadState(); render(); } }, 'Sign out')));
-  return shell('Settings', h('div', { class: 'grid two' }, h('div', {}, cards[0], cards[1], cards[2]), h('div', {}, cards[3], cards[4])));
+  const stab = params().get('tab') || 'general';
+  const sbar = h('div', { class: 'tabs', role: 'tablist' }, [['general', 'General'], ['lists', 'Lists']].map(([k, l]) => h('button', { role: 'tab', 'aria-selected': k === stab ? 'true' : 'false', onclick: () => go(`/settings?tab=${k}`) }, l)));
+  if (stab === 'lists') return shell('Settings', [sbar, await listsView()]);
+  return shell('Settings', [sbar, h('div', { class: 'grid two' }, h('div', {}, cards[0], cards[1], cards[2]), h('div', {}, cards[3], cards[4]))]);
 }
 
 // ---------- router ----------

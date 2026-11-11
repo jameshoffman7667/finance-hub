@@ -120,6 +120,17 @@ A Wealth page (also under More on phones) with five tabs.
 - Watchlist (Cards and bonuses > Watchlist): offers you spot, with source, whether seen on the issuer's own site, date seen, end date, bonus, points and program, rebate, fee. Check page reads one address on request (https only, never private addresses, robots.txt respected, size and time limits) and shows amounts, points, dates and fees found; nothing is saved from it. Check a feed reads an RSS address and shows items naming something watched. Compared view groups by issuer and product, values points with the Planner settings, marks unverified figures and ended offers.
 - API: `/api/receipts/{status,sync,review,linked,unmatched,link}`, `/api/receipts/links/:id[/accept|/reject]`; `/api/watch/{compare,feed}`, `/api/watch/:id/{fetch,pages}`; list/add/edit under `/api/offers/watch`.
 
+## Accounts, lists and sub-categories (v0.8.0)
+
+- Accounts screen groups accounts by institution, then owner ("No owner"), with balance totals (debts subtracted); groups collapse; closed accounts sit last. Everywhere accounts are picked or listed they show as "Name, Institution, Type, Owner" (empty parts left out).
+- Add and edit account: institution and owner are pick lists of values already used, with "Add new…". Edit changes name, institution, owner, type (asset/debt kind follows type) and closed. Delete asks each time: no data, a simple confirm; with data, close instead or delete everything attached after a confirmation showing counts.
+- Import: columns for Description, Comment and Reference (and Balance) are mapped in the preview and remembered per account. Comment and reference are searchable, exported and not editable after import; rules can match description, comment, reference or any. Balance: file balance column (last row by date) else last saved balance moved by new lines; shown with a Save checkbox before import; a balance typed by hand for the same date is kept unless you tick Replace. Debts are saved as positive amounts owed.
+- Categories ship with the app and cannot be added by users; they can be renamed or removed (with a choice of where transactions go). New shipped: Credit card payment (transfer), Loan payment (expense, debt service), Cash withdrawal (expense), Cash deposit (income), Cash returned to account (reduces spending; nets into Cash withdrawal), Children and Pets.
+- Sub-categories: optional, one level, added by the user (suggested names per category are offered in Settings > Lists), inherit the category kind, can have their own Wealth cash-flow group, can be chosen by rules and when categorising; spending report rolls them up with an expand toggle.
+- Settings > Lists: institutions and owners (rename, remove with usage counts), categories and sub-categories.
+- Categorising a transaction ticks "Always use this category" by default.
+- API: `/api/accounts/:id/usage`, `DELETE /api/accounts/:id` (body `delete_data`), `/api/lists`, `/api/lists/:institution|owner/{rename,remove}`, `/api/subcategories`, `DELETE /api/categories/:id` (body `move_to`), `/api/categories/:id/suggested`. `POST /api/categories` is removed.
+
 ## Settings
 
 Install app (Chrome/Edge button; iOS instructions), change password, export everything as JSON or transactions as CSV (password re-entry), security log, version, sign out.

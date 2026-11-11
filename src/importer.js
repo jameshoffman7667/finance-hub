@@ -8,10 +8,13 @@ const find = (headers, re) => headers.findIndex((h) => re.test(h));
 export function guessMapping(rows) {
   const headers = (rows[0] || []).map((h) => String(h).trim().toLowerCase());
   const hasHeader = headers.length > 0 && !parseDate(rows[0][0]) ;
-  const m = { hasHeader, date: -1, description: -1, amount: -1, debit: -1, credit: -1, dateOrder: 'YMD', invert: false };
+  const m = { hasHeader, date: -1, description: -1, amount: -1, debit: -1, credit: -1, comment: -1, reference: -1, balance: -1, dateOrder: 'YMD', invert: false };
   if (hasHeader) {
-    m.date = find(headers, /date|posted|transaction/);
-    m.description = find(headers, /desc|memo|payee|details|merchant|name/);
+    m.date = find(headers, /date|posted/); if (m.date < 0) m.date = find(headers, /transaction/);
+    m.description = find(headers, /desc|payee|merchant|name/); if (m.description < 0) m.description = find(headers, /memo|details/);
+    m.comment = find(headers, /comment|memo|note|details/); if (m.comment === m.description) m.comment = -1;
+    m.reference = find(headers, /\bref|confirmation|cheque|check n|transaction id|trace/);
+    m.balance = find(headers, /balance/);
     m.amount = find(headers, /^(amount|amt|value)|cad\$?$/);
     m.debit = find(headers, /debit|withdraw|paid out|money out/);
     m.credit = find(headers, /credit|deposit|paid in|money in/);
@@ -56,7 +59,9 @@ export function parseStatement(text, mappingIn) {
       errors.push({ line, reason: !date ? 'bad date' : cents == null ? 'bad amount' : 'missing description', raw: r.join(' | ').slice(0, 120) });
       return;
     }
-    out.push({ line, posted_on: date, description, amount_cents: cents });
+    const text = (i) => (i >= 0 ? String(r[i] ?? '').trim().replace(/\s+/g, ' ').slice(0, 300) : '');
+    const bal = mapping.balance >= 0 ? parseCents(r[mapping.balance]) : null;
+    out.push({ line, posted_on: date, description, comment: text(mapping.comment), reference: text(mapping.reference), balance_cents: bal, amount_cents: cents });
   });
   // Identical rows within one file get a sequence number so genuine repeats are kept.
   const seen = new Map();
@@ -69,11 +74,16 @@ export function parseStatement(text, mappingIn) {
   return { mapping, headers, rows: out, errors };
 }
 
+const FIELDS = ['description', 'comment', 'reference', 'any'];
 export function loadRules(db) {
-  return db.prepare('SELECT r.pattern, r.category_id FROM rules r ORDER BY r.priority, length(r.pattern) DESC, r.id').all()
-    .map((r) => ({ p: r.pattern.toLowerCase(), c: r.category_id }));
+  return db.prepare('SELECT r.pattern, r.category_id, r.subcategory_id, r.field FROM rules r ORDER BY r.priority, length(r.pattern) DESC, r.id').all()
+    .map((r) => ({ p: r.pattern.toLowerCase(), c: r.category_id, s: r.subcategory_id ?? null, f: FIELDS.includes(r.field) ? r.field : 'description' }));
 }
-export const categorize = (rules, description) => {
-  const d = description.toLowerCase();
-  return rules.find((r) => d.includes(r.p))?.c ?? null;
-};
+const hay = (t, f) => (f === 'any' ? [t.description, t.comment, t.reference].join('\n') : t[f] ?? '').toLowerCase();
+export function classify(rules, t) {
+  const tx = typeof t === 'string' ? { description: t } : t;
+  const r = rules.find((x) => hay(tx, x.f).includes(x.p));
+  return r ? { category_id: r.c, subcategory_id: r.s } : { category_id: null, subcategory_id: null };
+}
+export const categorize = (rules, t) => classify(rules, t).category_id;
+export { FIELDS as RULE_FIELDS };
