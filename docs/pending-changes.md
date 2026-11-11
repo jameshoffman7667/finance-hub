@@ -137,7 +137,7 @@ Plan: (1) a layout profile per bank and statement type, starting with these thre
 Notes / questions:
 - Test files use made-up data in the same layouts, not your real statements; your PDFs are not stored in the repository.
 - The image gains a small PDF tool (poppler-utils), which adds a few MB. OK?
-- Which Paperless marker should identify a bank statement and its account: a tag per account (for example "statement-cibc-chequing"), the correspondent, or the title? Recommended: one tag per account that you add in Paperless, plus the correspondent as a hint.
+- Paperless marker: decided 2026-11-10, one account tag per account plus the correspondent as a hint, named as in P-30.
 - Upload fallback: PDFs or a zip up to a size limit (suggest 50 MB), each file shown with its result.
 
 ### P-29 - Statements page: which statements are available or missing, and how old each CSV is
@@ -149,6 +149,21 @@ Notes / questions:
 - A PDF statement counts for the month its period ends in. Credit card cycles end mid-month, so "missing" would be a month with no statement ending in it once the usual cycle date has passed. OK?
 - "More than a month old" for PDF accounts: red when the most recent expected statement is missing 35 days or more after the previous one ended. OK?
 - Depends on P-28 for knowing which statements are in Paperless (tag per account) and on P-22 for grouping by institution and owner; it can be built before them with the Paperless tag lookup alone.
+
+### P-30 - Paperless statement conventions: account tags, document types and custom fields
+Requested: 2026-11-10 (James: "yes please log the paperless account tag convention", after approving the plan to rename his statement folders and upload all statement PDFs to Paperless through the API with metadata filled in)
+Type: minor (convention the Paperless statement connector of P-28 and P-29 relies on; no app change on its own)        Status: Pending
+Decisions (James): statement PDFs are uploaded to Paperless by a script outside the app (Claude Code on the LAN PC), with this metadata. The app reads it; it never writes these fields.
+- Account tag, one per account: `acct-<institution>-<product-or-type>-<last4>`, lowercase, words joined by hyphens (e.g. `acct-rbc-avion-visa-infinite-4417`, `acct-td-chequing-1234`, `acct-questrade-tfsa-5678`). This is how the app matches a PDF to its account. Store the tag on the account in the app (a new account setting, set once).
+- Other tags: `statement` on every statement, `finance-hub` on every document from the upload, `needs-review` on documents with low-confidence values.
+- Correspondent: the short institution name (TD, CIBC, Scotiabank, RBC, Questrade, Wealthsimple, American Express...), the same text as the app's institution field. Brokerage arms use the parent name (TD Direct Investing and TD Easy Trade are TD; Scotia iTRADE is Scotiabank).
+- Document types: Credit Card Statement, Bank Statement, Investment Statement, Annual Summary, Tax Slip, Trade Confirmation, Account Notice.
+- Title: `<Institution> - <Product or Account Type> - <Document Kind> - <YYYY-MM> - <Last4>`, with YYYY-MM the month the statement period ends in (P-29). Created date: the period end date.
+- Custom fields (exact names): Account Last 4 (string), Account Kind (select: Credit Card, Bank, Investment, Loan), Account Type (select: Chequing, Savings, HISA, Credit Card, LOC, HELOC, Mortgage, Cash, Margin, RRSP, Spousal RRSP, TFSA, FHSA, RESP, LIRA, RRIF), Product (string), Owner (select), Period Start (date), Period End (date), Opening Balance, Closing Balance, Total Debits, Total Credits (monetary; P-28 balance check, closing balance feeds P-21), Payment Due Date (date), Minimum Payment, Credit Limit, Interest Charged, Fees Charged (monetary), Points Earned (integer), Market Value, Contributions (monetary), Transaction Source (select: PDF only, CSV available), Reconciled (boolean). Fields that do not apply are left off the document. The existing receipt field Total is not used for statements.
+Notes / questions:
+- Select fields are read by option label (newer Paperless versions return option IDs, so the app looks up each field's options first).
+- Transaction Source "CSV available" means the period's transactions come from the CSV import, so the PDF import (P-28) skips that statement unless asked, to avoid importing it twice. OK?
+- Paperless field values are a hint, not the truth: the P-28 parser still reads the PDF, and a difference between its totals and the Paperless fields is flagged. OK?
 
 ## Done
 
