@@ -53,6 +53,12 @@ Today the app has hand-typed statement day and due day on each card, with a paym
 Decisions (James, 2026-11-10): learned dates for bank and investment accounts are the statement cycle only (no payment due date); learned statement and due days write back to each card's typed statement day and due day after one confirmation per card.
 Notes / questions: none. Uses the existing reminder channels and per-kind settings (a new kind for statement date; the payment due kind already exists).
 
+### P-32 - Suggested sub-categories for Loan payment, Cash withdrawal and Cash deposit
+Requested: 2026-11-11 (James: "loan payment - Auto Loan, Personal Loan, Other. Cash withdrawl - Purchase, Gift, Other. Cash Deposit - Sale, Gift, other")
+Type: patch (suggestion lists only)        Status: Pending
+Plan: add these to the suggested lists in Settings > Lists (nothing is created until you add it): Loan payment: Auto Loan, Personal Loan, Other. Cash withdrawal: Purchase, Gift, Other. Cash deposit: Sale, Gift, Other.
+Notes / questions: none. The categories document already shows these.
+
 ## Done
 
 ### P-1 - Link receipts from paperless-ngx to card transactions
