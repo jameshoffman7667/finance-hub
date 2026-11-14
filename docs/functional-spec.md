@@ -183,5 +183,17 @@ Logs go to stdout, one line per event. SIGTERM stops accepting requests, closes 
 
 Questrade import and ACB tracking, further institutions, forecast and wealth projection, tax tools, weekly offer research, live data connections.
 
+## Android app (v0.9.0)
+
+- A Trusted Web Activity (TWA, built with Bubblewrap) that opens https://finances.hoffmanhouse.ca full screen: the same PWA, no second codebase. Package id `ca.hoffmanhouse.financehub`, key alias `financehub`, APK `finance-hub-<version>.apk` attached to each GitHub release and served from James's F-Droid repo.
+- versionName is the release version; versionCode = MAJOR*100000000 + MINOR*10000 + PATCH (v0.9.0 = 90000); the build fails above MINOR/PATCH 9999 or MAJOR 20 (`scripts/android-version.js`). `twa-manifest.json` at the repo root holds the Android settings; the workflow overwrites appVersion and appVersionCode at build time and a test keeps the committed values equal to package.json.
+- Digital Asset Links: `/.well-known/assetlinks.json` is served publicly without a sign-in (static, package id and public certificate fingerprint only; source `public/.well-known/assetlinks.json`). The build fails if the signing certificate is not listed there. Status: served by v0.9.0; it matches once the image is deployed and Cloudflare Access lets `/.well-known/assetlinks.json` through.
+- Notifications: on (the app uses Web Push).
+- Back button: every dialog has a history entry, so Android Back closes the dialog first, then steps back through screens; Back at the Overview leaves the app. Closing a dialog with Save, Cancel or Escape removes its entry. A half-filled dialog is lost when Back closes it (same as Cancel); nothing is saved without Save.
+- Access: the sign-in is Cloudflare Access for James only, so the app works for James. Needs the Access bypass for `/manifest.webmanifest`, `/sw.js`, `/icons/*` and `/.well-known/assetlinks.json`, or the app opens with an address bar.
+- Build: the `android` job in `.github/workflows/release.yml` runs after the image job. It skips (green notice naming the missing secrets) until `ANDROID_KEYSTORE_B64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` and `ANDROID_KEY_PASSWORD` exist. It checks the signing fingerprint against assetlinks.json, builds, inspects the APK (package, signed, minSdk) and uploads it.
+- Rebuild an APK without a release (only for a failed or wrong APK nobody installed): `gh api -X POST repos/jameshoffman7667/finance-hub/actions/workflows/release.yml/dispatches -f ref=main -f 'inputs[tag]=vX.Y.Z' -f 'inputs[overwrite]=false'` (or Actions, release, Run workflow). The versionCode does not change.
+- Known limits: the first APK is untested until confirmed on a phone; no share targets or other native features; an APK that crashes on a phone needs a logcat before any change.
+
 ## Releases
 A release is a push to `main` that changes the version in `package.json` (CHANGELOG entry required: Short up to 50 characters, Long up to 250). The `release` GitHub Actions workflow reads the version X.Y.Z, stops if the tag vX.Y.Z or a GitHub release for it already exists or the CHANGELOG entry is missing or invalid, builds and pushes the image tags X.Y.Z, X.Y and latest, then runs `gh release create vX.Y.Z --target $GITHUB_SHA`, which also creates the tag. A push to `main` that does not change the version does nothing. A manually pushed `vX.Y.Z` tag runs the same workflow as a fallback; both triggers share a concurrency group per version, so only one of them can release a version.

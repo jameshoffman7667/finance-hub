@@ -76,22 +76,47 @@ const MOBILE_NAV = [AREAS[0], AREAS[1], AREAS[2], AREAS[3], { path: '/more', lab
 const isCurrent = (p) => (p === '/more' ? ['/more', '/tax', '/wealth', '/accounts', '/settings'].includes(state.route) : state.route === p);
 
 function go(path) {
+  if (backQueue) { backQueue.push(() => go(path)); return; }
   if (path === location.pathname) { render(); return; }
   history.pushState({}, '', path);
   render();
   window.scrollTo(0, 0);
 }
 const link = (path, ...kids) => h('a', { href: path, onclick: (e) => { if (e.metaKey || e.ctrlKey) return; e.preventDefault(); go(path); } }, ...kids);
-window.addEventListener('popstate', render);
+// Android Back (the app runs as a Trusted Web Activity, which uses the page's history): every open dialog owns one history entry,
+// so Back closes the dialog instead of leaving the screen or closing the app. When a dialog is closed another way (Save, Cancel,
+// Escape) its entry is removed with history.back(); a navigation asked for in the same moment waits for that to finish.
+const openDialogs = [];
+let dialogSeq = 0, backQueue = null;
+function flushBack() { const q = backQueue; backQueue = null; if (q) q.forEach((f) => f()); }
+function endDialog(entry, viaBack) {
+  const i = openDialogs.indexOf(entry); if (i < 0) { entry.gone = true; return; }
+  openDialogs.splice(i, 1);
+  try { entry.d.close(); } catch { /* already closed */ }
+  entry.d.remove();
+  if (!viaBack && history.state?.dlg === entry.id) { backQueue = backQueue || []; history.back(); setTimeout(flushBack, 600); }
+}
+window.addEventListener('popstate', () => {
+  if (backQueue) { flushBack(); return; }
+  if (openDialogs.length) { endDialog(openDialogs[openDialogs.length - 1], true); return; }
+  render();
+});
 
 // ---------- dialogs ----------
 function dialog(title, build) {
   const d = h('dialog', { 'aria-labelledby': 'dlg-title' });
-  const close = () => { d.close(); d.remove(); };
+  const entry = { d, id: ++dialogSeq };
+  const close = () => endDialog(entry, false);
   d.append(h('h2', { id: 'dlg-title' }, title), build(close));
-  d.addEventListener('cancel', () => setTimeout(() => d.remove()));
-  document.body.append(d);
-  d.showModal();
+  d.addEventListener('cancel', () => setTimeout(() => endDialog(entry, false)));
+  const open = () => {
+    if (entry.gone) return;
+    document.body.append(d);
+    history.pushState({ dlg: entry.id }, '', location.href);
+    openDialogs.push(entry);
+    d.showModal();
+  };
+  if (backQueue) backQueue.push(open); else open(); // a dialog opened right after another closed waits for that entry to be removed
   return d;
 }
 function askPassword(reason) {

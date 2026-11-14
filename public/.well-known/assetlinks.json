@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "ca.hoffmanhouse.financehub",
+      "sha256_cert_fingerprints": [
+        "E5:F5:85:AE:5E:9D:22:16:2E:01:21:84:0C:B4:20:65:F2:DE:37:D9:F3:FC:07:A8:30:6C:C8:03:8B:5B:B0:E4"
+      ]
+    }
+  }
+]

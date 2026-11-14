@@ -99,6 +99,12 @@ export function createApp({ db, config, log }) {
     }
   };
 
+  // ---------- Digital Asset Links for the Android app (public, static, no secrets: package id and public certificate fingerprint) ----------
+  app.get('/.well-known/assetlinks.json', (req, res) => {
+    res.set('Cache-Control', 'public, max-age=3600').type('application/json')
+      .sendFile(path.join(config.root, 'public', '.well-known', 'assetlinks.json'), { dotfiles: 'allow' }, (err) => { if (err && !res.headersSent) res.status(404).json({ error: 'Not found' }); });
+  });
+
   // ---------- static PWA shell (before auth: manifest, icons, worker must be public) ----------
   const pub = path.join(config.root, 'public');
   app.use(express.static(pub, {

@@ -2,6 +2,10 @@
 
 Newest first. One entry per released version; entries are never rewritten.
 
+## v0.9.0 - 2026-11-13
+**Short:** Add Android app and Back button support
+**Long:** Android app (TWA) for the F-Droid repo: signed APK built on release, assetlinks.json served without login. Android Back now closes dialogs instead of leaving the screen. Needs the key secrets; first APK untested. P-33.
+
 ## v0.8.0 - 2026-11-10
 **Short:** Edit accounts, sub-categories, import balances
 **Long:** Edit, delete and group accounts with pick lists; comment and reference on imports; balance from imports; optional sub-categories, cash and loan categories, Settings Lists. P-17 to P-27.

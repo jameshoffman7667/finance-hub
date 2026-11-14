@@ -1,0 +1,30 @@
+{
+  "packageId": "ca.hoffmanhouse.financehub",
+  "host": "finances.hoffmanhouse.ca",
+  "name": "Finance Hub",
+  "launcherName": "Finance Hub",
+  "display": "standalone",
+  "orientation": "default",
+  "themeColor": "#0f6b63",
+  "themeColorDark": "#0f6b63",
+  "navigationColor": "#0f6b63",
+  "navigationColorDark": "#0f6b63",
+  "navigationDividerColor": "#0f6b63",
+  "navigationDividerColorDark": "#0f6b63",
+  "backgroundColor": "#f4f7f6",
+  "startUrl": "/",
+  "iconUrl": "https://finances.hoffmanhouse.ca/icons/icon-512.png",
+  "maskableIconUrl": "https://finances.hoffmanhouse.ca/icons/icon-maskable-512.png",
+  "enableNotifications": true,
+  "enableSiteSettingsShortcut": true,
+  "fallbackType": "customtabs",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "financehub"
+  },
+  "appVersion": "0.9.0",
+  "generatorApp": "bubblewrap-cli",
+  "appVersionCode": 90000,
+  "minSdkVersion": 24
+}

@@ -337,3 +337,8 @@ Notes / questions:
 - A rule made from a whole bank description can be too narrow (store numbers, dates) or too wide (a short word). Should the pattern be tidied automatically (for example drop trailing store numbers and dates) or left as the text of the line? Recommended: tidy it, and show it so you can edit.
 - Should saving a rule also re-categorise other uncategorised transactions that match? Today's behavior is kept unless you say so; say if you want that.
 Built note: pattern tidy and re-categorise questions were not answered, so today's behaviour is kept (tidy already splits at digits, #, *).
+
+### P-33 - Android app (TWA) published to James's F-Droid repo
+Requested: 2026-11-13 (James: build message for the Android app, spec v1.11 section 15)
+Type: minor (new packaging, Back-button handling, one public file)        Status: Built in v0.9.0 (first APK untested until James confirms it on his phone; the android job skips until the four ANDROID_* secrets exist)
+Plan: twa-manifest.json, android job in the release workflow, assetlinks.json served without login, Back closes dialogs, tests, docs.
